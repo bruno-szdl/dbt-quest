@@ -60,8 +60,8 @@ export default function BottomPanel({ containerRef }: BottomPanelProps) {
 
   return (
     <div
-      className="flex flex-col shrink-0 border-t border-[#30363d]"
-      style={{ height: currentHeight, background: '#0d1117' }}
+      className="flex flex-col shrink-0"
+      style={{ height: currentHeight, background: 'var(--color-base)', borderTop: '1px solid var(--color-border)' }}
     >
       {/* Resize handle — above the tab bar */}
       <div
@@ -75,7 +75,7 @@ export default function BottomPanel({ containerRef }: BottomPanelProps) {
           zIndex: 2,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#484f58'
+          e.currentTarget.style.background = 'var(--color-muted)'
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'transparent'
@@ -84,8 +84,8 @@ export default function BottomPanel({ containerRef }: BottomPanelProps) {
 
       {/* Tab bar */}
       <div
-        className="flex items-center shrink-0 border-b border-[#30363d]"
-        style={{ height: '34px', background: '#161b22' }}
+        className="flex items-center shrink-0"
+        style={{ height: '34px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
       >
         <div className="flex items-center h-full">
           <TabButton
@@ -143,10 +143,10 @@ function TabButton({ label, active, onClick, icon }: TabButtonProps) {
       style={{
         background: 'transparent',
         border: 'none',
-        borderTop: active ? '2px solid #ff694a' : '2px solid transparent',
-        borderBottom: active ? '1px solid #0d1117' : 'none',
+        borderTop: active ? '2px solid var(--color-accent-orange)' : '2px solid transparent',
+        borderBottom: active ? '1px solid var(--color-base)' : 'none',
         marginBottom: active ? '-1px' : 0,
-        color: active ? '#e6edf3' : '#7d8590',
+        color: active ? 'var(--color-text)' : 'var(--color-text-muted)',
         fontFamily: 'JetBrains Mono, monospace',
         fontSize: '11px',
         textTransform: 'uppercase',
@@ -154,13 +154,13 @@ function TabButton({ label, active, onClick, icon }: TabButtonProps) {
         cursor: 'pointer',
       }}
       onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.color = '#e6edf3'
+        if (!active) e.currentTarget.style.color = 'var(--color-text)'
       }}
       onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.color = '#7d8590'
+        if (!active) e.currentTarget.style.color = 'var(--color-text-muted)'
       }}
     >
-      <span style={{ color: active ? '#ff694a' : '#484f58', display: 'flex' }}>{icon}</span>
+      <span style={{ color: active ? 'var(--color-accent-orange)' : 'var(--color-muted)', display: 'flex' }}>{icon}</span>
       {label}
     </button>
   )
@@ -179,15 +179,15 @@ function CollapseButton({ collapsed, onClick }: { collapsed: boolean; onClick: (
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        color: '#7d8590',
+        color: 'var(--color-text-muted)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#ffffff0a'
-        e.currentTarget.style.color = '#e6edf3'
+        e.currentTarget.style.background = 'var(--color-border-subtle)'
+        e.currentTarget.style.color = 'var(--color-text)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent'
-        e.currentTarget.style.color = '#7d8590'
+        e.currentTarget.style.color = 'var(--color-text-muted)'
       }}
     >
       <svg

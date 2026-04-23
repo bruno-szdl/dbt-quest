@@ -46,8 +46,8 @@ export default function LevelIntroModal() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#161b22',
-          border: '1px solid #30363d',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
           borderRadius: '12px',
           maxWidth: '640px',
           width: '100%',
@@ -62,7 +62,7 @@ export default function LevelIntroModal() {
         <div
           style={{
             padding: '24px 28px 16px',
-            borderBottom: '1px solid #21262d',
+            borderBottom: '1px solid var(--color-border-subtle)',
             position: 'relative',
           }}
         >
@@ -75,7 +75,7 @@ export default function LevelIntroModal() {
               right: '16px',
               background: 'transparent',
               border: 'none',
-              color: '#7d8590',
+              color: 'var(--color-text-muted)',
               cursor: 'pointer',
               fontSize: '22px',
               lineHeight: 1,
@@ -83,12 +83,12 @@ export default function LevelIntroModal() {
               borderRadius: '4px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#ffffff0a'
-              e.currentTarget.style.color = '#e6edf3'
+              e.currentTarget.style.background = 'var(--color-border-subtle)'
+              e.currentTarget.style.color = 'var(--color-text)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = '#7d8590'
+              e.currentTarget.style.color = 'var(--color-text-muted)'
             }}
           >
             ×
@@ -104,9 +104,9 @@ export default function LevelIntroModal() {
           >
             <span
               style={{
-                background: '#ff694a1a',
-                border: '1px solid #ff694a33',
-                color: '#ff694a',
+                background: 'var(--color-accent-bg)',
+                border: '1px solid var(--color-accent-orange-dim)',
+                color: 'var(--color-accent-orange)',
                 fontSize: '10px',
                 fontFamily: 'JetBrains Mono, monospace',
                 padding: '2px 7px',
@@ -120,7 +120,7 @@ export default function LevelIntroModal() {
             {mod && (
               <span
                 style={{
-                  color: '#7d8590',
+                  color: 'var(--color-text-muted)',
                   fontSize: '11px',
                   fontFamily: 'IBM Plex Sans, sans-serif',
                 }}
@@ -133,7 +133,7 @@ export default function LevelIntroModal() {
           <h2
             style={{
               margin: 0,
-              color: '#e6edf3',
+              color: 'var(--color-text)',
               fontFamily: 'IBM Plex Sans, sans-serif',
               fontSize: '22px',
               fontWeight: 600,
@@ -155,7 +155,7 @@ export default function LevelIntroModal() {
           <p
             style={{
               margin: 0,
-              color: '#c9d1d9',
+              color: 'var(--color-text-secondary)',
               fontFamily: 'IBM Plex Sans, sans-serif',
               fontSize: '14px',
               lineHeight: 1.7,
@@ -168,8 +168,8 @@ export default function LevelIntroModal() {
           <div
             style={{
               marginTop: '18px',
-              background: '#0d1117',
-              border: '1px solid #30363d',
+              background: 'var(--color-base)',
+              border: '1px solid var(--color-border)',
               borderRadius: '6px',
               padding: '10px 14px',
               display: 'flex',
@@ -179,7 +179,7 @@ export default function LevelIntroModal() {
           >
             <span
               style={{
-                color: '#3fb950',
+                color: 'var(--color-success)',
                 fontSize: '12px',
                 fontFamily: 'JetBrains Mono, monospace',
                 lineHeight: 1.6,
@@ -193,7 +193,7 @@ export default function LevelIntroModal() {
             </span>
             <span
               style={{
-                color: '#c9d1d9',
+                color: 'var(--color-text-secondary)',
                 fontSize: '13px',
                 fontFamily: 'IBM Plex Sans, sans-serif',
                 lineHeight: 1.6,
@@ -208,7 +208,7 @@ export default function LevelIntroModal() {
         <div
           style={{
             padding: '14px 28px 20px',
-            borderTop: '1px solid #21262d',
+            borderTop: '1px solid var(--color-border-subtle)',
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
@@ -217,7 +217,7 @@ export default function LevelIntroModal() {
         >
           <span
             style={{
-              color: '#484f58',
+              color: 'var(--color-muted)',
               fontSize: '10px',
               fontFamily: 'JetBrains Mono, monospace',
               marginRight: 'auto',
@@ -228,8 +228,8 @@ export default function LevelIntroModal() {
           <button
             onClick={dismiss}
             style={{
-              background: '#ff694a',
-              border: '1px solid #ff694a',
+              background: 'var(--color-accent-orange)',
+              border: '1px solid var(--color-accent-orange)',
               borderRadius: '6px',
               color: '#0d1117',
               fontFamily: 'IBM Plex Sans, sans-serif',
@@ -241,8 +241,8 @@ export default function LevelIntroModal() {
               alignItems: 'center',
               gap: '6px',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#ff7d61' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#ff694a' }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
           >
             Let's go
             <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">

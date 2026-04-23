@@ -17,15 +17,15 @@ export default function LevelPanel() {
   const isLastLevel = currentLevelId >= levels.length
 
   return (
-    <div className="shrink-0 border-b border-[#30363d]" style={{ background: '#161b22' }}>
+    <div className="shrink-0" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
       {levelJustCompleted && (
         <div
           className="flex items-center justify-between px-3 py-1.5"
-          style={{ background: '#3fb95015', borderBottom: '1px solid #3fb95030' }}
+          style={{ background: 'var(--color-success-bg)', borderBottom: '1px solid var(--color-success-border)' }}
         >
           <span
             style={{
-              color: '#3fb950',
+              color: 'var(--color-success)',
               fontSize: '11px',
               fontFamily: 'JetBrains Mono, monospace',
             }}
@@ -36,7 +36,7 @@ export default function LevelPanel() {
             {isLastLevel ? (
               <span
                 style={{
-                  color: '#3fb950',
+                  color: 'var(--color-success)',
                   fontSize: '11px',
                   fontFamily: 'IBM Plex Sans, sans-serif',
                   fontWeight: 600,
@@ -48,7 +48,7 @@ export default function LevelPanel() {
               <button
                 onClick={() => loadLevel(currentLevelId + 1)}
                 style={{
-                  background: '#3fb950',
+                  background: 'var(--color-success)',
                   border: 'none',
                   borderRadius: '4px',
                   color: '#0d1117',
@@ -61,8 +61,8 @@ export default function LevelPanel() {
                   alignItems: 'center',
                   gap: '4px',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#52c962' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#3fb950' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
               >
                 Next Level
                 <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
@@ -73,7 +73,7 @@ export default function LevelPanel() {
             <button
               onClick={dismissLevelComplete}
               style={{
-                color: '#484f58',
+                color: 'var(--color-muted)',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -93,9 +93,9 @@ export default function LevelPanel() {
       <div className="flex items-center gap-2 px-3" style={{ padding: '10px 12px 6px 12px' }}>
         <span
           style={{
-            background: '#ff694a1a',
-            border: '1px solid #ff694a33',
-            color: '#ff694a',
+            background: 'var(--color-accent-bg)',
+            border: '1px solid var(--color-accent-orange-dim)',
+            color: 'var(--color-accent-orange)',
             fontSize: '9px',
             fontFamily: 'JetBrains Mono, monospace',
             padding: '1px 5px',
@@ -108,7 +108,7 @@ export default function LevelPanel() {
         </span>
         <span
           style={{
-            color: '#e6edf3',
+            color: 'var(--color-text)',
             fontSize: '12px',
             fontFamily: 'IBM Plex Sans, sans-serif',
             fontWeight: 600,
@@ -122,7 +122,7 @@ export default function LevelPanel() {
       <div style={{ padding: '0 12px 10px 12px' }}>
         <p
           style={{
-            color: '#8b949e',
+            color: 'var(--color-text-secondary)',
             fontSize: '11.5px',
             fontFamily: 'IBM Plex Sans, sans-serif',
             lineHeight: '1.55',
@@ -139,16 +139,16 @@ export default function LevelPanel() {
             background: 'transparent',
             border: 'none',
             padding: '2px 0',
-            color: '#7d8590',
+            color: 'var(--color-text-muted)',
             fontFamily: 'IBM Plex Sans, sans-serif',
             fontSize: '11px',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#ff694a'
+            e.currentTarget.style.color = 'var(--color-accent-orange)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#7d8590'
+            e.currentTarget.style.color = 'var(--color-text-muted)'
           }}
         >
           <svg
@@ -175,12 +175,17 @@ export default function LevelPanel() {
 
       {expanded && (
         <div
-          className="border-t border-[#30363d]"
-          style={{ padding: '10px 12px', maxHeight: '260px', overflowY: 'auto', background: '#0d1117' }}
+          style={{
+            padding: '10px 12px',
+            maxHeight: '260px',
+            overflowY: 'auto',
+            background: 'var(--color-base)',
+            borderTop: '1px solid var(--color-border)',
+          }}
         >
           <p
             style={{
-              color: '#c9d1d9',
+              color: 'var(--color-text-secondary)',
               fontSize: '11.5px',
               fontFamily: 'IBM Plex Sans, sans-serif',
               whiteSpace: 'pre-wrap',
@@ -195,15 +200,15 @@ export default function LevelPanel() {
             (hintRevealed ? (
               <div
                 style={{
-                  background: '#1c2128',
-                  border: '1px solid #d2992230',
+                  background: 'var(--color-hint-bg)',
+                  border: '1px solid var(--color-warning)30',
                   borderRadius: '4px',
                   padding: '7px 10px',
                 }}
               >
                 <div
                   style={{
-                    color: '#d29922',
+                    color: 'var(--color-warning)',
                     fontSize: '9px',
                     fontFamily: 'JetBrains Mono, monospace',
                     textTransform: 'uppercase' as const,
@@ -215,7 +220,7 @@ export default function LevelPanel() {
                 </div>
                 <div
                   style={{
-                    color: '#8b949e',
+                    color: 'var(--color-text-secondary)',
                     fontSize: '11px',
                     fontFamily: 'JetBrains Mono, monospace',
                     whiteSpace: 'pre-wrap',
@@ -230,21 +235,21 @@ export default function LevelPanel() {
                 onClick={revealHint}
                 style={{
                   background: 'transparent',
-                  border: '1px solid #30363d',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '4px',
-                  color: '#7d8590',
+                  color: 'var(--color-text-muted)',
                   fontSize: '11px',
                   fontFamily: 'JetBrains Mono, monospace',
                   padding: '5px 10px',
                   cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#484f58'
-                  e.currentTarget.style.color = '#e6edf3'
+                  e.currentTarget.style.borderColor = 'var(--color-muted)'
+                  e.currentTarget.style.color = 'var(--color-text)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#30363d'
-                  e.currentTarget.style.color = '#7d8590'
+                  e.currentTarget.style.borderColor = 'var(--color-border)'
+                  e.currentTarget.style.color = 'var(--color-text-muted)'
                 }}
               >
                 Show Hint
@@ -290,12 +295,11 @@ function ProgressChecklist() {
 
   return (
     <div
-      className="border-t border-[#30363d]"
-      style={{ padding: '8px 12px', background: '#0d1117' }}
+      style={{ padding: '8px 12px', background: 'var(--color-base)', borderTop: '1px solid var(--color-border)' }}
     >
       <div
         style={{
-          color: '#484f58',
+          color: 'var(--color-muted)',
           fontSize: '9px',
           fontFamily: 'JetBrains Mono, monospace',
           textTransform: 'uppercase',
@@ -313,7 +317,7 @@ function ProgressChecklist() {
               display: 'flex',
               alignItems: 'center',
               gap: '7px',
-              color: it.done ? ('highlight' in it && it.highlight ? '#3fb950' : '#c9d1d9') : '#7d8590',
+              color: it.done ? ('highlight' in it && it.highlight ? 'var(--color-success)' : 'var(--color-text-secondary)') : 'var(--color-text-muted)',
               fontSize: '11px',
               fontFamily: 'IBM Plex Sans, sans-serif',
             }}
@@ -328,8 +332,10 @@ function ProgressChecklist() {
 }
 
 function CheckBox({ done, highlight }: { done: boolean; highlight: boolean }) {
-  const borderColor = done ? (highlight ? '#3fb950' : '#484f58') : '#30363d'
-  const fill = done && highlight ? '#3fb950' : 'transparent'
+  const borderColor = done
+    ? highlight ? 'var(--color-success)' : 'var(--color-muted)'
+    : 'var(--color-border)'
+  const fill = done && highlight ? 'var(--color-success)' : 'transparent'
   return (
     <span
       style={{
@@ -348,7 +354,7 @@ function CheckBox({ done, highlight }: { done: boolean; highlight: boolean }) {
         <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
           <path
             d="M2 5.2l2 2 4-4.4"
-            stroke={highlight ? '#0d1117' : '#7d8590'}
+            stroke={highlight ? 'var(--color-base)' : 'var(--color-text-muted)'}
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
