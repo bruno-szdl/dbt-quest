@@ -56,6 +56,9 @@ interface StoreState {
 
   setBottomTab: (tab: BottomTab) => void
   setBottomCollapsed: (collapsed: boolean) => void
+
+  theme: 'dark' | 'light'
+  toggleTheme: () => void
 }
 
 /**
@@ -85,6 +88,15 @@ export const useGameStore = create<StoreState>((set, get) => ({
 
   bottomTab: 'commands',
   bottomCollapsed: false,
+
+  theme: (localStorage.getItem('dbt-quest-theme') as 'dark' | 'light') ?? 'dark',
+
+  toggleTheme: () => {
+    const next = get().theme === 'dark' ? 'light' : 'dark'
+    document.documentElement.dataset.theme = next === 'light' ? 'light' : ''
+    localStorage.setItem('dbt-quest-theme', next)
+    set({ theme: next })
+  },
 
   setFileContent: (path, content) => {
     set((s) => ({ files: { ...s.files, [path]: content } }))
