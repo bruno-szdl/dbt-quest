@@ -1,0 +1,102 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Header from './components/Header'
+import Editor from './components/Editor'
+import LevelPanel from './components/LevelPanel'
+import FileExplorer from './components/FileExplorer'
+import DatabaseExplorer from './components/DatabaseExplorer'
+import BottomPanel from './components/BottomPanel'
+import LevelIntroModal from './components/LevelIntroModal'
+import { useGameStore } from './store/gameStore'
+
+export default function App() {
+  const loadLevel = useGameStore((s) => s.loadLevel)
+  const initializedRef = useRef(false)
+
+  useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+    loadLevel(1)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [sidebarWidth, setSidebarWidth] = useState(288)
+  const draggingSidebar = useRef(false)
+  const workspaceRef = useRef<HTMLDivElement>(null)
+  const mainColumnRef = useRef<HTMLDivElement>(null)
+
+  const onSidebarHandleDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    draggingSidebar.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }, [])
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!draggingSidebar.current || !workspaceRef.current) return
+      const { left } = workspaceRef.current.getBoundingClientRect()
+      const next = e.clientX - left
+      setSidebarWidth(Math.max(220, Math.min(440, next)))
+    }
+    const onUp = () => {
+      if (!draggingSidebar.current) return
+      draggingSidebar.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [])
+
+  return (
+    <div className="flex flex-col h-full bg-[#0d1117] overflow-hidden">
+      <Header />
+
+      <div ref={workspaceRef} className="flex-1 flex overflow-hidden">
+        {/* ── Left sidebar: exercise + checklist + files ───────────────────── */}
+        <aside
+          className="flex flex-col shrink-0 border-r border-[#30363d] overflow-hidden"
+          style={{ width: sidebarWidth, minWidth: '220px', background: '#0d1117' }}
+        >
+          <LevelPanel />
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 overflow-hidden min-h-0">
+              <FileExplorer />
+            </div>
+            <DatabaseExplorer />
+          </div>
+        </aside>
+
+        {/* Sidebar ↔ main handle */}
+        <div
+          className="shrink-0 cursor-col-resize"
+          style={{ width: '4px', background: '#30363d' }}
+          onMouseDown={onSidebarHandleDown}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#484f58'
+          }}
+          onMouseLeave={(e) => {
+            if (!draggingSidebar.current) e.currentTarget.style.background = '#30363d'
+          }}
+        />
+
+        {/* ── Main column: editor + bottom drawer ───────────────────────────── */}
+        <div
+          ref={mainColumnRef}
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{ minWidth: 0 }}
+        >
+          <div className="flex-1 overflow-hidden">
+            <Editor />
+          </div>
+          <BottomPanel containerRef={mainColumnRef} />
+        </div>
+      </div>
+
+      <LevelIntroModal />
+    </div>
+  )
+}

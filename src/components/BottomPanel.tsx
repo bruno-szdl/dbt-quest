@@ -1,0 +1,246 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useGameStore, type BottomTab } from '../store/gameStore'
+import { getLevelById } from '../levels'
+import TerminalPanel from './TerminalPanel'
+import DagPanel from './DagPanel'
+import ResultsPanel from './ResultsPanel'
+
+const COLLAPSED_HEIGHT = 34
+const DEFAULT_HEIGHT = 260
+const MIN_OPEN_HEIGHT = 140
+
+interface BottomPanelProps {
+  containerRef: React.RefObject<HTMLDivElement | null>
+}
+
+export default function BottomPanel({ containerRef }: BottomPanelProps) {
+  const tab = useGameStore((s) => s.bottomTab)
+  const collapsed = useGameStore((s) => s.bottomCollapsed)
+  const setTab = useGameStore((s) => s.setBottomTab)
+  const setCollapsed = useGameStore((s) => s.setBottomCollapsed)
+  const currentLevelId = useGameStore((s) => s.currentLevelId)
+
+  const level = getLevelById(currentLevelId)
+  const goalShape = level?.goal.dagShape
+
+  const [height, setHeight] = useState(DEFAULT_HEIGHT)
+  const dragging = useRef(false)
+
+  const onHandleDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    if (collapsed) setCollapsed(false)
+    dragging.current = true
+    document.body.style.cursor = 'row-resize'
+    document.body.style.userSelect = 'none'
+  }, [collapsed, setCollapsed])
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current || !containerRef.current) return
+      const rect = containerRef.current.getBoundingClientRect()
+      const next = rect.bottom - e.clientY
+      const max = rect.height - 140
+      setHeight(Math.max(MIN_OPEN_HEIGHT, Math.min(max, next)))
+    }
+    const onUp = () => {
+      if (!dragging.current) return
+      dragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [containerRef])
+
+  const currentHeight = collapsed ? COLLAPSED_HEIGHT : height
+
+  return (
+    <div
+      className="flex flex-col shrink-0 border-t border-[#30363d]"
+      style={{ height: currentHeight, background: '#0d1117' }}
+    >
+      {/* Resize handle — above the tab bar */}
+      <div
+        onMouseDown={onHandleDown}
+        style={{
+          height: '4px',
+          cursor: 'row-resize',
+          background: 'transparent',
+          marginTop: '-4px',
+          position: 'relative',
+          zIndex: 2,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#484f58'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
+        }}
+      />
+
+      {/* Tab bar */}
+      <div
+        className="flex items-center shrink-0 border-b border-[#30363d]"
+        style={{ height: '34px', background: '#161b22' }}
+      >
+        <div className="flex items-center h-full">
+          <TabButton
+            label="Commands"
+            active={!collapsed && tab === 'commands'}
+            onClick={() => setTab('commands')}
+            icon={<TerminalIcon />}
+          />
+          <TabButton
+            label="Results"
+            active={!collapsed && tab === 'results'}
+            onClick={() => setTab('results')}
+            icon={<ResultsIcon />}
+          />
+          <TabButton
+            label="Lineage"
+            active={!collapsed && tab === 'lineage'}
+            onClick={() => setTab('lineage')}
+            icon={<LineageIcon />}
+          />
+        </div>
+
+        <div className="flex items-center ml-auto pr-2 gap-1">
+          <CollapseButton
+            collapsed={collapsed}
+            onClick={() => setCollapsed(!collapsed)}
+          />
+        </div>
+      </div>
+
+      {/* Body */}
+      {!collapsed && (
+        <div className="flex-1 overflow-hidden">
+          {tab === 'commands' && <TerminalPanel embedded />}
+          {tab === 'results' && <ResultsPanel />}
+          {tab === 'lineage' && <DagPanel embedded goalShape={goalShape} />}
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface TabButtonProps {
+  label: string
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+}
+
+function TabButton({ label, active, onClick, icon }: TabButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 px-3 h-full"
+      style={{
+        background: 'transparent',
+        border: 'none',
+        borderTop: active ? '2px solid #ff694a' : '2px solid transparent',
+        borderBottom: active ? '1px solid #0d1117' : 'none',
+        marginBottom: active ? '-1px' : 0,
+        color: active ? '#e6edf3' : '#7d8590',
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '11px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.color = '#e6edf3'
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.color = '#7d8590'
+      }}
+    >
+      <span style={{ color: active ? '#ff694a' : '#484f58', display: 'flex' }}>{icon}</span>
+      {label}
+    </button>
+  )
+}
+
+function CollapseButton({ collapsed, onClick }: { collapsed: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={collapsed ? 'Expand panel' : 'Collapse panel'}
+      style={{
+        background: 'transparent',
+        border: '1px solid transparent',
+        borderRadius: '4px',
+        padding: '4px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        color: '#7d8590',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = '#ffffff0a'
+        e.currentTarget.style.color = '#e6edf3'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = '#7d8590'
+      }}
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 16 16"
+        fill="none"
+        style={{
+          transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+          transition: 'transform 0.15s',
+        }}
+      >
+        <path
+          d="M4 6l4 4 4-4"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  )
+}
+
+function TerminalIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25H1.75ZM7.25 8a.75.75 0 0 1-.22.53l-2.25 2.25a.75.75 0 0 1-1.06-1.06L5.44 8 3.72 6.28a.75.75 0 0 1 1.06-1.06l2.25 2.25c.141.14.22.331.22.53Zm1.5 1.5h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1 0-1.5Z" />
+    </svg>
+  )
+}
+
+function ResultsIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+      <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+      <line x1="1.5" y1="6" x2="14.5" y2="6" />
+      <line x1="5" y1="2.5" x2="5" y2="13.5" />
+      <line x1="10" y1="2.5" x2="10" y2="13.5" />
+    </svg>
+  )
+}
+
+function LineageIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+      <circle cx="3" cy="8" r="2" />
+      <circle cx="13" cy="3.5" r="2" />
+      <circle cx="13" cy="12.5" r="2" />
+      <line x1="4.5" y1="7" x2="11.5" y2="4.5" stroke="currentColor" strokeWidth="1" />
+      <line x1="4.5" y1="9" x2="11.5" y2="11.5" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
+}
+
+export type { BottomTab }
