@@ -4,17 +4,48 @@
 @theme {
   --color-base: #0d1117;
   --color-surface: #161b22;
+  --color-terminal-bg: #0a0e14;
+  --color-dag-bg: #080c12;
+  --color-hint-bg: #1c2128;
   --color-border: #30363d;
+  --color-border-subtle: #21262d;
   --color-muted: #484f58;
   --color-text: #e6edf3;
+  --color-text-secondary: #c9d1d9;
   --color-text-muted: #7d8590;
   --color-accent-orange: #ff694a;
   --color-accent-orange-dim: #ff694a33;
+  --color-accent-bg: #ff694a1a;
   --color-success: #3fb950;
+  --color-success-bg: #3fb95015;
+  --color-success-border: #3fb95030;
   --color-fail: #f85149;
+  --color-warning: #d29922;
 
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+[data-theme="light"] {
+  --color-base: #ffffff;
+  --color-surface: #f6f8fa;
+  --color-terminal-bg: #f0f2f4;
+  --color-dag-bg: #f6f8fa;
+  --color-hint-bg: #f6f8fa;
+  --color-border: #d0d7de;
+  --color-border-subtle: #eaeef2;
+  --color-muted: #8c959f;
+  --color-text: #1f2328;
+  --color-text-secondary: #3d444d;
+  --color-text-muted: #636c76;
+  --color-accent-orange: #e05a3a;
+  --color-accent-orange-dim: #e05a3a33;
+  --color-accent-bg: #e05a3a12;
+  --color-success: #1a7f37;
+  --color-success-bg: #1a7f3715;
+  --color-success-border: #1a7f3730;
+  --color-fail: #cf222e;
+  --color-warning: #9a6700;
 }
 
 html,
