@@ -48,7 +48,11 @@ function buildTree(files: Record<string, string>): TreeNode[] {
 function FileIcon({ name }: { name: string }) {
   const ext = name.split('.').pop() ?? ''
   const color =
-    ext === 'sql' ? '#ff694a' : ext === 'yml' || ext === 'yaml' ? '#3fb950' : '#7d8590'
+    ext === 'sql'
+      ? 'var(--color-accent-orange)'
+      : ext === 'yml' || ext === 'yaml'
+        ? 'var(--color-success)'
+        : 'var(--color-text-muted)'
   return (
     <svg
       width="11"
@@ -64,7 +68,7 @@ function FileIcon({ name }: { name: string }) {
 
 function FolderIcon({ open }: { open: boolean }) {
   return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="#6e7681" style={{ flexShrink: 0 }}>
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="var(--color-muted)" style={{ flexShrink: 0 }}>
       {open ? (
         <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3h-6.5L6.092 1.337A1.75 1.75 0 0 0 4.843 1H1.75ZM0 11.25V5.5h14.5v7.75a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25ZM14.5 4H1.75a.25.25 0 0 0-.25.25V4h13V4ZM1.5 2.75A.25.25 0 0 1 1.75 2.5h3.093a.25.25 0 0 1 .178.073L6.5 4H1.5V2.75Z" />
       ) : (
@@ -80,14 +84,14 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       width="8"
       height="8"
       viewBox="0 0 8 8"
-      fill="#484f58"
       style={{
         transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
         transition: 'transform 0.12s',
         flexShrink: 0,
+        fill: 'none',
       }}
     >
-      <path d="M2.5 1.5L5.5 4 2.5 6.5" stroke="#484f58" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M2.5 1.5L5.5 4 2.5 6.5" stroke="var(--color-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -131,7 +135,7 @@ function DirItem({ node, depth, activeFile, onOpen, onDelete, onCreateInDir }: I
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: '#8b949e',
+            color: 'var(--color-text-secondary)',
             fontSize: '11px',
             fontFamily: 'JetBrains Mono, monospace',
             textAlign: 'left',
@@ -139,7 +143,7 @@ function DirItem({ node, depth, activeFile, onOpen, onDelete, onCreateInDir }: I
             boxSizing: 'border-box',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ffffff0a'
+            e.currentTarget.style.background = 'var(--color-border-subtle)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent'
@@ -166,17 +170,17 @@ function DirItem({ node, depth, activeFile, onOpen, onDelete, onCreateInDir }: I
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: '#484f58',
+              color: 'var(--color-muted)',
               padding: '2px',
               display: 'flex',
               alignItems: 'center',
               borderRadius: '3px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#ff694a'
+              e.currentTarget.style.color = 'var(--color-accent-orange)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#484f58'
+              e.currentTarget.style.color = 'var(--color-muted)'
             }}
           >
             <PlusIcon />
@@ -216,18 +220,18 @@ function FileItem({ node, depth, activeFile, onOpen, onDelete }: ItemProps & { n
         className="flex items-center gap-1.5 w-full"
         style={{
           padding: `3px 28px 3px ${indent}px`,
-          background: isActive ? '#ff694a1a' : 'transparent',
+          background: isActive ? 'var(--color-accent-bg)' : 'transparent',
           border: 'none',
-          borderLeft: `2px solid ${isActive ? '#ff694a' : 'transparent'}`,
+          borderLeft: `2px solid ${isActive ? 'var(--color-accent-orange)' : 'transparent'}`,
           cursor: 'pointer',
-          color: isActive ? '#e6edf3' : '#8b949e',
+          color: isActive ? 'var(--color-text)' : 'var(--color-text-secondary)',
           fontSize: '11px',
           fontFamily: 'JetBrains Mono, monospace',
           textAlign: 'left',
           boxSizing: 'border-box',
         }}
         onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.background = '#ffffff0a'
+          if (!isActive) e.currentTarget.style.background = 'var(--color-border-subtle)'
         }}
         onMouseLeave={(e) => {
           if (!isActive) e.currentTarget.style.background = 'transparent'
@@ -261,17 +265,17 @@ function FileItem({ node, depth, activeFile, onOpen, onDelete }: ItemProps & { n
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: '#484f58',
+            color: 'var(--color-muted)',
             padding: '2px',
             display: 'flex',
             alignItems: 'center',
             borderRadius: '3px',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#f85149'
+            e.currentTarget.style.color = 'var(--color-fail)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#484f58'
+            e.currentTarget.style.color = 'var(--color-muted)'
           }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -308,7 +312,6 @@ export default function FileExplorer() {
   useEffect(() => {
     if (creating) {
       inputRef.current?.focus()
-      // Put cursor at end so pre-filled folder paths are ready to extend.
       const el = inputRef.current
       if (el) el.setSelectionRange(el.value.length, el.value.length)
     }
@@ -337,17 +340,17 @@ export default function FileExplorer() {
 
   return (
     <div
-      className="flex flex-col shrink-0 border-r border-[#30363d] overflow-hidden"
-      style={{ width: '100%', background: '#0d1117' }}
+      className="flex flex-col shrink-0 overflow-hidden"
+      style={{ width: '100%', background: 'var(--color-base)' }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between shrink-0 border-b border-[#30363d]"
-        style={{ height: '36px', padding: '0 8px', background: '#161b22' }}
+        className="flex items-center justify-between shrink-0"
+        style={{ height: '36px', padding: '0 8px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
       >
         <span
           style={{
-            color: '#7d8590',
+            color: 'var(--color-text-muted)',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '10px',
             textTransform: 'uppercase',
@@ -363,18 +366,18 @@ export default function FileExplorer() {
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: creating ? '#ff694a' : '#484f58',
+            color: creating ? 'var(--color-accent-orange)' : 'var(--color-muted)',
             padding: '4px',
             display: 'flex',
             alignItems: 'center',
             borderRadius: '3px',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#e6edf3'
-            e.currentTarget.style.background = '#ffffff0a'
+            e.currentTarget.style.color = 'var(--color-text)'
+            e.currentTarget.style.background = 'var(--color-border-subtle)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = creating ? '#ff694a' : '#484f58'
+            e.currentTarget.style.color = creating ? 'var(--color-accent-orange)' : 'var(--color-muted)'
             e.currentTarget.style.background = 'transparent'
           }}
         >
@@ -387,8 +390,8 @@ export default function FileExplorer() {
       {/* New-file input */}
       {creating && (
         <div
-          className="shrink-0 border-b border-[#30363d]"
-          style={{ padding: '6px 8px', background: '#0d1117' }}
+          className="shrink-0"
+          style={{ padding: '6px 8px', background: 'var(--color-base)', borderBottom: '1px solid var(--color-border)' }}
         >
           <input
             ref={inputRef}
@@ -415,10 +418,10 @@ export default function FileExplorer() {
             spellCheck={false}
             style={{
               width: '100%',
-              background: '#161b22',
-              border: '1px solid #ff694a55',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-accent-orange-dim)',
               borderRadius: '3px',
-              color: '#e6edf3',
+              color: 'var(--color-text)',
               fontSize: '11px',
               fontFamily: 'JetBrains Mono, monospace',
               padding: '4px 6px',
@@ -428,7 +431,7 @@ export default function FileExplorer() {
           />
           <div
             style={{
-              color: '#484f58',
+              color: 'var(--color-muted)',
               fontSize: '9px',
               fontFamily: 'JetBrains Mono, monospace',
               marginTop: '3px',
@@ -444,7 +447,7 @@ export default function FileExplorer() {
         {tree.length === 0 ? (
           <div
             style={{
-              color: '#484f58',
+              color: 'var(--color-muted)',
               fontSize: '10px',
               fontFamily: 'JetBrains Mono, monospace',
               padding: '16px 8px',

@@ -72,7 +72,7 @@ function ModelNode({ data }: { data: ModelNodeData }) {
     <div
       className={data.hasCycle ? 'node-cycle' : ''}
       style={{
-        background: '#161b22',
+        background: 'var(--color-surface)',
         backgroundColor: bg,
         border: `1px solid ${borderColor}`,
         borderRadius: '6px',
@@ -111,7 +111,7 @@ function ModelNode({ data }: { data: ModelNodeData }) {
 
       <div
         style={{
-          color: '#e6edf3',
+          color: 'var(--color-text)',
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           fontWeight: 500,
@@ -180,13 +180,14 @@ function toRfNodes(
   })
 }
 
-function toRfEdges(dagEdges: DagEdge[]): Edge[] {
+function toRfEdges(dagEdges: DagEdge[], isDark: boolean): Edge[] {
+  const edgeColor = isDark ? '#484f58' : '#8c959f'
   return dagEdges.map((e) => ({
     id: e.id,
     source: e.source,
     target: e.target,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#484f58', width: 16, height: 16 },
-    style: { stroke: '#484f58', strokeWidth: 1.5 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor, width: 16, height: 16 },
+    style: { stroke: edgeColor, strokeWidth: 1.5 },
   }))
 }
 
@@ -240,9 +241,10 @@ interface DagCanvasProps {
   rfNodes: Node[]
   rfEdges: Edge[]
   goalShape?: GoalDagShape
+  isDark: boolean
 }
 
-function DagCanvas({ rfNodes, rfEdges, goalShape }: DagCanvasProps) {
+function DagCanvas({ rfNodes, rfEdges, goalShape, isDark }: DagCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(rfNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(rfEdges)
   const rfRef = useRef<ReactFlowInstance | null>(null)
@@ -256,7 +258,6 @@ function DagCanvas({ rfNodes, rfEdges, goalShape }: DagCanvasProps) {
     setEdges(rfEdges)
   }, [rfEdges, setEdges])
 
-  // Auto-fit when node count changes (model added/removed)
   useEffect(() => {
     if (rfNodes.length !== prevCount.current) {
       prevCount.current = rfNodes.length
@@ -269,6 +270,13 @@ function DagCanvas({ rfNodes, rfEdges, goalShape }: DagCanvasProps) {
     rfRef.current = instance
     instance.fitView({ padding: 0.25 })
   }, [])
+
+  const bgDotColor = isDark ? '#30363d' : '#d0d7de'
+  const minimapBg = isDark ? '#161b22' : '#f6f8fa'
+  const minimapBorder = isDark ? '#30363d' : '#d0d7de'
+  const minimapMask = isDark ? '#0d111766' : '#ffffff66'
+  const controlsBg = isDark ? '#161b22' : '#ffffff'
+  const controlsBorder = isDark ? '#30363d' : '#d0d7de'
 
   return (
     <div className="relative w-full h-full">
@@ -289,7 +297,7 @@ function DagCanvas({ rfNodes, rfEdges, goalShape }: DagCanvasProps) {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="#30363d"
+          color={bgDotColor}
           style={{ opacity: 0.5 }}
         />
         <MiniMap
@@ -298,16 +306,16 @@ function DagCanvas({ rfNodes, rfEdges, goalShape }: DagCanvasProps) {
             return d.hasCycle ? '#f85149' : LAYER_COLOR[d.layer] ?? '#484f58'
           }}
           style={{
-            background: '#161b22',
-            border: '1px solid #30363d',
+            background: minimapBg,
+            border: `1px solid ${minimapBorder}`,
             borderRadius: '6px',
           }}
-          maskColor="#0d111766"
+          maskColor={minimapMask}
         />
         <Controls
           style={{
-            background: '#161b22',
-            border: '1px solid #30363d',
+            background: controlsBg,
+            border: `1px solid ${controlsBorder}`,
             borderRadius: '6px',
           }}
         />
@@ -327,7 +335,7 @@ function EmptyState() {
       <DagPlaceholderIcon />
       <span
         style={{
-          color: '#7d8590',
+          color: 'var(--color-text-muted)',
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           textTransform: 'uppercase',
@@ -337,7 +345,7 @@ function EmptyState() {
         DAG Viewer
       </span>
       <span
-        style={{ color: '#484f58', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }}
+        style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }}
       >
         add a model to see the graph
       </span>
@@ -356,32 +364,34 @@ export default function DagPanel({ goalShape, embedded = false }: DagPanelProps)
   const files = useGameStore((s) => s.files)
   const ranModels = useGameStore((s) => s.ranModels)
   const testResults = useGameStore((s) => s.testResults)
+  const theme = useGameStore((s) => s.theme)
+  const isDark = theme === 'dark'
 
   const { rfNodes, rfEdges } = useMemo(() => {
     const { nodes: dagNodes, edges: dagEdges } = buildDag(files)
     const rawNodes = toRfNodes(dagNodes, ranModels, testResults)
-    const rawEdges = toRfEdges(dagEdges)
+    const rawEdges = toRfEdges(dagEdges, isDark)
     const { nodes, edges } = applyDagreLayout(rawNodes, rawEdges)
     return { rfNodes: nodes, rfEdges: edges }
-  }, [files, ranModels, testResults])
+  }, [files, ranModels, testResults, isDark])
 
   const isEmpty = rfNodes.length === 0
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#080c12' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--color-dag-bg)' }}>
       {/* Header — suppressed when embedded, since BottomPanel draws its own tab bar */}
       {!embedded && (
       <div
-        className="flex items-center justify-between gap-2 px-4 border-b border-[#30363d] shrink-0"
-        style={{ height: '36px', background: '#161b22' }}
+        className="flex items-center justify-between gap-2 px-4 shrink-0"
+        style={{ height: '36px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
       >
         <div className="flex items-center gap-2">
-          <span style={{ color: '#484f58' }}>
+          <span style={{ color: 'var(--color-muted)' }}>
             <DagIcon />
           </span>
           <span
             style={{
-              color: '#7d8590',
+              color: 'var(--color-text-muted)',
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '11px',
               textTransform: 'uppercase',
@@ -396,11 +406,11 @@ export default function DagPanel({ goalShape, embedded = false }: DagPanelProps)
           <div className="flex items-center gap-1.5">
             <div
               className="w-1.5 h-1.5 rounded-full"
-              style={{ background: '#ff694a', opacity: 0.6 }}
+              style={{ background: 'var(--color-accent-orange)', opacity: 0.6 }}
             />
             <span
               style={{
-                color: '#484f58',
+                color: 'var(--color-muted)',
                 fontSize: '10px',
                 fontFamily: 'JetBrains Mono, monospace',
               }}
@@ -417,7 +427,7 @@ export default function DagPanel({ goalShape, embedded = false }: DagPanelProps)
         {isEmpty ? (
           <EmptyState />
         ) : (
-          <DagCanvas rfNodes={rfNodes} rfEdges={rfEdges} goalShape={goalShape} />
+          <DagCanvas rfNodes={rfNodes} rfEdges={rfEdges} goalShape={goalShape} isDark={isDark} />
         )}
       </div>
     </div>
@@ -437,11 +447,11 @@ function DagIcon() {
 function DagPlaceholderIcon() {
   return (
     <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
-      <circle cx="12" cy="24" r="5" stroke="#7d8590" strokeWidth="1.5" />
-      <circle cx="36" cy="12" r="5" stroke="#7d8590" strokeWidth="1.5" />
-      <circle cx="36" cy="36" r="5" stroke="#7d8590" strokeWidth="1.5" />
-      <line x1="17" y1="22" x2="31" y2="14" stroke="#7d8590" strokeWidth="1.5" strokeDasharray="3 2" />
-      <line x1="17" y1="26" x2="31" y2="34" stroke="#7d8590" strokeWidth="1.5" strokeDasharray="3 2" />
+      <circle cx="12" cy="24" r="5" stroke="var(--color-text-muted)" strokeWidth="1.5" />
+      <circle cx="36" cy="12" r="5" stroke="var(--color-text-muted)" strokeWidth="1.5" />
+      <circle cx="36" cy="36" r="5" stroke="var(--color-text-muted)" strokeWidth="1.5" />
+      <line x1="17" y1="22" x2="31" y2="14" stroke="var(--color-text-muted)" strokeWidth="1.5" strokeDasharray="3 2" />
+      <line x1="17" y1="26" x2="31" y2="34" stroke="var(--color-text-muted)" strokeWidth="1.5" strokeDasharray="3 2" />
     </svg>
   )
 }

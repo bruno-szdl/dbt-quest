@@ -10,14 +10,14 @@ export default function ResultsPanel() {
   const { name, columns, rows, rowCount } = lastPreview
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#0d1117' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--color-base)' }}>
       <div
-        className="flex items-center gap-2 shrink-0 border-b border-[#30363d]"
-        style={{ padding: '6px 16px', background: '#0d1117' }}
+        className="flex items-center gap-2 shrink-0"
+        style={{ padding: '6px 16px', background: 'var(--color-base)', borderBottom: '1px solid var(--color-border)' }}
       >
         <span
           style={{
-            color: '#7d8590',
+            color: 'var(--color-text-muted)',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '10px',
             textTransform: 'uppercase',
@@ -26,10 +26,10 @@ export default function ResultsPanel() {
         >
           preview
         </span>
-        <span style={{ color: '#484f58' }}>·</span>
+        <span style={{ color: 'var(--color-muted)' }}>·</span>
         <span
           style={{
-            color: '#ff694a',
+            color: 'var(--color-accent-orange)',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '11px',
           }}
@@ -39,7 +39,7 @@ export default function ResultsPanel() {
         <span
           style={{
             marginLeft: 'auto',
-            color: '#484f58',
+            color: 'var(--color-muted)',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '10px',
           }}
@@ -52,7 +52,7 @@ export default function ResultsPanel() {
         {rows.length === 0 ? (
           <div
             className="flex items-center justify-center h-full"
-            style={{ color: '#484f58', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}
+            style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}
           >
             (no rows)
           </div>
@@ -73,9 +73,9 @@ export default function ResultsPanel() {
                     style={{
                       textAlign: 'left',
                       padding: '8px 14px',
-                      background: '#161b22',
-                      borderBottom: '1px solid #30363d',
-                      color: '#7d8590',
+                      background: 'var(--color-surface)',
+                      borderBottom: '1px solid var(--color-border)',
+                      color: 'var(--color-text-muted)',
                       fontWeight: 500,
                       fontSize: '10px',
                       textTransform: 'uppercase',
@@ -94,7 +94,7 @@ export default function ResultsPanel() {
                 <tr
                   key={ri}
                   style={{
-                    background: ri % 2 === 0 ? 'transparent' : '#161b2260',
+                    background: ri % 2 === 0 ? 'transparent' : 'var(--color-border-subtle)',
                   }}
                 >
                   {row.map((cell, ci) => (
@@ -102,8 +102,8 @@ export default function ResultsPanel() {
                       key={ci}
                       style={{
                         padding: '6px 14px',
-                        borderBottom: '1px solid #21262d',
-                        color: cell === null || cell === undefined ? '#484f58' : '#e6edf3',
+                        borderBottom: '1px solid var(--color-border-subtle)',
+                        color: cell === null || cell === undefined ? 'var(--color-muted)' : 'var(--color-text)',
                         whiteSpace: 'nowrap',
                       }}
                     >
@@ -129,7 +129,7 @@ function EmptyState() {
       <ResultsIcon />
       <span
         style={{
-          color: '#7d8590',
+          color: 'var(--color-text-muted)',
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           letterSpacing: '0.15em',
@@ -140,7 +140,7 @@ function EmptyState() {
       </span>
       <span
         style={{
-          color: '#484f58',
+          color: 'var(--color-muted)',
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '10px',
           textAlign: 'center',
@@ -148,9 +148,9 @@ function EmptyState() {
           maxWidth: '280px',
         }}
       >
-        Run a model, then click <span style={{ color: '#7d8590' }}>Show Results</span>
+        Run a model, then click <span style={{ color: 'var(--color-text-muted)' }}>Show Results</span>
         <br />
-        (or run <span style={{ color: '#7d8590' }}>dbt show --select &lt;model&gt;</span>)
+        (or run <span style={{ color: 'var(--color-text-muted)' }}>dbt show --select &lt;model&gt;</span>)
       </span>
     </div>
   )
@@ -158,7 +158,7 @@ function EmptyState() {
 
 function ResultsIcon() {
   return (
-    <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="#7d8590" strokeWidth="1.2">
+    <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="var(--color-text-muted)" strokeWidth="1.2">
       <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
       <line x1="1.5" y1="6" x2="14.5" y2="6" />
       <line x1="5" y1="2.5" x2="5" y2="13.5" />

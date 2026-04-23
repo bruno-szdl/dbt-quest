@@ -9,7 +9,7 @@ interface CatalogEntry {
 
 function TableIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="#e69d3a" style={{ flexShrink: 0, opacity: 0.9 }}>
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="var(--color-warning)" style={{ flexShrink: 0, opacity: 0.9 }}>
       <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V1.75ZM6.5 6.5v8h7.75a.25.25 0 0 0 .25-.25V6.5H6.5Zm0-1.5h8V1.75a.25.25 0 0 0-.25-.25H6.5V5Zm-1.5 1.5H1.5v7.75c0 .138.112.25.25.25H5V6.5ZM5 5V1.5H1.75a.25.25 0 0 0-.25.25V5H5Z" />
     </svg>
   )
@@ -29,21 +29,21 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       width="8"
       height="8"
       viewBox="0 0 8 8"
-      fill="#6e7681"
       style={{
         flexShrink: 0,
         transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
         transition: 'transform 0.12s ease',
+        fill: 'none',
       }}
     >
-      <path d="M2 1 l4 3 -4 3" stroke="#6e7681" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 1 l4 3 -4 3" stroke="var(--color-muted)" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
 function SchemaIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="#6e7681" style={{ flexShrink: 0 }}>
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="var(--color-muted)" style={{ flexShrink: 0 }}>
       <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z" />
     </svg>
   )
@@ -85,8 +85,8 @@ export default function DatabaseExplorer() {
   return (
     <div
       style={{
-        borderTop: '1px solid #21262d',
-        background: '#0d1117',
+        borderTop: '1px solid var(--color-border-subtle)',
+        background: 'var(--color-base)',
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -113,7 +113,7 @@ export default function DatabaseExplorer() {
         <ChevronIcon expanded={!collapsed} />
         <span
           style={{
-            color: '#7d8590',
+            color: 'var(--color-text-muted)',
             fontSize: '10px',
             fontFamily: 'JetBrains Mono, monospace',
             letterSpacing: '0.08em',
@@ -126,7 +126,7 @@ export default function DatabaseExplorer() {
           <span
             style={{
               marginLeft: 'auto',
-              color: '#484f58',
+              color: 'var(--color-muted)',
               fontSize: '10px',
               fontFamily: 'JetBrains Mono, monospace',
             }}
@@ -143,7 +143,7 @@ export default function DatabaseExplorer() {
             <div
               style={{
                 padding: '4px 16px 8px',
-                color: '#484f58',
+                color: 'var(--color-muted)',
                 fontSize: '11px',
                 fontFamily: 'IBM Plex Sans, sans-serif',
                 fontStyle: 'italic',
@@ -172,7 +172,7 @@ export default function DatabaseExplorer() {
                   <SchemaIcon />
                   <span
                     style={{
-                      color: '#7d8590',
+                      color: 'var(--color-text-muted)',
                       fontSize: '11px',
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -194,7 +194,7 @@ export default function DatabaseExplorer() {
                           borderRadius: '3px',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#161b22'
+                          e.currentTarget.style.background = 'var(--color-surface)'
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent'
@@ -203,7 +203,7 @@ export default function DatabaseExplorer() {
                         <TableIcon />
                         <span
                           style={{
-                            color: '#c9d1d9',
+                            color: 'var(--color-text-secondary)',
                             fontSize: '11px',
                             fontFamily: 'JetBrains Mono, monospace',
                             whiteSpace: 'nowrap',
@@ -227,7 +227,7 @@ export default function DatabaseExplorer() {
                           borderRadius: '3px',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#161b22'
+                          e.currentTarget.style.background = 'var(--color-surface)'
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'transparent'
@@ -236,7 +236,7 @@ export default function DatabaseExplorer() {
                         <ViewIcon />
                         <span
                           style={{
-                            color: '#c9d1d9',
+                            color: 'var(--color-text-secondary)',
                             fontSize: '11px',
                             fontFamily: 'JetBrains Mono, monospace',
                             whiteSpace: 'nowrap',
