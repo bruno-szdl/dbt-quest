@@ -52,14 +52,14 @@ export default function App() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117] overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-base)' }}>
       <Header />
 
       <div ref={workspaceRef} className="flex-1 flex overflow-hidden">
         {/* ── Left sidebar: exercise + checklist + files ───────────────────── */}
         <aside
-          className="flex flex-col shrink-0 border-r border-[#30363d] overflow-hidden"
-          style={{ width: sidebarWidth, minWidth: '220px', background: '#0d1117' }}
+          className="flex flex-col shrink-0 overflow-hidden"
+          style={{ width: sidebarWidth, minWidth: '220px', background: 'var(--color-base)', borderRight: '1px solid var(--color-border)' }}
         >
           <LevelPanel />
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -73,13 +73,13 @@ export default function App() {
         {/* Sidebar ↔ main handle */}
         <div
           className="shrink-0 cursor-col-resize"
-          style={{ width: '4px', background: '#30363d' }}
+          style={{ width: '4px', background: 'var(--color-border)' }}
           onMouseDown={onSidebarHandleDown}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#484f58'
+            e.currentTarget.style.background = 'var(--color-muted)'
           }}
           onMouseLeave={(e) => {
-            if (!draggingSidebar.current) e.currentTarget.style.background = '#30363d'
+            if (!draggingSidebar.current) e.currentTarget.style.background = 'var(--color-border)'
           }}
         />
 

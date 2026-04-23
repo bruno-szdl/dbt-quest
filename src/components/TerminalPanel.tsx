@@ -3,14 +3,14 @@ import { useGameStore } from '../store/gameStore'
 import type { TerminalLine } from '../store/gameStore'
 
 const COLOR: Record<string, string> = {
-  green: '#3fb950',
-  red: '#f85149',
-  yellow: '#e3b341',
-  gray: '#7d8590',
+  green: 'var(--color-success)',
+  red: 'var(--color-fail)',
+  yellow: 'var(--color-warning)',
+  gray: 'var(--color-text-muted)',
 }
 
 function lineColor(line: TerminalLine): string {
-  return line.color ? COLOR[line.color] : '#e6edf3'
+  return line.color ? COLOR[line.color] : 'var(--color-text)'
 }
 
 interface TerminalPanelProps {
@@ -61,21 +61,21 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
   return (
     <div
       className="flex flex-col h-full"
-      style={{ background: '#0a0e14' }}
+      style={{ background: 'var(--color-terminal-bg)' }}
       onClick={() => inputRef.current?.focus()}
     >
       {/* Internal title bar — hidden when embedded in the shared bottom drawer */}
       {!embedded && (
         <div
-          className="flex items-center gap-2 px-4 border-b border-[#30363d] shrink-0"
-          style={{ height: '36px', background: '#161b22' }}
+          className="flex items-center gap-2 px-4 shrink-0"
+          style={{ height: '36px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
         >
-          <span style={{ color: '#484f58' }}>
+          <span style={{ color: 'var(--color-muted)' }}>
             <TerminalIcon />
           </span>
           <span
             style={{
-              color: '#7d8590',
+              color: 'var(--color-text-muted)',
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '11px',
               textTransform: 'uppercase',
@@ -85,9 +85,9 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
             terminal
           </span>
           <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#f85149', opacity: 0.4 }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#e3b341', opacity: 0.4 }} />
-            <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#3fb950', opacity: 0.4 }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-fail)', opacity: 0.4 }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-warning)', opacity: 0.4 }} />
+            <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-success)', opacity: 0.4 }} />
           </div>
         </div>
       )}
@@ -110,21 +110,21 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
               minHeight: '1.65em',
             }}
           >
-            {line.text || ' '}
+            {line.text || ' '}
           </div>
         ))}
       </div>
 
       {/* Input row */}
       <div
-        className="flex items-center gap-0 px-4 border-t border-[#30363d] shrink-0"
-        style={{ height: '36px', background: '#0d1117' }}
+        className="flex items-center gap-0 px-4 shrink-0"
+        style={{ height: '36px', background: 'var(--color-base)', borderTop: '1px solid var(--color-border)' }}
       >
         <span
           style={{
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '12px',
-            color: '#ff694a',
+            color: 'var(--color-accent-orange)',
             userSelect: 'none',
             flexShrink: 0,
           }}
@@ -145,10 +145,10 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
             background: 'transparent',
             border: 'none',
             outline: 'none',
-            color: '#e6edf3',
+            color: 'var(--color-text)',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '12px',
-            caretColor: '#e6edf3',
+            caretColor: 'var(--color-text)',
           }}
         />
       </div>
