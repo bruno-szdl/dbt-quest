@@ -22,6 +22,11 @@ export default function LevelCompleteModal() {
     }
   }
 
+  function handleSkipQuiz() {
+    useGameStore.setState({ showLevelComplete: false, showLevelQuiz: false })
+    if (!isLastLevel) loadLevel(currentLevelId + 1)
+  }
+
   if (!show || !level) return null
 
   return (
@@ -156,6 +161,29 @@ export default function LevelCompleteModal() {
             </svg>
           )}
         </button>
+
+        {hasQuiz && (
+          <button
+            onClick={handleSkipQuiz}
+            style={{
+              marginTop: '10px',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-text-muted)',
+              fontFamily: 'IBM Plex Sans, sans-serif',
+              fontSize: '11px',
+              padding: '4px 8px',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textDecorationColor: 'var(--color-border)',
+              textUnderlineOffset: '3px',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)' }}
+          >
+            {isLastLevel ? 'Skip the quiz' : 'Skip the quiz and continue'}
+          </button>
+        )}
       </div>
     </div>
   )
