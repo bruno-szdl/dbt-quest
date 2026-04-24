@@ -1,5 +1,5 @@
 import type { Level } from '../engine/types'
-import { hasModel, modelRan } from '../engine/validators'
+import { modelRan } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@sparkle.co,2024-01-05,US
@@ -8,30 +8,20 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
 5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
 
-const RAW_ORDERS = `id,customer_id,amount,status,created_at
-1,1,49.99,completed,2024-01-10
-2,1,24.99,completed,2024-01-20
-3,2,89.99,completed,2024-01-25
-4,3,12.99,pending,2024-02-05
-5,4,199.99,completed,2024-02-15
-6,5,39.99,refunded,2024-03-05
-7,1,59.99,completed,2024-03-12
-8,2,14.99,pending,2024-04-01`
-
 const level04: Level = {
-  id: 4,
-  chapter: 2,
-  title: 'A second model',
-  description: `Real dbt projects have many models — not just one. Each model represents one clean, focused dataset.
+  id: 3,
+  chapter: 1,
+  title: 'Clean up column names',
+  description: `Raw data often has generic or unclear column names that don't communicate intent. A staging model is the right place to rename columns and make them self-explanatory.
 
-At Sparkle Co, customers place orders. The raw orders data lives in raw_orders, and we need a staging model for it just like we built one for customers.
+For example: the column id is ambiguous — is it a customer ID, a user ID, or something else? Renaming it to customer_id makes it immediately clear.
 
-Your task: create a new model file called models/stg_orders.sql that selects from raw_orders. Use the + button in the file explorer to create the file, then write a SELECT statement and run dbt run.`,
-  hint: 'Click the + button in the file explorer, type `models/stg_orders.sql`, and write: select id as order_id, customer_id, amount, status, created_at from raw_orders',
+Your task: rename id to customer_id and name to customer_name using SQL aliases. Then run dbt run to rebuild the model.`,
+  hint: 'Use SQL aliases: `id as customer_id` and `name as customer_name`. You can write them on the same line as the column.',
   initialFiles: {
     'models/stg_customers.sql': `select
-    id         as customer_id,
-    name       as customer_name,
+    id,
+    name,
     email,
     created_at,
     country
@@ -39,27 +29,37 @@ from raw_customers`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
-    raw_orders: RAW_ORDERS,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Create models/stg_orders.sql and run dbt run.',
+    description: 'Rename id to customer_id and name to customer_name, then run dbt run.',
     dagShape: {
-      nodes: [
-        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-      ],
+      nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
       edges: [],
     },
   },
   validate: (state) => {
-    if (!hasModel(state, 'stg_orders'))
-      return { passed: false, reason: 'Create a model file named stg_orders.sql.' }
-    if (!modelRan(state, 'stg_orders'))
-      return { passed: false, reason: 'Run dbt run to build your new model.' }
+    const sql = (state.files['models/stg_customers.sql'] ?? '').toLowerCase()
+    if (!/\bid\s+as\s+customer_id\b/.test(sql))
+      return { passed: false, reason: 'Rename id to customer_id using `id as customer_id`.' }
+    if (!/\bname\s+as\s+customer_name\b/.test(sql))
+      return { passed: false, reason: 'Rename name to customer_name using `name as customer_name`.' }
+    if (!modelRan(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
     return { passed: true }
   },
-  badge: { id: 'second-model', name: 'Second Model', emoji: '📦' },
+  badge: { id: 'clean-columns', name: 'Clean Columns', emoji: '✨' },
+  quiz: {
+    question: 'How do you rename a column in a SQL SELECT statement?',
+    options: [
+      'RENAME original_name TO new_name',
+      'original_name ALIAS new_name',
+      'original_name AS new_name',
+      'CAST(original_name AS new_name)',
+    ],
+    correctIndex: 2,
+    explanation: 'The AS keyword creates a column alias. For example, `customer_id AS id` renames the output column to "id". This is how dbt models produce clean, consistent column names.',
+  },
 }
 
 export default level04

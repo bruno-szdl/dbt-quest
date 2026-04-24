@@ -11,19 +11,23 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 const level03: Level = {
   id: 3,
   chapter: 1,
-  title: 'Clean up column names',
-  description: `Raw data often has generic or unclear column names that don't communicate intent. A staging model is the right place to rename columns and make them self-explanatory.
+  title: 'Your first model',
+  description: `A dbt model is a SQL file you write and maintain. The results are rebuilt every time you run dbt — making your transformations reproducible and version-controlled.
 
-For example: the column id is ambiguous — is it a customer ID, a user ID, or something else? Renaming it to customer_id makes it immediately clear.
+The stg_customers model is almost complete, but the created_at column is missing. Without it, the analytics team won't know when each customer signed up.
 
-Your task: rename id to customer_id and name to customer_name using SQL aliases. Then run dbt run to rebuild the model.`,
-  hint: 'Use SQL aliases: `id as customer_id` and `name as customer_name`. You can write them on the same line as the column.',
+Your task: add created_at to the SELECT statement, then run dbt run to rebuild the model.`,
+  hint: 'Add `created_at` to the select list, between email and country. Then run dbt run.',
   initialFiles: {
-    'models/stg_customers.sql': `select
+    'models/stg_customers.sql': `-- This model is missing the created_at column.
+-- Add it to the SELECT list below (hint: between email and country),
+-- then run dbt run to rebuild the model.
+
+select
     id,
     name,
     email,
-    created_at,
+    -- ← add created_at here
     country
 from raw_customers`,
   },
@@ -32,23 +36,33 @@ from raw_customers`,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Rename id to customer_id and name to customer_name, then run dbt run.',
+    description: 'Add the created_at column to stg_customers, then run dbt run.',
     dagShape: {
       nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
       edges: [],
     },
   },
   validate: (state) => {
-    const sql = (state.files['models/stg_customers.sql'] ?? '').toLowerCase()
-    if (!/\bid\s+as\s+customer_id\b/.test(sql))
-      return { passed: false, reason: 'Rename id to customer_id using `id as customer_id`.' }
-    if (!/\bname\s+as\s+customer_name\b/.test(sql))
-      return { passed: false, reason: 'Rename name to customer_name using `name as customer_name`.' }
+    // Strip -- comments so the placeholder comment doesn't satisfy the check.
+    const sql = (state.files['models/stg_customers.sql'] ?? '').replace(/--[^\n]*/g, '')
+    if (!sql.includes('created_at'))
+      return { passed: false, reason: 'Add the created_at column to the SELECT statement.' }
     if (!modelRan(state, 'stg_customers'))
       return { passed: false, reason: 'Run dbt run to rebuild the model.' }
     return { passed: true }
   },
-  badge: { id: 'clean-columns', name: 'Clean Columns', emoji: '✨' },
+  badge: { id: 'first-model', name: 'First Model', emoji: '🌱' },
+  quiz: {
+    question: 'In dbt, what is a "model"?',
+    options: [
+      'A Python class that defines transformations',
+      'A SQL SELECT statement saved as a .sql file',
+      'A CREATE TABLE statement executed directly',
+      'A JSON configuration describing the schema',
+    ],
+    correctIndex: 1,
+    explanation: 'A dbt model is simply a SQL SELECT statement in a .sql file. dbt wraps it with CREATE VIEW or CREATE TABLE automatically based on your materialization setting.',
+  },
 }
 
 export default level03

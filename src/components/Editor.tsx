@@ -17,6 +17,7 @@ export default function Editor() {
   const openFile = useGameStore((s) => s.openFile)
   const setFileContent = useGameStore((s) => s.setFileContent)
   const theme = useGameStore((s) => s.theme)
+  const currentLevelId = useGameStore((s) => s.currentLevelId)
 
   const filePaths = Object.keys(files).sort()
 
@@ -89,7 +90,7 @@ export default function Editor() {
           </div>
         ) : (
           <MonacoEditor
-            key={`${activeFile}-${theme}`}
+            key={`${currentLevelId}-${activeFile}-${theme}`}
             height="100%"
             language={detectLanguage(activeFile)}
             theme={theme === 'dark' ? 'vs-dark' : 'light'}

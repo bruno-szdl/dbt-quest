@@ -1,13 +1,6 @@
 import type { Level } from '../engine/types'
 import { modelRefs, modelRan } from '../engine/validators'
 
-const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@sparkle.co,2024-01-05,US
-2,Bob Chen,bob@sparkle.co,2024-01-17,CA
-3,Carol Silva,carol@sparkle.co,2024-02-02,BR
-4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
-5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
-
 const RAW_ORDERS = `id,customer_id,amount,status,created_at
 1,1,49.99,completed,2024-01-10
 2,1,24.99,completed,2024-01-20
@@ -19,23 +12,22 @@ const RAW_ORDERS = `id,customer_id,amount,status,created_at
 8,2,14.99,pending,2024-04-01`
 
 const level06: Level = {
-  id: 6,
+  id: 5,
   chapter: 2,
-  title: 'Joining models',
-  description: `So far, customers and orders live in separate models. But the analytics team needs a combined view: which customers placed which orders?
+  title: 'Using ref()',
+  description: `When a model depends on another model, you should reference it using {{ ref('model_name') }} instead of the table name directly.
 
-In dbt, you can JOIN models together using ref() for both tables. The DAG will show both dependencies as arrows pointing into the new model.
+Open the Lineage tab now. You'll see stg_orders and customer_orders as disconnected nodes — dbt has no idea one depends on the other.
 
-The customer_orders model already references stg_customers. Your task: add a JOIN to stg_orders using {{ ref('stg_orders') }}, connecting the two on customer_id. Then run dbt run.`,
-  hint: "After the FROM clause, add:\njoin {{ ref('stg_orders') }} as o\n    on c.customer_id = o.customer_id\nAlso add o.order_id, o.amount, o.status to the SELECT list.",
+ref() fixes this in two ways:
+  1. dbt learns the dependency and builds models in the right order.
+  2. The edge appears in the lineage, making the data flow explicit.
+
+ref() also resolves to the correct location for each environment automatically. In dev it points to your personal schema, in prod to the production schema — you write the same SQL everywhere and dbt handles the rest.
+
+Your task: replace \`from stg_orders\` with \`from {{ ref('stg_orders') }}\`, run dbt run, then check the Lineage tab again to see the edge appear.`,
+  hint: "Change `from stg_orders` to `from {{ ref('stg_orders') }}`. The double curly braces are dbt's Jinja template syntax.",
   initialFiles: {
-    'models/stg_customers.sql': `select
-    id         as customer_id,
-    name       as customer_name,
-    email,
-    created_at,
-    country
-from raw_customers`,
     'models/stg_orders.sql': `select
     id         as order_id,
     customer_id,
@@ -43,44 +35,45 @@ from raw_customers`,
     status,
     created_at
 from raw_orders`,
-    'models/customer_orders.sql': `-- Task: Add a join to stg_orders using {{ ref('stg_orders') }}.
--- Match customers and orders on customer_id.
+    'models/customer_orders.sql': `-- Task: Replace the bare table name with {{ ref('stg_orders') }}
+-- to declare the dependency between models.
 
-select
-    c.customer_id,
-    c.customer_name,
-    c.country
-from {{ ref('stg_customers') }} as c`,
+select *
+from stg_orders`,
   },
   seeds: {
-    raw_customers: RAW_CUSTOMERS,
     raw_orders: RAW_ORDERS,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: "Add a JOIN to {{ ref('stg_orders') }} in customer_orders, then run dbt run.",
+    description: "Replace `from stg_orders` with `from {{ ref('stg_orders') }}`, run dbt run, and watch the edge appear in the Lineage tab.",
     dagShape: {
       nodes: [
-        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
         { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
         { id: 'customer_orders', label: 'customer_orders', layer: 'mart' },
       ],
-      edges: [
-        { source: 'stg_customers', target: 'customer_orders' },
-        { source: 'stg_orders', target: 'customer_orders' },
-      ],
+      edges: [{ source: 'stg_orders', target: 'customer_orders' }],
     },
   },
   validate: (state) => {
-    if (!modelRefs(state, 'customer_orders', 'stg_customers'))
-      return { passed: false, reason: "Use {{ ref('stg_customers') }} in customer_orders.sql." }
     if (!modelRefs(state, 'customer_orders', 'stg_orders'))
-      return { passed: false, reason: "Add a JOIN to {{ ref('stg_orders') }} in customer_orders.sql." }
+      return { passed: false, reason: "Replace `from stg_orders` with `from {{ ref('stg_orders') }}`." }
     if (!modelRan(state, 'customer_orders'))
       return { passed: false, reason: 'Run dbt run to build the model.' }
     return { passed: true }
   },
-  badge: { id: 'first-join', name: 'First Join', emoji: '🤝' },
+  badge: { id: 'first-ref', name: 'First ref()', emoji: '🔗' },
+  quiz: {
+    question: "What does {{ ref('model_name') }} do in a dbt model?",
+    options: [
+      'Imports a Jinja macro from the macros/ directory',
+      'Runs a raw SQL query against the database',
+      'References another dbt model and creates a DAG dependency',
+      'Creates a database function named model_name',
+    ],
+    correctIndex: 2,
+    explanation: "ref() tells dbt that this model depends on another. dbt uses this to build a DAG and ensures the referenced model is always built first, in the correct order.",
+  },
 }
 
 export default level06

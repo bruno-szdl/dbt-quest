@@ -1,5 +1,5 @@
 import type { Level } from '../engine/types'
-import { modelMaterialization, modelRan } from '../engine/validators'
+import { modelRefs, modelRan } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@sparkle.co,2024-01-05,US
@@ -19,17 +19,15 @@ const RAW_ORDERS = `id,customer_id,amount,status,created_at
 8,2,14.99,pending,2024-04-01`
 
 const level07: Level = {
-  id: 7,
-  chapter: 3,
-  title: 'Change materialization',
-  description: `By default, dbt builds models as views — lightweight SQL wrappers that re-run the query every time someone reads them. For models that are queried frequently or are expensive to compute, building them as tables is more efficient.
+  id: 6,
+  chapter: 2,
+  title: 'Joining models',
+  description: `So far, customers and orders live in separate models. But the analytics team needs a combined view: which customers placed which orders?
 
-You control this with the config() block at the top of a model file:
+In dbt, you can JOIN models together using ref() for both tables. The DAG will show both dependencies as arrows pointing into the new model.
 
-  {{ config(materialized='table') }}
-
-The customer_orders model is used heavily by the analytics team. Your task: add the config block at the top of the file to materialize it as a table, then run dbt run.`,
-  hint: "Add this as the very first line of customer_orders.sql:\n\n{{ config(materialized='table') }}",
+The customer_orders model already references stg_customers. Your task: add a JOIN to stg_orders using {{ ref('stg_orders') }}, connecting the two on customer_id. Then run dbt run.`,
+  hint: "After the FROM clause, add:\njoin {{ ref('stg_orders') }} as o\n    on c.customer_id = o.customer_id\nAlso add o.order_id, o.amount, o.status to the SELECT list.",
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
@@ -45,16 +43,14 @@ from raw_customers`,
     status,
     created_at
 from raw_orders`,
-    'models/customer_orders.sql': `select
+    'models/customer_orders.sql': `-- Task: Add a join to stg_orders using {{ ref('stg_orders') }}.
+-- Match customers and orders on customer_id.
+
+select
     c.customer_id,
     c.customer_name,
-    c.country,
-    o.order_id,
-    o.amount,
-    o.status
-from {{ ref('stg_customers') }} as c
-join {{ ref('stg_orders') }} as o
-    on c.customer_id = o.customer_id`,
+    c.country
+from {{ ref('stg_customers') }} as c`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
@@ -62,7 +58,7 @@ join {{ ref('stg_orders') }} as o
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: "Add {{ config(materialized='table') }} to customer_orders.sql, then run dbt run.",
+    description: "Add a JOIN to {{ ref('stg_orders') }} in customer_orders, then run dbt run.",
     dagShape: {
       nodes: [
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
@@ -76,13 +72,26 @@ join {{ ref('stg_orders') }} as o
     },
   },
   validate: (state) => {
-    if (!modelMaterialization(state, 'customer_orders', 'table'))
-      return { passed: false, reason: "Add {{ config(materialized='table') }} at the top of customer_orders.sql." }
+    if (!modelRefs(state, 'customer_orders', 'stg_customers'))
+      return { passed: false, reason: "Use {{ ref('stg_customers') }} in customer_orders.sql." }
+    if (!modelRefs(state, 'customer_orders', 'stg_orders'))
+      return { passed: false, reason: "Add a JOIN to {{ ref('stg_orders') }} in customer_orders.sql." }
     if (!modelRan(state, 'customer_orders'))
-      return { passed: false, reason: 'Run dbt run to materialize it as a table.' }
+      return { passed: false, reason: 'Run dbt run to build the model.' }
     return { passed: true }
   },
-  badge: { id: 'table-time', name: 'Table Time', emoji: '🗄️' },
+  badge: { id: 'first-join', name: 'First Join', emoji: '🤝' },
+  quiz: {
+    question: 'When you use ref() to JOIN two models in dbt, what does dbt guarantee?',
+    options: [
+      'The JOIN will use a database index for performance',
+      'The data is automatically deduplicated before joining',
+      'The referenced models are always built before the current model',
+      'Both models run simultaneously in parallel',
+    ],
+    correctIndex: 2,
+    explanation: "dbt builds a dependency graph (DAG) from all your ref() calls. It executes models in topological order, so any model you ref() is guaranteed to exist and be up-to-date before your model runs.",
+  },
 }
 
 export default level07

@@ -1,5 +1,12 @@
 import type { Level } from '../engine/types'
-import { modelRefs, modelRan } from '../engine/validators'
+import { hasModel, modelRan } from '../engine/validators'
+
+const RAW_CUSTOMERS = `id,name,email,created_at,country
+1,Alice Martin,alice@sparkle.co,2024-01-05,US
+2,Bob Chen,bob@sparkle.co,2024-01-17,CA
+3,Carol Silva,carol@sparkle.co,2024-02-02,BR
+4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
+5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
 
 const RAW_ORDERS = `id,customer_id,amount,status,created_at
 1,1,49.99,completed,2024-01-10
@@ -12,53 +19,58 @@ const RAW_ORDERS = `id,customer_id,amount,status,created_at
 8,2,14.99,pending,2024-04-01`
 
 const level05: Level = {
-  id: 5,
+  id: 4,
   chapter: 2,
-  title: 'Using ref()',
-  description: `When a model depends on another model, you should reference it using {{ ref('model_name') }} instead of the table name directly.
+  title: 'A second model',
+  description: `Real dbt projects have many models — not just one. Each model represents one clean, focused dataset.
 
-Using ref() does two important things:
-  1. It tells dbt about the dependency, so models are built in the right order.
-  2. It makes the dependency visible in the DAG (the lineage graph on the right).
+At Sparkle Co, customers place orders. The raw orders data lives in raw_orders, and we need a staging model for it just like we built one for customers.
 
-The customer_orders model currently references stg_orders as a bare table name. Your task: replace it with {{ ref('stg_orders') }}, then run dbt run and watch the DAG update.`,
-  hint: "Change `from stg_orders` to `from {{ ref('stg_orders') }}`. The double curly braces are dbt's Jinja template syntax.",
+Your task: create a new model file called models/stg_orders.sql that selects from raw_orders. Use the + button in the file explorer to create the file, then write a SELECT statement and run dbt run.`,
+  hint: 'Click the + button in the file explorer, type `models/stg_orders.sql`, and write: select id as order_id, customer_id, amount, status, created_at from raw_orders',
   initialFiles: {
-    'models/stg_orders.sql': `select
-    id         as order_id,
-    customer_id,
-    amount,
-    status,
-    created_at
-from raw_orders`,
-    'models/customer_orders.sql': `-- Task: Replace the bare table name with {{ ref('stg_orders') }}
--- to declare the dependency between models.
-
-select *
-from stg_orders`,
+    'models/stg_customers.sql': `select
+    id         as customer_id,
+    name       as customer_name,
+    email,
+    created_at,
+    country
+from raw_customers`,
   },
   seeds: {
+    raw_customers: RAW_CUSTOMERS,
     raw_orders: RAW_ORDERS,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: "Replace `from stg_orders` with `from {{ ref('stg_orders') }}`, then run dbt run.",
+    description: 'Create models/stg_orders.sql and run dbt run.',
     dagShape: {
       nodes: [
+        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
         { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-        { id: 'customer_orders', label: 'customer_orders', layer: 'mart' },
       ],
-      edges: [{ source: 'stg_orders', target: 'customer_orders' }],
+      edges: [],
     },
   },
   validate: (state) => {
-    if (!modelRefs(state, 'customer_orders', 'stg_orders'))
-      return { passed: false, reason: "Replace `from stg_orders` with `from {{ ref('stg_orders') }}`." }
-    if (!modelRan(state, 'customer_orders'))
-      return { passed: false, reason: 'Run dbt run to build the model.' }
+    if (!hasModel(state, 'stg_orders'))
+      return { passed: false, reason: 'Create a model file named stg_orders.sql.' }
+    if (!modelRan(state, 'stg_orders'))
+      return { passed: false, reason: 'Run dbt run to build your new model.' }
     return { passed: true }
   },
-  badge: { id: 'first-ref', name: 'First ref()', emoji: '🔗' },
+  badge: { id: 'second-model', name: 'Second Model', emoji: '📦' },
+  quiz: {
+    question: 'Where do dbt model SQL files live in a project?',
+    options: [
+      'In the seeds/ directory',
+      'In the macros/ directory',
+      'In the models/ directory',
+      'In the snapshots/ directory',
+    ],
+    correctIndex: 2,
+    explanation: 'All dbt models go in the models/ directory (or subdirectories within it). dbt discovers and runs every .sql file in this directory automatically.',
+  },
 }
 
 export default level05

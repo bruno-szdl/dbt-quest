@@ -4,6 +4,7 @@ export interface GameState {
   files: Record<string, string>
   ranModels: Set<string>
   testResults: Record<string, 'pass' | 'fail' | 'untested'>
+  shownModels: Set<string>
 }
 
 export interface GoalDagShape {
@@ -36,4 +37,10 @@ export interface Level {
   requiredSteps?: ('files' | 'run' | 'test')[]
   validate: (state: GameState) => { passed: boolean; reason?: string }
   badge?: { id: string; name: string; emoji: string }
+  quiz?: {
+    question: string
+    options: [string, string, string, string]
+    correctIndex: number
+    explanation: string
+  }
 }

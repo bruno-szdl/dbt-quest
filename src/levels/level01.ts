@@ -46,6 +46,17 @@ from raw_customers`,
     return { passed: true }
   },
   badge: { id: 'first-run', name: 'First Run', emoji: '🚀' },
+  quiz: {
+    question: 'Which command builds your dbt models and materializes them in the database?',
+    options: [
+      'dbt compile',
+      'dbt run',
+      'dbt execute',
+      'dbt build --models',
+    ],
+    correctIndex: 1,
+    explanation: '`dbt run` reads your SQL model files and executes them against the database, creating views or tables depending on the materialization config.',
+  },
 }
 
 export default level01

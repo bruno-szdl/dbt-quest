@@ -1,62 +1,66 @@
-# Learn dbt Branching
+# CLAUDE.md
 
-Jogo web, em inglês, interativo que ensina dbt (data build tool) através de níveis progressivos, inspirado em Learn Git Branching. Cada nível apresenta um objetivo visual do DAG que o jogador precisa alcançar editando arquivos e rodando comandos dbt fake.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Stack
+## Commands
 
-- **Vite + React 18 + TypeScript**
-- **Tailwind CSS** para estilo
-- **Monaco Editor** (`@monaco-editor/react`) para edição de arquivos
-- **React Flow** (`reactflow`) para visualização do DAG
-- **xterm.js** (`@xterm/xterm`) para o terminal fake
-- **html-to-image** para gerar PNG dos badges compartilháveis
-- **Zustand** para estado global (mais simples que Redux, sem boilerplate)
-- **localStorage** para progresso — sem backend, sem login
-- Deploy: Vercel
-
-## Princípios de arquitetura
-
-1. **Zero backend.** Tudo roda no browser. Nada de Supabase, Firebase, nada.
-2. **Níveis são dados, não código.** Cada nível é um objeto JSON/TS com `initialFiles`, `goal`, `validate()`. Adicionar nível = adicionar entrada no array. Nunca mexer na engine pra adicionar nível novo.
-3. **Engine simula, não executa.** Não rodamos SQL de verdade. `dbt run` parseia os arquivos do jogador, constrói o DAG, roda validações estáticas e imprime output fake realista.
-4. **Estado central imutável.** Um `useGameStore` (Zustand) com `files`, `ranModels`, `testResults`, `currentLevel`. Todo componente lê daqui.
-5. **Validação declarativa.** `validate(state) => { passed: boolean, hints: string[] }`. Nunca lógica espalhada.
-
-## Layout da tela (desktop-first, min 1280px)
-
-```
-┌────────────────────────────────────────────────────┐
-│ Header: logo | nível atual | progresso | menu      │
-├──────────────────────┬─────────────────────────────┤
-│                      │                             │
-│  Editor (Monaco)     │   DAG (React Flow)          │
-│  + tabs de arquivo   │   + objetivo fantasma       │
-│                      │   no fundo                  │
-│                      │                             │
-├──────────────────────┤                             │
-│  Terminal (xterm)    │                             │
-│                      │                             │
-└──────────────────────┴─────────────────────────────┘
+```bash
+npm run dev      # Start Vite dev server at localhost:5173
+npm run build    # TypeScript check + production build → dist/
+npm run lint     # ESLint validation
+npm run preview  # Preview production build locally
 ```
 
-Mobile: fora de escopo pro MVP. Mostrar tela "abra no desktop".
+There are no automated tests — level completion is validated via `validate()` functions in each level definition.
 
-## Estrutura de pastas
+## Architecture
+
+**dbt-quest** is a browser-based interactive game for learning dbt, inspired by Learn Git Branching. It runs entirely in-browser with no backend: SQL executes in DuckDB WASM, the editor is Monaco, and the DAG is rendered with React Flow.
+
+### Stack
+
+- **React 19 + TypeScript** (strict mode) — UI
+- **Zustand** — all game/UI state in `src/store/gameStore.ts`
+- **Vite + Tailwind CSS 4** — build and styling
+- **DuckDB WASM** — in-browser SQL execution
+- **Monaco Editor** — code editing with file tabs
+- **React Flow + Dagre** — DAG visualization
+
+### Key directories
 
 ```
 src/
-  engine/          # core do jogo (file system, command parser, validator, dag builder)
-  levels/          # um arquivo .ts por nível, exportando Level
-  components/      # Editor, Terminal, DAG, Header, LevelCompleteModal
-  store/           # zustand store
-  share/           # geração do badge PNG
-  App.tsx
+├── engine/          # dbt simulation: compile SQL, build DAG, execute against DuckDB, run CLI commands
+├── levels/          # Level definitions (level01.ts–level10.ts) + module groupings (index.ts)
+├── components/      # React UI panels (Editor, TerminalPanel, DagPanel, LevelPanel, etc.)
+├── store/
+│   └── gameStore.ts # Zustand store: files, ranModels, testResults, completedLevels, theme
+└── index.css        # CSS variable theming (dark default, light variant)
 ```
 
-## Convenções
+### Engine pipeline
 
-- O jogo deve ser todo em inglês
-- TypeScript strict. Tipos explícitos em fronteiras de módulo.
-- Componentes em PascalCase, hooks em `useX`, tudo mais camelCase.
-- Sem CSS-in-JS. Só Tailwind.
-- Paleta: fundo `#0d1117`, texto `#e6edf3`, accent dbt laranja `#ff694a`, verde success `#3fb950`, vermelho fail `#f85149`. Inspirada em dbt Cloud dark mode.
+1. **`compiler.ts`** — extracts `ref()`, `source()`, `config()` from SQL Jinja-like syntax
+2. **`dagBuilder.ts`** — builds node/edge graph; infers layer (staging/intermediate/mart) from naming; reads `schema.yml` for sources
+3. **`executor.ts`** — compiles and runs SQL in DuckDB; handles VIEW vs TABLE materialization
+4. **`runner.ts`** — parses dbt CLI commands (`dbt run`, `dbt test`, `dbt show`) and resolves selectors (`+model`, `model+`)
+5. **`validators.ts`** — helpers used by each level's `validate()` to check completion
+
+### Level structure
+
+Each level file exports an object with:
+- `initialFiles` — starting SQL/YAML file contents
+- `seeds` — CSV data for `source()` calls loaded into DuckDB
+- `goal.description` + optional `goal.dagShape` — target DAG shape for completion
+- `validate(state)` — checks whether the player has completed the level
+- `badge` — emoji awarded on completion
+
+To add a new level: create `src/levels/levelNN.ts` and register it in `src/levels/index.ts`.
+
+### Theming
+
+CSS variables defined in `index.css` drive all colors. Theme (dark/light) is persisted to `localStorage` and applied via `document.documentElement.dataset.theme`. Components use CSS vars rather than hardcoded colors.
+
+### State shape
+
+`gameStore.ts` holds: `files` (record of filename → content), `ranModels`, `testResults`, `terminalHistory`, `currentLevelId`, `completedLevels`, `unlockedBadges`, `bottomTab`, `showLevelIntro`, and `isDarkTheme`.

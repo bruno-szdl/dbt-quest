@@ -61,7 +61,11 @@ export default function BottomPanel({ containerRef }: BottomPanelProps) {
   return (
     <div
       className="flex flex-col shrink-0"
-      style={{ height: currentHeight, background: 'var(--color-base)', borderTop: '1px solid var(--color-border)' }}
+      style={{
+        height: currentHeight,
+        background: 'var(--color-base)',
+        borderTop: '1px solid var(--color-border)',
+      }}
     >
       {/* Resize handle — above the tab bar */}
       <div

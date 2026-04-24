@@ -24,6 +24,7 @@ interface StoreState {
   files: Record<string, string>
   activeFile: string | null
   ranModels: Set<string>
+  shownModels: Set<string>
   testResults: Record<string, 'pass' | 'fail' | 'untested'>
   terminalHistory: TerminalLine[]
   running: boolean
@@ -34,7 +35,9 @@ interface StoreState {
   unlockedBadges: Set<string>
   hintRevealed: boolean
   levelJustCompleted: boolean
+  showLevelComplete: boolean
   showLevelIntro: boolean
+  showLevelQuiz: boolean
 
   bottomTab: BottomTab
   bottomCollapsed: boolean
@@ -51,7 +54,10 @@ interface StoreState {
   checkLevel: () => void
   revealHint: () => void
   dismissLevelComplete: () => void
+  openLevelComplete: () => void
+  dismissLevelCompleteModal: () => void
   dismissLevelIntro: () => void
+  dismissLevelQuiz: () => void
   openLevelIntro: () => void
 
   setBottomTab: (tab: BottomTab) => void
@@ -74,6 +80,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
   files: {},
   activeFile: null,
   ranModels: new Set<string>(),
+  shownModels: new Set<string>(),
   testResults: {},
   terminalHistory: [{ text: 'dbt-quest — loading...', color: 'gray' }],
   running: false,
@@ -84,7 +91,9 @@ export const useGameStore = create<StoreState>((set, get) => ({
   unlockedBadges: new Set<string>(),
   hintRevealed: false,
   levelJustCompleted: false,
+  showLevelComplete: false,
   showLevelIntro: false,
+  showLevelQuiz: false,
 
   bottomTab: 'commands',
   bottomCollapsed: false,
@@ -154,6 +163,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       const result = await execute(parsed.command, {
         files: s.files,
         ranModels: s.ranModels,
+        shownModels: s.shownModels,
         testResults: s.testResults,
       })
 
@@ -170,11 +180,12 @@ export const useGameStore = create<StoreState>((set, get) => ({
         if (latestRan.has(target)) {
           try {
             const res = await previewModel(target, 20)
-            set({
+            set((cur) => ({
               lastPreview: { name: target, columns: res.columns, rows: res.rows, rowCount: res.rowCount },
+              shownModels: new Set([...cur.shownModels, target]),
               bottomTab: 'results',
               bottomCollapsed: false,
-            })
+            }))
           } catch {
             /* ignore — terminal already shows the error */
           }
@@ -262,6 +273,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       files: { ...level.initialFiles },
       activeFile: firstFile,
       ranModels: new Set<string>(),
+      shownModels: new Set<string>(),
       testResults: {},
       currentLevelId: id,
       hintRevealed: false,
@@ -316,6 +328,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
     const result = level.validate({
       files: s.files,
       ranModels: s.ranModels,
+      shownModels: s.shownModels,
       testResults: s.testResults,
     })
 
@@ -342,6 +355,14 @@ export const useGameStore = create<StoreState>((set, get) => ({
   revealHint: () => set({ hintRevealed: true }),
 
   dismissLevelComplete: () => set({ levelJustCompleted: false }),
+  openLevelComplete: () => set({ showLevelComplete: true }),
+
+  dismissLevelCompleteModal: () => {
+    const level = getLevelById(get().currentLevelId)
+    set({ showLevelComplete: false, showLevelQuiz: level?.quiz != null })
+  },
+
+  dismissLevelQuiz: () => set({ showLevelQuiz: false }),
 
   dismissLevelIntro: () => set({ showLevelIntro: false }),
   openLevelIntro: () => set({ showLevelIntro: true }),

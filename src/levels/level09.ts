@@ -8,45 +8,21 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
 5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
 
-const RAW_ORDERS = `id,customer_id,amount,status,created_at
-1,1,49.99,completed,2024-01-10
-2,1,24.99,completed,2024-01-20
-3,2,89.99,completed,2024-01-25
-4,3,12.99,pending,2024-02-05
-5,4,199.99,completed,2024-02-15
-6,5,39.99,refunded,2024-03-05
-7,1,59.99,completed,2024-03-12
-8,2,14.99,pending,2024-04-01`
-
 const level09: Level = {
-  id: 9,
+  id: 8,
   chapter: 4,
-  title: 'Create your first test',
-  description: `You know how to run pre-configured tests. Now it's time to write your own.
+  title: 'Run built-in tests',
+  description: `Transforming data is only half the job — you also need to validate it. dbt has built-in tests that can automatically check your data quality.
 
-Tests are defined in YAML files under the model and column they apply to. A common dbt convention is to keep one YAML file per model, sitting next to the .sql file. Here's the structure:
+The two most common tests are:
+  - not_null: fails if any value in a column is NULL.
+  - unique: fails if any value appears more than once.
 
-  models:
-    - name: my_model
-      columns:
-        - name: my_column
-          tests:
-            - not_null
-            - unique
+Tests are declared in schema.yml. They have already been configured for stg_customers in this level.
 
-stg_customers.yml already has tests configured. The stg_orders model also needs data quality checks — specifically, every order_id should be unique and not null.
-
-Your task: open stg_orders.yml and add not_null and unique tests for the order_id column. Then run dbt run and dbt test.`,
-  hint: 'In stg_orders.yml, replace the TODO comment with:\n        tests:\n          - not_null\n          - unique',
+Your task: first run dbt run to build the model, then run dbt test to check the data quality. Watch the test results appear in the terminal.`,
+  hint: 'Run `dbt run` first to build the model, then run `dbt test` to execute the data quality checks.',
   initialFiles: {
-    'models/stg_orders.yml': `version: 2
-
-models:
-  - name: stg_orders
-    columns:
-      - name: order_id
-        # TODO: Add not_null and unique tests here
-`,
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
@@ -63,45 +39,41 @@ models:
         tests:
           - not_null
           - unique
+      - name: email
+        tests:
+          - not_null
 `,
-    'models/stg_orders.sql': `select
-    id         as order_id,
-    customer_id,
-    amount,
-    status,
-    created_at
-from raw_orders`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
-    raw_orders: RAW_ORDERS,
   },
-  requiredSteps: ['files', 'run', 'test'],
+  requiredSteps: ['run', 'test'],
   goal: {
-    description: 'Add not_null and unique tests to stg_orders.yml, then run dbt run and dbt test.',
+    description: 'Run dbt run to build stg_customers, then run dbt test to pass the data quality checks.',
     dagShape: {
-      nodes: [
-        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-      ],
+      nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
       edges: [],
     },
   },
   validate: (state) => {
-    const yml = state.files['models/stg_orders.yml'] ?? ''
-    if (!yml.includes('stg_orders'))
-      return { passed: false, reason: 'Keep the stg_orders model entry in stg_orders.yml.' }
-    if (!yml.includes('not_null'))
-      return { passed: false, reason: 'Add a not_null test for stg_orders.order_id.' }
-    if (!yml.includes('unique'))
-      return { passed: false, reason: 'Add a unique test for stg_orders.order_id.' }
-    if (!modelRan(state, 'stg_orders'))
-      return { passed: false, reason: 'Run dbt run to build stg_orders.' }
-    if (!testPassed(state, 'stg_orders'))
-      return { passed: false, reason: 'Run dbt test to validate your tests.' }
+    if (!modelRan(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt run to build stg_customers first.' }
+    if (!testPassed(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt test to check the data quality.' }
     return { passed: true }
   },
-  badge: { id: 'test-author', name: 'Test Author', emoji: '🧪' },
+  badge: { id: 'quality-check', name: 'Quality Check', emoji: '✅' },
+  quiz: {
+    question: 'Which dbt built-in generic test asserts that no values in a column are NULL?',
+    options: [
+      'unique',
+      'accepted_values',
+      'not_null',
+      'relationships',
+    ],
+    correctIndex: 2,
+    explanation: "The 'not_null' test fails if any row has a NULL in the specified column. The 'unique' test checks for duplicates, 'accepted_values' validates a whitelist, and 'relationships' enforces referential integrity.",
+  },
 }
 
 export default level09

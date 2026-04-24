@@ -11,47 +11,56 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 const level02: Level = {
   id: 2,
   chapter: 1,
-  title: 'Your first model',
-  description: `A dbt model is a SQL file you write and maintain. The results are rebuilt every time you run dbt — making your transformations reproducible and version-controlled.
+  title: 'Explore your model',
+  description: `You just built stg_customers as a view in DuckDB. But what does the output actually look like?
 
-The stg_customers model is almost complete, but the created_at column is missing. Without it, the analytics team won't know when each customer signed up.
+dbt has a command for that: dbt show. It queries the model directly and prints a preview of the rows in the terminal.
 
-Your task: add created_at to the SELECT statement, then run dbt run to rebuild the model.`,
-  hint: 'Add `created_at` to the select list, between email and country. Then run dbt run.',
+  dbt show --select stg_customers
+
+After running it, dbt-quest will also open the Results tab automatically so you can see the data in a table format. Notice that stg_customers also appears in the Database Explorer on the left — it's a real view you can query at any time.
+
+Your task: run dbt run to rebuild the model, then run dbt show --select stg_customers to preview the data.`,
+  hint: 'First run `dbt run`, then run `dbt show --select stg_customers`. The Results tab will open automatically.',
   initialFiles: {
-    'models/stg_customers.sql': `-- This model is missing the created_at column.
--- Add it to the SELECT list below (hint: between email and country),
--- then run dbt run to rebuild the model.
-
-select
+    'models/stg_customers.sql': `select
     id,
     name,
     email,
-    -- ← add created_at here
+    created_at,
     country
 from raw_customers`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
   },
-  requiredSteps: ['files', 'run'],
+  requiredSteps: ['run'],
   goal: {
-    description: 'Add the created_at column to stg_customers, then run dbt run.',
+    description: 'Run dbt run, then run dbt show --select stg_customers to preview the output.',
     dagShape: {
       nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
       edges: [],
     },
   },
   validate: (state) => {
-    // Strip -- comments so the placeholder comment doesn't satisfy the check.
-    const sql = (state.files['models/stg_customers.sql'] ?? '').replace(/--[^\n]*/g, '')
-    if (!sql.includes('created_at'))
-      return { passed: false, reason: 'Add the created_at column to the SELECT statement.' }
     if (!modelRan(state, 'stg_customers'))
-      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
+      return { passed: false, reason: 'Run `dbt run` to build the model first.' }
+    if (!state.shownModels.has('stg_customers'))
+      return { passed: false, reason: 'Run `dbt show --select stg_customers` to preview the data.' }
     return { passed: true }
   },
-  badge: { id: 'first-model', name: 'First Model', emoji: '🌱' },
+  badge: { id: 'first-preview', name: 'First Preview', emoji: '🔍' },
+  quiz: {
+    question: 'By default, what does dbt create when you run a model?',
+    options: [
+      'A permanent table with data physically stored',
+      'A view — a saved query that runs each time it is read',
+      'A CSV file exported to the filesystem',
+      'A materialized view with incremental updates',
+    ],
+    correctIndex: 1,
+    explanation: "By default dbt materializes models as views. A view doesn't store data — it re-runs the SELECT query each time someone reads it. You can see this in the Database Explorer, where stg_customers appears under Views.",
+  },
 }
 
 export default level02

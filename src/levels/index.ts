@@ -9,6 +9,7 @@ import level07 from './level07'
 import level08 from './level08'
 import level09 from './level09'
 import level10 from './level10'
+import level11 from './level11'
 
 export const levels: Level[] = [
   level01,
@@ -21,6 +22,7 @@ export const levels: Level[] = [
   level08,
   level09,
   level10,
+  level11,
 ]
 
 export interface Module {
@@ -35,31 +37,31 @@ export const modules: Module[] = [
     id: 1,
     title: 'Foundations',
     description: 'Understand SQL models and the dbt workflow.',
-    levelIds: [1, 2, 3],
+    levelIds: [1, 2, 3, 4],
   },
   {
     id: 2,
     title: 'Dependencies',
     description: 'Connect models using ref() to build a dependency graph.',
-    levelIds: [4, 5, 6],
+    levelIds: [5, 6, 7],
   },
   {
     id: 3,
     title: 'Materializations',
     description: 'Control how models are built with config().',
-    levelIds: [7],
+    levelIds: [8],
   },
   {
     id: 4,
     title: 'Data Quality',
     description: 'Validate your data with dbt tests.',
-    levelIds: [8, 9],
+    levelIds: [9, 10],
   },
   {
     id: 5,
     title: 'Sources',
     description: 'Declare raw input tables as explicit sources.',
-    levelIds: [10],
+    levelIds: [11],
   },
 ]
 

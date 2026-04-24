@@ -1,8 +1,6 @@
 import type { Level } from '../engine/types'
-import { sourceDefined, modelRan } from '../engine/validators'
+import { modelRan, testPassed } from '../engine/validators'
 
-// For level 10 the seed key uses the "source.table" format so DuckDB registers
-// it as raw__customers — matching what {{ source('raw', 'customers') }} compiles to.
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@sparkle.co,2024-01-05,US
 2,Bob Chen,bob@sparkle.co,2024-01-17,CA
@@ -10,26 +8,45 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
 5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
 
+const RAW_ORDERS = `id,customer_id,amount,status,created_at
+1,1,49.99,completed,2024-01-10
+2,1,24.99,completed,2024-01-20
+3,2,89.99,completed,2024-01-25
+4,3,12.99,pending,2024-02-05
+5,4,199.99,completed,2024-02-15
+6,5,39.99,refunded,2024-03-05
+7,1,59.99,completed,2024-03-12
+8,2,14.99,pending,2024-04-01`
+
 const level10: Level = {
-  id: 10,
-  chapter: 5,
-  title: 'Using source()',
-  description: `Until now, models have referenced raw tables directly (e.g. from raw_customers). This works, but dbt has a better way: sources.
+  id: 9,
+  chapter: 4,
+  title: 'Create your first test',
+  description: `You know how to run pre-configured tests. Now it's time to write your own.
 
-Declaring a source tells dbt:
-  - Where your raw data comes from.
-  - How to reference it consistently using {{ source('name', 'table') }}.
-  - That it's raw input, not a model — so it shows up differently in the DAG.
+Tests are defined in YAML files under the model and column they apply to. A common dbt convention is to keep one YAML file per model, sitting next to the .sql file. Here's the structure:
 
-Sources are usually declared in a dedicated YAML file like sources.yml.
+  models:
+    - name: my_model
+      columns:
+        - name: my_column
+          tests:
+            - not_null
+            - unique
 
-Your task has two steps:
-  1. Declare the raw.customers source in sources.yml (a starter file is provided).
-  2. Replace \`from raw_customers\` in stg_customers.sql with \`from {{ source('raw', 'customers') }}\`.
+stg_customers.yml already has tests configured. The stg_orders model also needs data quality checks — specifically, every order_id should be unique and not null.
 
-Then run dbt run to rebuild the model.`,
-  hint: "In sources.yml add:\nsources:\n  - name: raw\n    tables:\n      - name: customers\n\nIn stg_customers.sql replace the FROM clause with:\nfrom {{ source('raw', 'customers') }}",
+Your task: open stg_orders.yml and add not_null and unique tests for the order_id column. Then run dbt run and dbt test.`,
+  hint: 'In stg_orders.yml, replace the TODO comment with:\n        tests:\n          - not_null\n          - unique',
   initialFiles: {
+    'models/stg_orders.yml': `version: 2
+
+models:
+  - name: stg_orders
+    columns:
+      - name: order_id
+        # TODO: Add not_null and unique tests here
+`,
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
@@ -37,37 +54,65 @@ Then run dbt run to rebuild the model.`,
     created_at,
     country
 from raw_customers`,
-    'models/sources.yml': `version: 2
+    'models/stg_customers.yml': `version: 2
 
-# TODO: Declare the raw.customers source here.
-# See the hint for the exact YAML shape.
+models:
+  - name: stg_customers
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
 `,
+    'models/stg_orders.sql': `select
+    id         as order_id,
+    customer_id,
+    amount,
+    status,
+    created_at
+from raw_orders`,
   },
   seeds: {
-    'raw.customers': RAW_CUSTOMERS,
+    raw_customers: RAW_CUSTOMERS,
+    raw_orders: RAW_ORDERS,
   },
-  requiredSteps: ['files', 'run'],
+  requiredSteps: ['files', 'run', 'test'],
   goal: {
-    description: "Declare raw.customers as a source and use {{ source('raw', 'customers') }} in stg_customers.sql.",
+    description: 'Add not_null and unique tests to stg_orders.yml, then run dbt run and dbt test.',
     dagShape: {
       nodes: [
-        { id: 'raw.customers', label: 'raw.customers', layer: 'source' },
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
+        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
       ],
-      edges: [{ source: 'raw.customers', target: 'stg_customers' }],
+      edges: [],
     },
   },
   validate: (state) => {
-    if (!sourceDefined(state, 'raw', 'customers'))
-      return { passed: false, reason: 'Declare raw.customers as a source in schema.yml.' }
-    const sql = state.files['models/stg_customers.sql'] ?? ''
-    if (!/source\s*\(\s*['"]raw['"]\s*,\s*['"]customers['"]\s*\)/.test(sql))
-      return { passed: false, reason: "Replace `from raw_customers` with `from {{ source('raw', 'customers') }}`." }
-    if (!modelRan(state, 'stg_customers'))
-      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
+    const yml = state.files['models/stg_orders.yml'] ?? ''
+    if (!yml.includes('stg_orders'))
+      return { passed: false, reason: 'Keep the stg_orders model entry in stg_orders.yml.' }
+    if (!yml.includes('not_null'))
+      return { passed: false, reason: 'Add a not_null test for stg_orders.order_id.' }
+    if (!yml.includes('unique'))
+      return { passed: false, reason: 'Add a unique test for stg_orders.order_id.' }
+    if (!modelRan(state, 'stg_orders'))
+      return { passed: false, reason: 'Run dbt run to build stg_orders.' }
+    if (!testPassed(state, 'stg_orders'))
+      return { passed: false, reason: 'Run dbt test to validate your tests.' }
     return { passed: true }
   },
-  badge: { id: 'source-declared', name: 'Source Declared', emoji: '📡' },
+  badge: { id: 'test-author', name: 'Test Author', emoji: '🧪' },
+  quiz: {
+    question: 'Where do you define column-level tests for a dbt model?',
+    options: [
+      'Directly inside the .sql model file using comments',
+      'In a YAML file (schema.yml) alongside the model',
+      'In a dedicated tests/ directory as Python files',
+      'Only in dbt_project.yml at the project root',
+    ],
+    correctIndex: 1,
+    explanation: "Tests are declared in YAML files (typically schema.yml) in the same directory as your models. Each model can have a 'columns' section where you list tests like not_null and unique per column.",
+  },
 }
 
 export default level10

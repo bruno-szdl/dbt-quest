@@ -11,6 +11,7 @@ export interface TerminalLine {
 export interface RunnerState {
   files: Record<string, string>
   ranModels: Set<string>
+  shownModels: Set<string>
   testResults: Record<string, 'pass' | 'fail' | 'untested'>
 }
 
