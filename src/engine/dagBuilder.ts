@@ -159,13 +159,12 @@ export function buildDag(files: Record<string, string>): { nodes: DagNode[]; edg
     }
   }
 
-  // 1. Collect declared sources from schema.yml files
+  // 1. Collect declared sources from any models/*.yml file
   for (const [path, content] of Object.entries(files)) {
-    const filename = path.split('/').pop() ?? ''
-    if (filename === 'schema.yml' || filename === 'schema.yaml') {
-      for (const { id, label } of parseSchemaYmlSources(content)) {
-        ensureSource(id, label)
-      }
+    if (!path.startsWith('models/')) continue
+    if (!path.endsWith('.yml') && !path.endsWith('.yaml')) continue
+    for (const { id, label } of parseSchemaYmlSources(content)) {
+      ensureSource(id, label)
     }
   }
 
@@ -173,6 +172,30 @@ export function buildDag(files: Record<string, string>): { nodes: DagNode[]; edg
   const modelFiles = Object.entries(files).filter(
     ([p]) => p.startsWith('models/') && p.endsWith('.sql'),
   )
+  // 2a. Parse snapshot files — same lineage semantics as a model.
+  const snapshotFiles = Object.entries(files).filter(
+    ([p]) => p.startsWith('snapshots/') && p.endsWith('.sql'),
+  )
+  const SNAPSHOT_NAME_RE = /\{%\s*snapshot\s+([A-Za-z_][A-Za-z0-9_]*)\s*%\}/
+  for (const [, content] of snapshotFiles) {
+    const m = SNAPSHOT_NAME_RE.exec(content)
+    if (!m) continue
+    const name = m[1]
+    if (!nodesMap.has(name)) {
+      nodesMap.set(name, { id: name, label: name, layer: 'intermediate', hasCycle: false })
+    }
+    for (const ref of extractRefs(content)) {
+      if (!nodesMap.has(ref)) {
+        nodesMap.set(ref, { id: ref, label: ref, layer: getModelLayer(ref, ''), hasCycle: false })
+      }
+      addEdge(ref, name)
+    }
+    for (const [src, table] of extractSourceCalls(content)) {
+      const srcId = `${src}.${table}`
+      ensureSource(srcId, `${src}.${table}`)
+      addEdge(srcId, name)
+    }
+  }
 
   for (const [path, content] of modelFiles) {
     const name = path.split('/').pop()!.replace(/\.sql$/, '')

@@ -1,78 +1,74 @@
 import type { Level } from '../engine/types'
 import { modelRefs, modelRan } from '../engine/validators'
 
-const RAW_ORDERS = `id,customer_id,amount,status,created_at
-1,1,49.99,completed,2024-01-10
-2,1,24.99,completed,2024-01-20
-3,2,89.99,completed,2024-01-25
-4,3,12.99,pending,2024-02-05
-5,4,199.99,completed,2024-02-15
-6,5,39.99,refunded,2024-03-05
-7,1,59.99,completed,2024-03-12
-8,2,14.99,pending,2024-04-01`
+const RAW_CUSTOMERS = `id,name,email,created_at,country
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,carol@example.com,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE`
 
 const level06: Level = {
-  id: 5,
+  id: 6,
   chapter: 2,
-  title: 'Using ref()',
-  description: `When a model depends on another model, you should reference it using {{ ref('model_name') }} instead of the table name directly.
+  title: 'Use ref() to reference another model',
+  description: `Models almost always build on top of other models. When one model depends on another, you should reference it with {{ ref('model_name') }} instead of writing the table name directly.
 
-Open the Lineage tab now. You'll see stg_orders and customer_orders as disconnected nodes — dbt has no idea one depends on the other.
+Using ref() buys you two things:
+  1. dbt learns about the dependency and builds upstream models first, in the correct order.
+  2. The reference resolves to the right place in every environment automatically (dev, prod, etc.).
 
-ref() fixes this in two ways:
-  1. dbt learns the dependency and builds models in the right order.
-  2. The edge appears in the lineage, making the data flow explicit.
-
-ref() also resolves to the correct location for each environment automatically. In dev it points to your personal schema, in prod to the production schema — you write the same SQL everywhere and dbt handles the rest.
-
-Your task: replace \`from stg_orders\` with \`from {{ ref('stg_orders') }}\`, run dbt run, then check the Lineage tab again to see the edge appear.`,
-  hint: "Change `from stg_orders` to `from {{ ref('stg_orders') }}`. The double curly braces are dbt's Jinja template syntax.",
+Your task: open models/int_customer_summary.sql and replace \`from stg_customers\` with \`from {{ ref('stg_customers') }}\`. Then run dbt run.`,
+  hint: "Change `from stg_customers` to `from {{ ref('stg_customers') }}`. The double curly braces are dbt's Jinja template syntax.",
   initialFiles: {
-    'models/stg_orders.sql': `select
-    id         as order_id,
-    customer_id,
-    amount,
-    status,
-    created_at
-from raw_orders`,
-    'models/customer_orders.sql': `-- Task: Replace the bare table name with {{ ref('stg_orders') }}
--- to declare the dependency between models.
+    'models/stg_customers.sql': `select
+    id         as customer_id,
+    name       as customer_name,
+    email,
+    created_at,
+    country
+from raw_customers`,
+    'models/int_customer_summary.sql': `-- Task: replace the bare table name with {{ ref('stg_customers') }}
+-- so dbt recognises the dependency.
 
-select *
-from stg_orders`,
+select
+    customer_id,
+    customer_name,
+    country
+from stg_customers`,
   },
   seeds: {
-    raw_orders: RAW_ORDERS,
+    raw_customers: RAW_CUSTOMERS,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: "Replace `from stg_orders` with `from {{ ref('stg_orders') }}`, run dbt run, and watch the edge appear in the Lineage tab.",
+    description: "Update int_customer_summary.sql to use {{ ref('stg_customers') }}, then run dbt run.",
     dagShape: {
       nodes: [
-        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-        { id: 'customer_orders', label: 'customer_orders', layer: 'mart' },
+        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
+        { id: 'int_customer_summary', label: 'int_customer_summary', layer: 'intermediate' },
       ],
-      edges: [{ source: 'stg_orders', target: 'customer_orders' }],
+      edges: [{ source: 'stg_customers', target: 'int_customer_summary' }],
     },
   },
   validate: (state) => {
-    if (!modelRefs(state, 'customer_orders', 'stg_orders'))
-      return { passed: false, reason: "Replace `from stg_orders` with `from {{ ref('stg_orders') }}`." }
-    if (!modelRan(state, 'customer_orders'))
+    if (!modelRefs(state, 'int_customer_summary', 'stg_customers'))
+      return { passed: false, reason: "Use {{ ref('stg_customers') }} in int_customer_summary.sql." }
+    if (!modelRan(state, 'int_customer_summary'))
       return { passed: false, reason: 'Run dbt run to build the model.' }
     return { passed: true }
   },
   badge: { id: 'first-ref', name: 'First ref()', emoji: '🔗' },
   quiz: {
-    question: "What does {{ ref('model_name') }} do in a dbt model?",
+    question: "What does {{ ref('model_name') }} tell dbt?",
     options: [
-      'Imports a Jinja macro from the macros/ directory',
-      'Runs a raw SQL query against the database',
-      'References another dbt model and creates a DAG dependency',
-      'Creates a database function named model_name',
+      'To import a Jinja macro',
+      'To copy the referenced table physically',
+      'That this model depends on another model',
+      'To create a new schema',
     ],
     correctIndex: 2,
-    explanation: "ref() tells dbt that this model depends on another. dbt uses this to build a DAG and ensures the referenced model is always built first, in the correct order.",
+    explanation: "ref() declares a dependency. dbt uses it to order builds and to resolve the referenced model to the correct schema for each environment.",
   },
 }
 

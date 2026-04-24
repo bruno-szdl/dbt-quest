@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { parseCommand } from '../engine/commandParser'
 import { execute } from '../engine/runner'
-import { previewModel } from '../engine/executor'
+import { previewModel, plan, materializeModels } from '../engine/executor'
 import { getLevelById } from '../levels'
 import type { TerminalLine } from '../engine/runner'
 import { registerCsv, resetDb } from '../engine/duckdb'
@@ -26,6 +26,12 @@ interface StoreState {
   ranModels: Set<string>
   shownModels: Set<string>
   testResults: Record<string, 'pass' | 'fail' | 'untested'>
+  modelColumns: Record<string, string[]>
+  loadedSeeds: Set<string>
+  buildSucceeded: boolean
+  snapshotRunCounts: Record<string, number>
+  snapshotClosedRows: Record<string, number>
+  manuallyMarkedComplete: Set<number>
   terminalHistory: TerminalLine[]
   running: boolean
   lastPreview: PreviewResult | null
@@ -53,6 +59,7 @@ interface StoreState {
   resetLevel: () => Promise<void>
   checkLevel: () => void
   revealHint: () => void
+  markLessonComplete: () => void
   dismissLevelComplete: () => void
   openLevelComplete: () => void
   dismissLevelCompleteModal: () => void
@@ -82,6 +89,12 @@ export const useGameStore = create<StoreState>((set, get) => ({
   ranModels: new Set<string>(),
   shownModels: new Set<string>(),
   testResults: {},
+  modelColumns: {},
+  loadedSeeds: new Set<string>(),
+  buildSucceeded: false,
+  snapshotRunCounts: {},
+  snapshotClosedRows: {},
+  manuallyMarkedComplete: new Set<number>(),
   terminalHistory: [{ text: 'dbt-quest — loading...', color: 'gray' }],
   running: false,
   lastPreview: null,
@@ -165,19 +178,33 @@ export const useGameStore = create<StoreState>((set, get) => ({
         ranModels: s.ranModels,
         shownModels: s.shownModels,
         testResults: s.testResults,
+        modelColumns: s.modelColumns,
+        loadedSeeds: s.loadedSeeds,
+        buildSucceeded: s.buildSucceeded,
+        snapshotRunCounts: s.snapshotRunCounts,
+        snapshotClosedRows: s.snapshotClosedRows,
       })
 
       set((current) => ({
         terminalHistory: [...current.terminalHistory, ...result.lines],
         ranModels: result.updatedState.ranModels ?? current.ranModels,
         testResults: result.updatedState.testResults ?? current.testResults,
+        modelColumns: result.updatedState.modelColumns ?? current.modelColumns,
+        loadedSeeds: result.updatedState.loadedSeeds ?? current.loadedSeeds,
+        buildSucceeded: result.updatedState.buildSucceeded ?? current.buildSucceeded,
+        snapshotRunCounts: result.updatedState.snapshotRunCounts ?? current.snapshotRunCounts,
+        snapshotClosedRows: result.updatedState.snapshotClosedRows ?? current.snapshotClosedRows,
       }))
 
       // Mirror `dbt show --select <m>` results into the Results tab.
-      if (parsed.command.type === 'show' && parsed.command.select.length === 1) {
-        const target = parsed.command.select[0].name
+      const showTerm = parsed.command.type === 'show' && parsed.command.select.length === 1
+        ? parsed.command.select[0].terms[0]
+        : null
+      const showTarget = showTerm?.method === 'fqn' ? showTerm.value : null
+      if (showTarget) {
         const latestRan = result.updatedState.ranModels ?? get().ranModels
-        if (latestRan.has(target)) {
+        if (latestRan.has(showTarget)) {
+          const target = showTarget
           try {
             const res = await previewModel(target, 20)
             set((cur) => ({
@@ -275,6 +302,11 @@ export const useGameStore = create<StoreState>((set, get) => ({
       ranModels: new Set<string>(),
       shownModels: new Set<string>(),
       testResults: {},
+      modelColumns: {},
+      loadedSeeds: new Set<string>(),
+      buildSucceeded: false,
+      snapshotRunCounts: {},
+      snapshotClosedRows: {},
       currentLevelId: id,
       hintRevealed: false,
       levelJustCompleted: false,
@@ -293,6 +325,28 @@ export const useGameStore = create<StoreState>((set, get) => ({
       for (const [key, csv] of Object.entries(seeds)) {
         await registerCsv(seedTableName(key), csv)
       }
+      // Silently register any seeds/*.csv files from initialFiles into DuckDB
+      // so downstream models work. `dbt seed` still needs to run to mark them
+      // as user-loaded for validation.
+      for (const [path, csv] of Object.entries(level.initialFiles)) {
+        if (path.startsWith('seeds/') && path.endsWith('.csv')) {
+          const name = path.split('/').pop()!.replace(/\.csv$/, '')
+          await registerCsv(name, csv.trim())
+        }
+      }
+      const preRanSet = new Set<string>()
+      const preRanColumns: Record<string, string[]> = {}
+      if (level.preRanModels?.length) {
+        const execPlan = plan(level.initialFiles)
+        const toRun = execPlan.sorted.filter((m) => level.preRanModels!.includes(m.name))
+        const outcomes = await materializeModels(toRun)
+        for (const o of outcomes) {
+          if (o.passed) {
+            preRanSet.add(o.name)
+            preRanColumns[o.name] = o.columns
+          }
+        }
+      }
       const seedNames = Object.keys(seeds)
       set((s) => ({
         terminalHistory: [
@@ -305,6 +359,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
           { text: `Try: dbt run${seedNames.length ? ' · dbt show --select <model>' : ''}`, color: 'gray' },
           { text: '' },
         ],
+        ...(preRanSet.size ? { ranModels: preRanSet, modelColumns: preRanColumns } : {}),
       }))
     } catch (e) {
       set((s) => ({
@@ -330,6 +385,13 @@ export const useGameStore = create<StoreState>((set, get) => ({
       ranModels: s.ranModels,
       shownModels: s.shownModels,
       testResults: s.testResults,
+      modelColumns: s.modelColumns,
+      loadedSeeds: s.loadedSeeds,
+      buildSucceeded: s.buildSucceeded,
+      snapshotRunCounts: s.snapshotRunCounts,
+      snapshotClosedRows: s.snapshotClosedRows,
+      manuallyMarkedComplete: s.manuallyMarkedComplete,
+      currentLevelId: s.currentLevelId,
     })
 
     if (result.passed) {
@@ -353,6 +415,16 @@ export const useGameStore = create<StoreState>((set, get) => ({
   },
 
   revealHint: () => set({ hintRevealed: true }),
+
+  markLessonComplete: () => {
+    const s = get()
+    if (!s.currentLevelId) return
+    if (s.manuallyMarkedComplete.has(s.currentLevelId)) return
+    set({
+      manuallyMarkedComplete: new Set([...s.manuallyMarkedComplete, s.currentLevelId]),
+    })
+    get().checkLevel()
+  },
 
   dismissLevelComplete: () => set({ levelJustCompleted: false }),
   openLevelComplete: () => set({ showLevelComplete: true }),

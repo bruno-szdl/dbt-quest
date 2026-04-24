@@ -1,27 +1,35 @@
 import type { Level } from '../engine/types'
-import { modelRan, testPassed } from '../engine/validators'
+import { modelMaterialization, modelRan } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@sparkle.co,2024-01-05,US
-2,Bob Chen,bob@sparkle.co,2024-01-17,CA
-3,Carol Silva,carol@sparkle.co,2024-02-02,BR
-4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
-5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,carol@example.com,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE`
+
+const RAW_ORDERS = `id,customer_id,amount,status,created_at
+1,1,49.99,completed,2024-01-10
+2,1,24.99,completed,2024-01-20
+3,2,89.99,completed,2024-01-25
+4,3,12.99,pending,2024-02-05
+5,4,199.99,completed,2024-02-15
+6,5,39.99,refunded,2024-03-05
+7,1,59.99,completed,2024-03-12
+8,2,14.99,pending,2024-04-01`
 
 const level09: Level = {
-  id: 8,
-  chapter: 4,
-  title: 'Run built-in tests',
-  description: `Transforming data is only half the job — you also need to validate it. dbt has built-in tests that can automatically check your data quality.
+  id: 9,
+  chapter: 3,
+  title: 'Change a model to table',
+  description: `By default dbt materializes models as views. A view is cheap to build but runs the underlying query every time it is read. For models that are queried often or are expensive to compute, building them as a table is usually a better choice.
 
-The two most common tests are:
-  - not_null: fails if any value in a column is NULL.
-  - unique: fails if any value appears more than once.
+You change the materialization with a config() block at the top of the model file:
 
-Tests are declared in schema.yml. They have already been configured for stg_customers in this level.
+  {{ config(materialized='table') }}
 
-Your task: first run dbt run to build the model, then run dbt test to check the data quality. Watch the test results appear in the terminal.`,
-  hint: 'Run `dbt run` first to build the model, then run `dbt test` to execute the data quality checks.',
+The customer_orders mart is read frequently by the analytics team. Your task: add the config() line to customer_orders.sql and run dbt run. Then look at the Database Explorer — the model should now appear under Tables instead of Views.`,
+  hint: "Add this as the first line of customer_orders.sql:\n\n{{ config(materialized='table') }}",
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
@@ -30,49 +38,61 @@ Your task: first run dbt run to build the model, then run dbt test to check the 
     created_at,
     country
 from raw_customers`,
-    'models/stg_customers.yml': `version: 2
-
-models:
-  - name: stg_customers
-    columns:
-      - name: customer_id
-        tests:
-          - not_null
-          - unique
-      - name: email
-        tests:
-          - not_null
-`,
+    'models/stg_orders.sql': `select
+    id         as order_id,
+    customer_id,
+    amount,
+    status,
+    created_at
+from raw_orders`,
+    'models/customer_orders.sql': `select
+    c.customer_id,
+    c.customer_name,
+    c.country,
+    o.order_id,
+    o.amount,
+    o.status
+from {{ ref('stg_customers') }} as c
+join {{ ref('stg_orders') }} as o
+    on c.customer_id = o.customer_id`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
+    raw_orders: RAW_ORDERS,
   },
-  requiredSteps: ['run', 'test'],
+  requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Run dbt run to build stg_customers, then run dbt test to pass the data quality checks.',
+    description: "Add {{ config(materialized='table') }} to customer_orders.sql and run dbt run.",
     dagShape: {
-      nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
-      edges: [],
+      nodes: [
+        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
+        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
+        { id: 'customer_orders', label: 'customer_orders', layer: 'mart' },
+      ],
+      edges: [
+        { source: 'stg_customers', target: 'customer_orders' },
+        { source: 'stg_orders', target: 'customer_orders' },
+      ],
     },
   },
   validate: (state) => {
-    if (!modelRan(state, 'stg_customers'))
-      return { passed: false, reason: 'Run dbt run to build stg_customers first.' }
-    if (!testPassed(state, 'stg_customers'))
-      return { passed: false, reason: 'Run dbt test to check the data quality.' }
+    if (!modelMaterialization(state, 'customer_orders', 'table'))
+      return { passed: false, reason: "Add {{ config(materialized='table') }} at the top of customer_orders.sql." }
+    if (!modelRan(state, 'customer_orders'))
+      return { passed: false, reason: 'Run dbt run to materialize the model as a table.' }
     return { passed: true }
   },
-  badge: { id: 'quality-check', name: 'Quality Check', emoji: '✅' },
+  badge: { id: 'table-time', name: 'Table Time', emoji: '🗄️' },
   quiz: {
-    question: 'Which dbt built-in generic test asserts that no values in a column are NULL?',
+    question: "What is the practical difference between dbt's `view` and `table` materializations?",
     options: [
-      'unique',
-      'accepted_values',
-      'not_null',
-      'relationships',
+      'A view stores rows; a table is a saved query',
+      'A table stores rows; a view is a saved query that re-runs on read',
+      'They are identical apart from naming',
+      'Tables only work on incremental models',
     ],
-    correctIndex: 2,
-    explanation: "The 'not_null' test fails if any row has a NULL in the specified column. The 'unique' test checks for duplicates, 'accepted_values' validates a whitelist, and 'relationships' enforces referential integrity.",
+    correctIndex: 1,
+    explanation: "A table persists the result rows, so reads are fast but must be rebuilt to reflect upstream changes. A view just stores the query definition — every read re-executes it against the latest upstream data.",
   },
 }
 

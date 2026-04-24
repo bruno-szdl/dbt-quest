@@ -1,34 +1,27 @@
 import type { Level } from '../engine/types'
-import { sourceDefined, modelRan } from '../engine/validators'
+import { manuallyMarked } from '../engine/validators'
 
-// For level 10 the seed key uses the "source.table" format so DuckDB registers
-// it as raw__customers — matching what {{ source('raw', 'customers') }} compiles to.
+// Intentionally contains issues: a NULL email (id=3) and a duplicate customer id (5 twice).
 const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@sparkle.co,2024-01-05,US
-2,Bob Chen,bob@sparkle.co,2024-01-17,CA
-3,Carol Silva,carol@sparkle.co,2024-02-02,BR
-4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
-5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE
+5,Eve Müller,eve+dup@example.com,2024-03-02,DE`
 
 const level11: Level = {
   id: 11,
-  chapter: 5,
-  title: 'Using source()',
-  description: `Until now, models have referenced raw tables directly (e.g. from raw_customers). This works, but dbt has a better way: sources.
+  chapter: 4,
+  title: 'Find a data issue',
+  description: `A model can run successfully and still produce bad data. "It ran" only tells you the SQL was syntactically valid — not that the rows are correct.
 
-Declaring a source tells dbt:
-  - Where your raw data comes from.
-  - How to reference it consistently using {{ source('name', 'table') }}.
-  - That it's raw input, not a model — so it shows up differently in the DAG.
+The two most common data quality issues you will hunt for in analytics are:
+  • NULLs where a value should always exist (like an id or an email).
+  • Duplicates on a column that should be unique (like a customer id).
 
-Sources are usually declared in a dedicated YAML file like sources.yml.
-
-Your task has two steps:
-  1. Declare the raw.customers source in sources.yml (a starter file is provided).
-  2. Replace \`from raw_customers\` in stg_customers.sql with \`from {{ source('raw', 'customers') }}\`.
-
-Then run dbt run to rebuild the model.`,
-  hint: "In sources.yml add:\nsources:\n  - name: raw\n    tables:\n      - name: customers\n\nIn stg_customers.sql replace the FROM clause with:\nfrom {{ source('raw', 'customers') }}",
+Your task here is pure inspection — no code to write. Run \`dbt show --select stg_customers\` and look at the rows carefully. You should see both problems hiding in the result. Once you have spotted them, mark the lesson complete below.`,
+  hint: 'Run `dbt show --select stg_customers` and scan the customer_id and email columns.',
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
@@ -37,47 +30,36 @@ Then run dbt run to rebuild the model.`,
     created_at,
     country
 from raw_customers`,
-    'models/sources.yml': `version: 2
-
-# TODO: Declare the raw.customers source here.
-# See the hint for the exact YAML shape.
-`,
   },
   seeds: {
-    'raw.customers': RAW_CUSTOMERS,
+    raw_customers: RAW_CUSTOMERS,
   },
-  requiredSteps: ['files', 'run'],
+  preRanModels: ['stg_customers'],
+  requiredSteps: [],
+  manualCompletion: true,
   goal: {
-    description: "Declare raw.customers as a source and use {{ source('raw', 'customers') }} in stg_customers.sql.",
+    description: 'Preview stg_customers, spot the data issues, then mark complete.',
     dagShape: {
-      nodes: [
-        { id: 'raw.customers', label: 'raw.customers', layer: 'source' },
-        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-      ],
-      edges: [{ source: 'raw.customers', target: 'stg_customers' }],
+      nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
+      edges: [],
     },
   },
   validate: (state) => {
-    if (!sourceDefined(state, 'raw', 'customers'))
-      return { passed: false, reason: 'Declare raw.customers as a source in schema.yml.' }
-    const sql = state.files['models/stg_customers.sql'] ?? ''
-    if (!/source\s*\(\s*['"]raw['"]\s*,\s*['"]customers['"]\s*\)/.test(sql))
-      return { passed: false, reason: "Replace `from raw_customers` with `from {{ source('raw', 'customers') }}`." }
-    if (!modelRan(state, 'stg_customers'))
-      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
+    if (!manuallyMarked(state))
+      return { passed: false, reason: 'Preview the model, spot the issues, then mark complete.' }
     return { passed: true }
   },
-  badge: { id: 'source-declared', name: 'Source Declared', emoji: '📡' },
+  badge: { id: 'data-detective', name: 'Data Detective', emoji: '🕵️' },
   quiz: {
-    question: "What is the purpose of {{ source('raw', 'customers') }} in a dbt model?",
+    question: 'Which of the following does NOT indicate a data quality problem?',
     options: [
-      "It creates a raw copy of the 'customers' table in your warehouse",
-      "It seeds the database with CSV data from a file named customers.csv",
-      "It references an upstream data source that dbt does not own or build",
-      "It runs a raw SQL query without Jinja compilation",
+      'A NULL value in a column that should always have a value',
+      'A duplicate id in a column meant to be unique',
+      'A row count that changes between runs because upstream data changed',
+      'Two customers with completely different details sharing the same customer_id',
     ],
     correctIndex: 2,
-    explanation: "source() references tables that exist in your warehouse but are loaded by external processes (like an ETL tool), not by dbt. Declaring them in sources.yml lets dbt document lineage, run freshness checks, and display them in the DAG.",
+    explanation: 'Row counts changing over time is normal — data evolves. NULLs in non-nullable columns and duplicates on identifiers, on the other hand, are classic quality issues and the main target of dbt tests.',
   },
 }
 

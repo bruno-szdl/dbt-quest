@@ -1,33 +1,31 @@
 import type { Level } from '../engine/types'
-import { modelRan } from '../engine/validators'
+import { modelRan, outputColumnsInclude } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@sparkle.co,2024-01-05,US
-2,Bob Chen,bob@sparkle.co,2024-01-17,CA
-3,Carol Silva,carol@sparkle.co,2024-02-02,BR
-4,Dave Kumar,dave@sparkle.co,2024-02-11,IN
-5,Eve Müller,eve@sparkle.co,2024-03-01,DE`
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,carol@example.com,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE`
 
 const level03: Level = {
   id: 3,
   chapter: 1,
-  title: 'Your first model',
-  description: `A dbt model is a SQL file you write and maintain. The results are rebuilt every time you run dbt — making your transformations reproducible and version-controlled.
+  title: 'Add a column and run again',
+  description: `Editing the SQL in a model changes the shape of the dataset dbt produces. Because every run rebuilds the model from scratch, fixing a bug or adding a column is usually just: edit the file, hit run.
 
-The stg_customers model is almost complete, but the created_at column is missing. Without it, the analytics team won't know when each customer signed up.
+The starter stg_customers model is missing the email column. The analytics team wants to contact customers, so email needs to be included in the clean model.
 
-Your task: add created_at to the SELECT statement, then run dbt run to rebuild the model.`,
-  hint: 'Add `created_at` to the select list, between email and country. Then run dbt run.',
+Your task: add email to the SELECT list and run dbt run again.`,
+  hint: 'Add `email` to the select list, for example between `name` and `country`. Then run `dbt run`.',
   initialFiles: {
-    'models/stg_customers.sql': `-- This model is missing the created_at column.
--- Add it to the SELECT list below (hint: between email and country),
--- then run dbt run to rebuild the model.
+    'models/stg_customers.sql': `-- The analytics team wants email in this model.
+-- Add the email column to the SELECT list, then run dbt run.
 
 select
     id,
     name,
-    email,
-    -- ← add created_at here
+    -- add email here
     country
 from raw_customers`,
   },
@@ -36,32 +34,30 @@ from raw_customers`,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Add the created_at column to stg_customers, then run dbt run.',
+    description: 'Add `email` to stg_customers and run `dbt run`.',
     dagShape: {
       nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
       edges: [],
     },
   },
   validate: (state) => {
-    // Strip -- comments so the placeholder comment doesn't satisfy the check.
-    const sql = (state.files['models/stg_customers.sql'] ?? '').replace(/--[^\n]*/g, '')
-    if (!sql.includes('created_at'))
-      return { passed: false, reason: 'Add the created_at column to the SELECT statement.' }
     if (!modelRan(state, 'stg_customers'))
       return { passed: false, reason: 'Run dbt run to rebuild the model.' }
+    if (!outputColumnsInclude(state, 'stg_customers', ['id', 'name', 'email', 'country']))
+      return { passed: false, reason: 'The output should include id, name, email, and country.' }
     return { passed: true }
   },
-  badge: { id: 'first-model', name: 'First Model', emoji: '🌱' },
+  badge: { id: 'first-column', name: 'First Column', emoji: '➕' },
   quiz: {
-    question: 'In dbt, what is a "model"?',
+    question: 'After editing a model file, what do you need to do for the change to appear in the warehouse?',
     options: [
-      'A Python class that defines transformations',
-      'A SQL SELECT statement saved as a .sql file',
-      'A CREATE TABLE statement executed directly',
-      'A JSON configuration describing the schema',
+      'Nothing — dbt picks up edits automatically',
+      'Run `dbt compile`',
+      'Run `dbt run`',
+      'Restart the warehouse',
     ],
-    correctIndex: 1,
-    explanation: 'A dbt model is simply a SQL SELECT statement in a .sql file. dbt wraps it with CREATE VIEW or CREATE TABLE automatically based on your materialization setting.',
+    correctIndex: 2,
+    explanation: '`dbt run` re-executes the SELECT against your warehouse and replaces the view or table with the new definition. Without it, the warehouse still shows the previous version of the model.',
   },
 }
 

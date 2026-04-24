@@ -1,15 +1,21 @@
-export type CommandType = 'run' | 'test' | 'build' | 'show'
+export type CommandType = 'run' | 'test' | 'build' | 'show' | 'compile' | 'seed' | 'snapshot'
 
-export interface Selector {
-  name: string
-  upstream: boolean   // +name
-  downstream: boolean // name+
+export interface SelectorTerm {
+  method: 'fqn' | 'tag' | 'path'
+  value: string
+  upstream: boolean   // +term
+  downstream: boolean // term+
+}
+
+// Comma-separated terms within one token are ANDed (intersection).
+export interface SelectorGroup {
+  terms: SelectorTerm[]
 }
 
 export interface ParsedCommand {
   type: CommandType
-  select: Selector[]
-  exclude: Selector[]
+  select: SelectorGroup[]  // space-separated groups are ORed (union)
+  exclude: SelectorGroup[]
   raw: string
 }
 
@@ -17,14 +23,27 @@ export type ParseResult =
   | { ok: true; command: ParsedCommand }
   | { ok: false; error: string }
 
-const VALID_SUBCOMMANDS = ['run', 'test', 'build', 'show'] as const
+const VALID_SUBCOMMANDS = ['run', 'test', 'build', 'show', 'compile', 'seed', 'snapshot'] as const
 
-function parseSelector(token: string): Selector {
-  return {
-    upstream: token.startsWith('+'),
-    downstream: token.endsWith('+'),
-    name: token.replace(/^\+/, '').replace(/\+$/, ''),
+function parseSelectorTerm(raw: string): SelectorTerm {
+  const upstream = raw.startsWith('+')
+  const downstream = raw.endsWith('+')
+  let value = raw.replace(/^\+/, '').replace(/\+$/, '')
+  let method: 'fqn' | 'tag' | 'path' = 'fqn'
+  if (value.startsWith('tag:')) {
+    method = 'tag'
+    value = value.slice(4)
+  } else if (value.startsWith('path:')) {
+    method = 'path'
+    value = value.slice(5)
+  } else if (value.includes('/')) {
+    method = 'path'
   }
+  return { method, value, upstream, downstream }
+}
+
+function parseSelectorGroup(token: string): SelectorGroup {
+  return { terms: token.split(',').map(parseSelectorTerm) }
 }
 
 export function parseCommand(input: string): ParseResult {
@@ -44,7 +63,7 @@ export function parseCommand(input: string): ParseResult {
   if (!sub) {
     return {
       ok: false,
-      error: 'Missing subcommand. Try: dbt run, dbt test, dbt build',
+      error: 'Missing subcommand. Try: dbt run, dbt test, dbt build, dbt compile',
     }
   }
 
@@ -56,31 +75,31 @@ export function parseCommand(input: string): ParseResult {
   }
 
   const type = sub as CommandType
-  const select: Selector[] = []
-  const exclude: Selector[] = []
+  const select: SelectorGroup[] = []
+  const exclude: SelectorGroup[] = []
 
   let i = 2
   while (i < parts.length) {
     const flag = parts[i]
 
     if (flag === '--select' || flag === '-s') {
+      const before = select.length
       i++
       while (i < parts.length && !parts[i].startsWith('-')) {
-        select.push(parseSelector(parts[i]))
+        select.push(parseSelectorGroup(parts[i]))
         i++
       }
-      if (select.length === 0) {
+      if (select.length === before)
         return { ok: false, error: '--select requires a model name' }
-      }
     } else if (flag === '--exclude') {
+      const before = exclude.length
       i++
       while (i < parts.length && !parts[i].startsWith('-')) {
-        exclude.push(parseSelector(parts[i]))
+        exclude.push(parseSelectorGroup(parts[i]))
         i++
       }
-      if (exclude.length === 0) {
+      if (exclude.length === before)
         return { ok: false, error: '--exclude requires a model name' }
-      }
     } else if (flag.startsWith('-')) {
       return {
         ok: false,

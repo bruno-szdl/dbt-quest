@@ -3,12 +3,15 @@ import { collectModels, type CompiledModel } from './compiler'
 
 export interface ModelOutcome {
   name: string
-  materialization: 'view' | 'table'
+  materialization: 'view' | 'table' | 'ephemeral' | 'incremental'
   passed: boolean
   elapsed: number
   rowCount: number
+  columns: string[]
   error?: string
   compiledSql: string
+  /** True when the model was skipped (ephemeral). */
+  skipped?: boolean
 }
 
 export interface ExecutionPlan {
@@ -18,8 +21,10 @@ export interface ExecutionPlan {
 }
 
 export function plan(files: Record<string, string>): ExecutionPlan {
-  const all = collectModels(files)
-  const byName = new Map(all.map((m) => [m.name, m]))
+  const raw = collectModels(files)
+  const rawByName = new Map(raw.map((m) => [m.name, m]))
+  const inlined = inlineEphemeralCtes(raw, rawByName)
+  const byName = new Map(inlined.map((m) => [m.name, m]))
   const visited = new Set<string>()
   const sorted: CompiledModel[] = []
   function visit(name: string) {
@@ -30,8 +35,58 @@ export function plan(files: Record<string, string>): ExecutionPlan {
     for (const r of node.refs) visit(r)
     sorted.push(node)
   }
-  for (const m of all) visit(m.name)
-  return { all, sorted, byName }
+  for (const m of inlined) visit(m.name)
+  return { all: inlined, sorted, byName }
+}
+
+/**
+ * For each non-ephemeral model, collect all ephemeral models it depends on
+ * (recursively) and prepend them as CTEs. ref("eph") already compiled to
+ * `"eph"` in the SQL, which now resolves to the CTE name rather than a DB
+ * object. Ephemeral models themselves keep their compiled SQL unchanged —
+ * they're never materialized, only inlined into downstream models.
+ */
+function inlineEphemeralCtes(
+  all: CompiledModel[],
+  byName: Map<string, CompiledModel>,
+): CompiledModel[] {
+  const ephNames = new Set(
+    all.filter((m) => m.materialization === 'ephemeral').map((m) => m.name),
+  )
+  if (ephNames.size === 0) return all
+
+  // Return upstream ephemerals in dependency-first order.
+  function collectEphDeps(start: string): string[] {
+    const order: string[] = []
+    const seen = new Set<string>()
+    function walk(name: string) {
+      const node = byName.get(name)
+      if (!node) return
+      for (const r of node.refs) {
+        if (ephNames.has(r) && !seen.has(r)) {
+          seen.add(r)
+          walk(r)
+          order.push(r)
+        } else if (!ephNames.has(r)) {
+          // Walk non-ephemeral refs too, because an ephemeral ref may hide
+          // behind a chain of non-ephemeral refs? No — dbt only inlines
+          // direct ephemeral dependencies. Stop here.
+        }
+      }
+    }
+    walk(start)
+    return order
+  }
+
+  return all.map((m) => {
+    if (m.materialization === 'ephemeral') return m
+    const ephs = collectEphDeps(m.name)
+    if (ephs.length === 0) return m
+    const ctes = ephs
+      .map((name) => `"${name}" AS (\n${byName.get(name)!.sql}\n)`)
+      .join(',\n')
+    return { ...m, sql: `WITH ${ctes}\n${m.sql}` }
+  })
 }
 
 /** Execute each model as a DuckDB view (or table). Order is given by caller. */
@@ -39,14 +94,29 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
   const outcomes: ModelOutcome[] = []
   for (const m of models) {
     const start = performance.now()
+    if (m.materialization === 'ephemeral') {
+      outcomes.push({
+        name: m.name,
+        materialization: 'ephemeral',
+        passed: true,
+        skipped: true,
+        elapsed: 0,
+        rowCount: 0,
+        columns: [],
+        compiledSql: m.sql,
+      })
+      continue
+    }
     try {
       // IF EXISTS only protects against "not found" — DuckDB still errors if
       // the object exists but is the other kind (e.g. DROP TABLE on a view).
       // Try both and swallow the type-mismatch error.
       try { await exec(`DROP VIEW IF EXISTS "${m.name}" CASCADE`) } catch { /* not a view */ }
       try { await exec(`DROP TABLE IF EXISTS "${m.name}" CASCADE`) } catch { /* not a table */ }
-      const keyword = m.materialization === 'table' ? 'TABLE' : 'VIEW'
+      // Incremental is simulated as a full table rebuild in dbt-quest.
+      const keyword = m.materialization === 'table' || m.materialization === 'incremental' ? 'TABLE' : 'VIEW'
       await exec(`CREATE ${keyword} "${m.name}" AS ${m.sql}`)
+      const preview = await runQuery(`SELECT * FROM "${m.name}" LIMIT 0`)
       const count = await runQuery(`SELECT COUNT(*) AS c FROM "${m.name}"`)
       const rowCount = Number(count.rows[0]?.[0] ?? 0)
       outcomes.push({
@@ -55,6 +125,7 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
         passed: true,
         elapsed: (performance.now() - start) / 1000,
         rowCount,
+        columns: preview.columns,
         compiledSql: m.sql,
       })
     } catch (e) {
@@ -64,6 +135,7 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
         passed: false,
         elapsed: (performance.now() - start) / 1000,
         rowCount: 0,
+        columns: [],
         error: e instanceof Error ? e.message : String(e),
         compiledSql: m.sql,
       })

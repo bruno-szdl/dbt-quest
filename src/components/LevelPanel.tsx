@@ -241,6 +241,8 @@ function ProgressChecklist() {
   const testResults = useGameStore((s) => s.testResults)
   const currentLevelId = useGameStore((s) => s.currentLevelId)
   const completedLevels = useGameStore((s) => s.completedLevels)
+  const manuallyMarkedComplete = useGameStore((s) => s.manuallyMarkedComplete)
+  const markLessonComplete = useGameStore((s) => s.markLessonComplete)
   const level = getLevelById(currentLevelId)
   if (!level) return null
 
@@ -253,6 +255,7 @@ function ProgressChecklist() {
   const ranSomething = ranModels.size > 0
   const testedSomething = Object.keys(testResults).length > 0
   const passed = completedLevels.has(currentLevelId)
+  const alreadyMarked = manuallyMarkedComplete.has(currentLevelId)
 
   const stepItems = [
     { id: 'files' as const, label: 'Edit files', done: editedOrNewFiles },
@@ -301,6 +304,31 @@ function ProgressChecklist() {
           </li>
         ))}
       </ul>
+
+      {level.manualCompletion && !passed && (
+        <button
+          onClick={markLessonComplete}
+          disabled={alreadyMarked}
+          style={{
+            marginTop: '12px',
+            background: 'transparent',
+            border: '1px solid var(--color-success)',
+            borderRadius: '4px',
+            color: 'var(--color-success)',
+            fontSize: '11px',
+            fontFamily: 'IBM Plex Sans, sans-serif',
+            fontWeight: 600,
+            padding: '6px 10px',
+            cursor: alreadyMarked ? 'default' : 'pointer',
+            width: '100%',
+            opacity: alreadyMarked ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => { if (!alreadyMarked) e.currentTarget.style.background = 'var(--color-success-bg)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        >
+          {alreadyMarked ? 'Marked — finishing up…' : "I've read it — mark this lesson complete"}
+        </button>
+      )}
     </div>
   )
 }
