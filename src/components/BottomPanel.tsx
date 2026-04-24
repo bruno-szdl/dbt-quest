@@ -5,7 +5,7 @@ import TerminalPanel from './TerminalPanel'
 import DagPanel from './DagPanel'
 import ResultsPanel from './ResultsPanel'
 
-const COLLAPSED_HEIGHT = 34
+const COLLAPSED_HEIGHT = 42
 const DEFAULT_HEIGHT = 260
 const MIN_OPEN_HEIGHT = 140
 
@@ -89,8 +89,21 @@ export default function BottomPanel({ containerRef }: BottomPanelProps) {
       {/* Tab bar */}
       <div
         className="flex items-center shrink-0"
-        style={{ height: '34px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
+        style={{ height: '42px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)', gap: '8px', paddingLeft: '8px' }}
       >
+        <ActionButtons
+          onBeforeRun={() => {
+            if (collapsed) setCollapsed(false)
+            setTab('commands')
+          }}
+          onBeforeShow={() => {
+            if (collapsed) setCollapsed(false)
+            setTab('results')
+          }}
+        />
+
+        <div style={{ width: '1px', height: '20px', background: 'var(--color-border)' }} />
+
         <div className="flex items-center h-full">
           <TabButton
             label="Commands"
@@ -129,6 +142,180 @@ export default function BottomPanel({ containerRef }: BottomPanelProps) {
         </div>
       )}
     </div>
+  )
+}
+
+function activeModelName(activeFile: string | null): string | null {
+  if (!activeFile) return null
+  if (!activeFile.startsWith('models/') || !activeFile.endsWith('.sql')) return null
+  const base = activeFile.split('/').pop() ?? ''
+  return base.replace(/\.sql$/, '')
+}
+
+interface ActionButtonsProps {
+  onBeforeRun: () => void
+  onBeforeShow: () => void
+}
+
+function ActionButtons({ onBeforeRun, onBeforeShow }: ActionButtonsProps) {
+  const running = useGameStore((s) => s.running)
+  const activeFile = useGameStore((s) => s.activeFile)
+  const ranModels = useGameStore((s) => s.ranModels)
+  const runCommand = useGameStore((s) => s.runCommand)
+  const showModel = useGameStore((s) => s.showModel)
+  const resetLevel = useGameStore((s) => s.resetLevel)
+
+  const model = activeModelName(activeFile)
+  const canShow = !!model && ranModels.has(model)
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <ActionButton
+        label="Run"
+        variant="primary"
+        disabled={running}
+        onClick={() => { onBeforeRun(); runCommand('dbt run') }}
+        icon={<PlayIcon />}
+      />
+      <ActionButton
+        label="Test"
+        disabled={running}
+        onClick={() => { onBeforeRun(); runCommand('dbt test') }}
+        icon={<CheckIcon />}
+      />
+      <ActionButton
+        label="Show Results"
+        disabled={running || !canShow}
+        title={
+          canShow
+            ? `dbt show --select ${model}`
+            : model
+              ? `Run ${model} first`
+              : 'Open a .sql model file to preview'
+        }
+        onClick={() => { if (model) { onBeforeShow(); showModel(model) } }}
+        icon={<TableIcon />}
+      />
+      <ActionButton
+        label="Reset"
+        disabled={running}
+        onClick={() => {
+          if (confirm('Reset this level? All your edits will be discarded.')) resetLevel()
+        }}
+        icon={<ResetIcon />}
+      />
+    </div>
+  )
+}
+
+interface ActionButtonProps {
+  label: string
+  onClick: () => void
+  icon: React.ReactNode
+  disabled?: boolean
+  variant?: 'primary' | 'default'
+  title?: string
+}
+
+function ActionButton({
+  label,
+  onClick,
+  icon,
+  disabled,
+  variant = 'default',
+  title,
+}: ActionButtonProps) {
+  const isPrimary = variant === 'primary'
+  const base = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    height: '28px',
+    padding: '0 10px',
+    borderRadius: '5px',
+    fontFamily: 'IBM Plex Sans, sans-serif',
+    fontSize: '12px',
+    fontWeight: 500,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.45 : 1,
+    transition: 'background 0.12s, border-color 0.12s, color 0.12s',
+  } as const
+
+  const primary = {
+    background: 'var(--color-accent-orange)',
+    border: '1px solid var(--color-accent-orange)',
+    color: 'var(--color-base)',
+  } as const
+
+  const secondary = {
+    background: 'transparent',
+    border: '1px solid var(--color-border)',
+    color: 'var(--color-text)',
+  } as const
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title ?? label}
+      style={{ ...base, ...(isPrimary ? primary : secondary) }}
+      onMouseEnter={(e) => {
+        if (disabled) return
+        if (isPrimary) {
+          e.currentTarget.style.background = '#ff7d61'
+        } else {
+          e.currentTarget.style.borderColor = 'var(--color-muted)'
+          e.currentTarget.style.background = 'rgba(128,128,128,0.08)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (disabled) return
+        if (isPrimary) {
+          e.currentTarget.style.background = 'var(--color-accent-orange)'
+        } else {
+          e.currentTarget.style.borderColor = 'var(--color-border)'
+          e.currentTarget.style.background = 'transparent'
+        }
+      }}
+    >
+      <span style={{ display: 'flex' }}>{icon}</span>
+      {label}
+    </button>
+  )
+}
+
+function PlayIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M4 3.5v9a.5.5 0 0 0 .77.42l7-4.5a.5.5 0 0 0 0-.84l-7-4.5A.5.5 0 0 0 4 3.5Z" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 8.5l3 3 7-7" />
+    </svg>
+  )
+}
+
+function TableIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+      <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
+      <line x1="1.5" y1="6" x2="14.5" y2="6" />
+      <line x1="5" y1="2.5" x2="5" y2="13.5" />
+    </svg>
+  )
+}
+
+function ResetIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" />
+      <path d="M2.5 3v3h3" />
+    </svg>
   )
 }
 

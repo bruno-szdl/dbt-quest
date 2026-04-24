@@ -2,13 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLevelById, levels, modules } from '../levels'
 
-function activeModelName(activeFile: string | null): string | null {
-  if (!activeFile) return null
-  if (!activeFile.startsWith('models/') || !activeFile.endsWith('.sql')) return null
-  const base = activeFile.split('/').pop() ?? ''
-  return base.replace(/\.sql$/, '')
-}
-
 export default function Header() {
   return (
     <header
@@ -45,11 +38,7 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-3">
-        <ActionButtons />
-
-        <div className="w-px h-5" style={{ background: 'var(--color-border)' }} />
-
-        <ProgressBar />
+        <BadgeStrip />
         <ThemeToggleButton />
         <HelpButton />
       </div>
@@ -233,168 +222,6 @@ function LevelSelector() {
   )
 }
 
-function ActionButtons() {
-  const running = useGameStore((s) => s.running)
-  const activeFile = useGameStore((s) => s.activeFile)
-  const ranModels = useGameStore((s) => s.ranModels)
-  const runCommand = useGameStore((s) => s.runCommand)
-  const showModel = useGameStore((s) => s.showModel)
-  const resetLevel = useGameStore((s) => s.resetLevel)
-
-  const model = activeModelName(activeFile)
-  const canShow = !!model && ranModels.has(model)
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <ActionButton
-        label="Run"
-        variant="primary"
-        disabled={running}
-        onClick={() => runCommand('dbt run')}
-        icon={<PlayIcon />}
-      />
-      <ActionButton
-        label="Test"
-        disabled={running}
-        onClick={() => runCommand('dbt test')}
-        icon={<CheckIcon />}
-      />
-      <ActionButton
-        label="Show Results"
-        disabled={running || !canShow}
-        title={
-          canShow
-            ? `dbt show --select ${model}`
-            : model
-              ? `Run ${model} first`
-              : 'Open a .sql model file to preview'
-        }
-        onClick={() => model && showModel(model)}
-        icon={<TableIcon />}
-      />
-      <ActionButton
-        label="Reset"
-        disabled={running}
-        onClick={() => {
-          if (confirm('Reset this level? All your edits will be discarded.')) resetLevel()
-        }}
-        icon={<ResetIcon />}
-      />
-    </div>
-  )
-}
-
-interface ActionButtonProps {
-  label: string
-  onClick: () => void
-  icon: React.ReactNode
-  disabled?: boolean
-  variant?: 'primary' | 'default'
-  title?: string
-}
-
-function ActionButton({
-  label,
-  onClick,
-  icon,
-  disabled,
-  variant = 'default',
-  title,
-}: ActionButtonProps) {
-  const isPrimary = variant === 'primary'
-  const base = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    height: '28px',
-    padding: '0 10px',
-    borderRadius: '5px',
-    fontFamily: 'IBM Plex Sans, sans-serif',
-    fontSize: '12px',
-    fontWeight: 500,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.45 : 1,
-    transition: 'background 0.12s, border-color 0.12s, color 0.12s',
-  } as const
-
-  const primary = {
-    background: 'var(--color-accent-orange)',
-    border: '1px solid var(--color-accent-orange)',
-    color: 'var(--color-base)',
-  } as const
-
-  const secondary = {
-    background: 'transparent',
-    border: '1px solid var(--color-border)',
-    color: 'var(--color-text)',
-  } as const
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title ?? label}
-      style={{ ...base, ...(isPrimary ? primary : secondary) }}
-      onMouseEnter={(e) => {
-        if (disabled) return
-        if (isPrimary) {
-          e.currentTarget.style.background = '#ff7d61'
-        } else {
-          e.currentTarget.style.borderColor = 'var(--color-muted)'
-          e.currentTarget.style.background = 'rgba(128,128,128,0.08)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (disabled) return
-        if (isPrimary) {
-          e.currentTarget.style.background = 'var(--color-accent-orange)'
-        } else {
-          e.currentTarget.style.borderColor = 'var(--color-border)'
-          e.currentTarget.style.background = 'transparent'
-        }
-      }}
-    >
-      <span style={{ display: 'flex' }}>{icon}</span>
-      {label}
-    </button>
-  )
-}
-
-function PlayIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M4 3.5v9a.5.5 0 0 0 .77.42l7-4.5a.5.5 0 0 0 0-.84l-7-4.5A.5.5 0 0 0 4 3.5Z" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 8.5l3 3 7-7" />
-    </svg>
-  )
-}
-
-function TableIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
-      <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
-      <line x1="1.5" y1="6" x2="14.5" y2="6" />
-      <line x1="5" y1="2.5" x2="5" y2="13.5" />
-    </svg>
-  )
-}
-
-function ResetIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" />
-      <path d="M2.5 3v3h3" />
-    </svg>
-  )
-}
-
 function DbtLogo() {
   return (
     <span style={{ color: 'var(--color-accent-orange)', display: 'flex' }}>
@@ -417,39 +244,232 @@ function DbtLogo() {
   )
 }
 
-function ProgressBar() {
-  const completedLevels = useGameStore((s) => s.completedLevels)
+function BadgeStrip() {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const unlockedBadges = useGameStore((s) => s.unlockedBadges)
+  const levelJustCompleted = useGameStore((s) => s.levelJustCompleted)
   const total = levels.length
 
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const earned = levels
+    .filter((l) => l.badge && unlockedBadges.has(l.badge.id))
+    .map((l) => ({ ...(l.badge as NonNullable<typeof l.badge>), levelId: l.id }))
+
+  const count = earned.length
+  const recent = earned.slice(-5)
+  const overflow = Math.max(0, count - recent.length)
+  const isEmpty = count === 0
+
   return (
-    <div className="flex items-center gap-2">
-      <div
-        className="flex gap-1"
-        role="progressbar"
-        aria-label="Level progress"
-        aria-valuenow={completedLevels.size}
-        aria-valuemax={total}
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2"
+        title={isEmpty ? 'No badges earned yet' : `${count} of ${total} badges earned`}
+        style={{
+          background: 'transparent',
+          border: '1px solid var(--color-border)',
+          borderRadius: '6px',
+          padding: '3px 8px 3px 6px',
+          height: '28px',
+          cursor: 'pointer',
+          transition: 'border-color 0.12s, background 0.12s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)'
+          e.currentTarget.style.background = 'rgba(128,128,128,0.06)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)'
+          e.currentTarget.style.background = 'transparent'
+        }}
       >
-        {Array.from({ length: total }).map((_, i) => {
-          const done = completedLevels.has(i + 1)
+        {isEmpty ? (
+          <>
+            <TrophyIcon />
+            <span style={{ color: 'var(--color-muted)', fontSize: '11px', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+              No badges yet
+            </span>
+          </>
+        ) : (
+          <>
+            {overflow > 0 && (
+              <span
+                style={{
+                  color: 'var(--color-muted)',
+                  fontSize: '10px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  padding: '1px 5px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '9px',
+                  lineHeight: 1,
+                }}
+              >
+                +{overflow}
+              </span>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              {recent.map((b, i) => {
+                const isNewest = i === recent.length - 1 && levelJustCompleted
+                return (
+                  <span
+                    key={b.id}
+                    className={isNewest ? 'btn-pulse-success' : ''}
+                    style={{
+                      fontSize: '15px',
+                      lineHeight: 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                    }}
+                  >
+                    {b.emoji}
+                  </span>
+                )
+              })}
+            </div>
+          </>
+        )}
+        <span style={{ color: 'var(--color-border)', fontSize: '11px' }}>·</span>
+        <span
+          style={{
+            color: count > 0 ? 'var(--color-text-muted)' : 'var(--color-muted)',
+            fontSize: '11px',
+            fontFamily: 'JetBrains Mono, monospace',
+          }}
+        >
+          {count}/{total}
+        </span>
+      </button>
+
+      {open && <BadgePopover onClose={() => setOpen(false)} />}
+    </div>
+  )
+}
+
+function BadgePopover({ onClose }: { onClose: () => void }) {
+  const unlockedBadges = useGameStore((s) => s.unlockedBadges)
+  const loadLevel = useGameStore((s) => s.loadLevel)
+  const count = levels.filter((l) => l.badge && unlockedBadges.has(l.badge.id)).length
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 8px)',
+        right: 0,
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: '8px',
+        padding: '12px',
+        width: '300px',
+        maxHeight: '420px',
+        overflowY: 'auto',
+        zIndex: 100,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <span
+          style={{
+            color: 'var(--color-text)',
+            fontSize: '12px',
+            fontFamily: 'IBM Plex Sans, sans-serif',
+            fontWeight: 600,
+          }}
+        >
+          Badges
+        </span>
+        <span
+          style={{
+            color: 'var(--color-muted)',
+            fontSize: '10px',
+            fontFamily: 'JetBrains Mono, monospace',
+          }}
+        >
+          {count} / {levels.length}
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
+        {levels.map((lvl) => {
+          const badge = lvl.badge
+          const earned = badge ? unlockedBadges.has(badge.id) : false
           return (
-            <div
-              key={i}
-              className="rounded-full transition-colors"
+            <button
+              key={lvl.id}
+              onClick={() => { void loadLevel(lvl.id); onClose() }}
+              title={badge ? `L${lvl.id} — ${badge.name}${earned ? '' : ' (locked)'}` : `L${lvl.id} — ${lvl.title}`}
               style={{
-                width: '6px',
-                height: '6px',
-                background: done ? 'var(--color-success)' : 'var(--color-border-subtle)',
-                border: done ? '1px solid var(--color-success)' : '1px solid var(--color-border)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '2px',
+                padding: '6px 2px',
+                background: earned ? 'var(--color-success-bg)' : 'transparent',
+                border: `1px solid ${earned ? 'var(--color-success-border)' : 'var(--color-border-subtle)'}`,
+                borderRadius: '5px',
+                cursor: 'pointer',
+                transition: 'background 0.12s, border-color 0.12s',
               }}
-            />
+              onMouseEnter={(e) => {
+                if (!earned) {
+                  e.currentTarget.style.background = 'rgba(128,128,128,0.08)'
+                  e.currentTarget.style.borderColor = 'var(--color-border)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!earned) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.borderColor = 'var(--color-border-subtle)'
+                }
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '18px',
+                  lineHeight: 1,
+                  filter: earned ? 'none' : 'grayscale(1)',
+                  opacity: earned ? 1 : 0.3,
+                }}
+              >
+                {badge ? badge.emoji : '·'}
+              </span>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  color: earned ? 'var(--color-success)' : 'var(--color-muted)',
+                }}
+              >
+                L{lvl.id}
+              </span>
+            </button>
           )
         })}
       </div>
-      <span style={{ color: 'var(--color-muted)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
-        {completedLevels.size}/{total}
-      </span>
     </div>
+  )
+}
+
+function TrophyIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="var(--color-muted)">
+      <path d="M4 1a.5.5 0 0 0-.5.5V3h-1A1.5 1.5 0 0 0 1 4.5v1a2.5 2.5 0 0 0 2.5 2.5H4c.23 1.63 1.43 2.94 3 3.32V13H5a1 1 0 0 0-1 1v.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V14a1 1 0 0 0-1-1H9v-1.68c1.57-.38 2.77-1.69 3-3.32h.5A2.5 2.5 0 0 0 15 5.5v-1A1.5 1.5 0 0 0 13.5 3h-1V1.5a.5.5 0 0 0-.5-.5H4Zm-.5 6A1.5 1.5 0 0 1 2 5.5v-1a.5.5 0 0 1 .5-.5h1v3h-.5Zm10-1.5A1.5 1.5 0 0 1 12 7h-.5V4h1a.5.5 0 0 1 .5.5v1Z" />
+    </svg>
   )
 }
 

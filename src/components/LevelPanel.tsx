@@ -19,52 +19,113 @@ export default function LevelPanel() {
       {/* Completion banner */}
       {levelJustCompleted && (
         <div
-          className="flex items-center justify-between px-3 py-1.5 shrink-0"
-          style={{ background: 'var(--color-success-bg)', borderBottom: '1px solid var(--color-success-border)' }}
+          className="flex items-center shrink-0"
+          style={{
+            background: 'linear-gradient(180deg, var(--color-success-bg), transparent), var(--color-success-bg)',
+            borderBottom: '1px solid var(--color-success-border)',
+            padding: '12px 14px',
+            gap: '12px',
+            position: 'relative',
+          }}
         >
-          <span style={{ color: 'var(--color-success)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
-            {level.badge?.emoji} Level complete!{level.badge ? ` ${level.badge.name} unlocked.` : ''}
-          </span>
-          <div className="flex items-center gap-1.5">
-            {isLastLevel ? (
-              <span style={{ color: 'var(--color-success)', fontSize: '11px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600 }}>
-                All levels done! 🎉
-              </span>
-            ) : (
-              <button
-                onClick={openLevelComplete}
-                className="btn-pulse-success"
-                style={{
-                  background: 'var(--color-success)',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: '#0d1117',
-                  fontSize: '11px',
-                  fontFamily: 'IBM Plex Sans, sans-serif',
-                  fontWeight: 600,
-                  padding: '3px 8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-              >
-                Continue
-                <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
-                </svg>
-              </button>
-            )}
-            <button
-              onClick={dismissLevelComplete}
-              style={{ color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'var(--color-success-bg)',
+              border: '1px solid var(--color-success-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '22px',
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            {level.badge?.emoji ?? '🎉'}
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                color: 'var(--color-success)',
+                fontSize: '13px',
+                fontFamily: 'IBM Plex Sans, sans-serif',
+                fontWeight: 700,
+                lineHeight: 1.2,
+              }}
+            >
+              Level complete!
+            </div>
+            <div
+              style={{
+                color: 'var(--color-text-secondary)',
+                fontSize: '11px',
+                fontFamily: 'IBM Plex Sans, sans-serif',
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {level.badge ? `${level.badge.name} badge unlocked` : 'Nicely done'}
+            </div>
+          </div>
+
+          {isLastLevel ? (
+            <span style={{ color: 'var(--color-success)', fontSize: '11px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600, flexShrink: 0 }}>
+              All levels done! 🎉
+            </span>
+          ) : (
+            <button
+              onClick={openLevelComplete}
+              className="btn-pulse-success"
+              style={{
+                background: 'var(--color-success)',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#0d1117',
+                fontSize: '12px',
+                fontFamily: 'IBM Plex Sans, sans-serif',
+                fontWeight: 600,
+                padding: '8px 14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            >
+              Continue
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
+              </svg>
+            </button>
+          )}
+
+          <button
+            onClick={dismissLevelComplete}
+            style={{
+              position: 'absolute',
+              top: '6px',
+              right: '8px',
+              color: 'var(--color-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '16px',
+              lineHeight: 1,
+              padding: '2px 4px',
+            }}
+            aria-label="Dismiss"
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-muted)' }}
+          >
+            ×
+          </button>
         </div>
       )}
 
