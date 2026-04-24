@@ -17,7 +17,8 @@ export default function App() {
   useEffect(() => {
     if (initializedRef.current) return
     initializedRef.current = true
-    loadLevel(1)
+    const resumeId = useGameStore.getState().currentLevelId || 1
+    loadLevel(resumeId)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [sidebarWidth, setSidebarWidth] = useState(220)

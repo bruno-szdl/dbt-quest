@@ -362,7 +362,15 @@ function BadgeStrip() {
 function BadgePopover({ onClose }: { onClose: () => void }) {
   const unlockedBadges = useGameStore((s) => s.unlockedBadges)
   const loadLevel = useGameStore((s) => s.loadLevel)
+  const resetAllProgress = useGameStore((s) => s.resetAllProgress)
   const count = levels.filter((l) => l.badge && unlockedBadges.has(l.badge.id)).length
+
+  const handleReset = () => {
+    if (confirm('Reset all progress? You will lose every completed level and badge. This cannot be undone.')) {
+      onClose()
+      void resetAllProgress()
+    }
+  }
 
   return (
     <div
@@ -460,6 +468,37 @@ function BadgePopover({ onClose }: { onClose: () => void }) {
             </button>
           )
         })}
+      </div>
+
+      <div
+        style={{
+          marginTop: '12px',
+          paddingTop: '10px',
+          borderTop: '1px solid var(--color-border-subtle)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <button
+          onClick={handleReset}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            padding: '2px 4px',
+            color: 'var(--color-muted)',
+            fontSize: '10px',
+            fontFamily: 'IBM Plex Sans, sans-serif',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            textDecorationColor: 'var(--color-border)',
+            textUnderlineOffset: '2px',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger, #e5534b)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-muted)' }}
+          title="Clear completed levels and badges stored in your browser"
+        >
+          Reset all progress
+        </button>
       </div>
     </div>
   )

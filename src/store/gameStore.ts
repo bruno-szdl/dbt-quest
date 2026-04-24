@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { parseCommand } from '../engine/commandParser'
 import { execute } from '../engine/runner'
 import { previewModel, plan, materializeModels } from '../engine/executor'
@@ -72,7 +73,11 @@ interface StoreState {
 
   theme: 'dark' | 'light'
   toggleTheme: () => void
+
+  resetAllProgress: () => Promise<void>
 }
+
+const PERSIST_KEY = 'dbt-quest-storage'
 
 /**
  * Translate a seed key like `raw.users` into the DuckDB table name used by
@@ -83,7 +88,9 @@ function seedTableName(key: string): string {
   return tbl ? sourceViewName(src, tbl) : src
 }
 
-export const useGameStore = create<StoreState>((set, get) => ({
+export const useGameStore = create<StoreState>()(
+  persist(
+    (set, get) => ({
   files: {},
   activeFile: null,
   ranModels: new Set<string>(),
@@ -254,6 +261,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       const res = await previewModel(name, 20)
       set((s) => ({
         lastPreview: { name, columns: res.columns, rows: res.rows, rowCount: res.rowCount },
+        shownModels: new Set([...s.shownModels, name]),
         terminalHistory: [
           ...s.terminalHistory,
           { text: `Preview of "${name}" — ${res.rowCount} row${res.rowCount !== 1 ? 's' : ''}. See the Results tab.`, color: 'gray' },
@@ -270,6 +278,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       }))
     } finally {
       set({ running: false })
+      get().checkLevel()
     }
   },
 
@@ -438,4 +447,47 @@ export const useGameStore = create<StoreState>((set, get) => ({
 
   dismissLevelIntro: () => set({ showLevelIntro: false }),
   openLevelIntro: () => set({ showLevelIntro: true }),
-}))
+
+  resetAllProgress: async () => {
+    set({
+      completedLevels: new Set<number>(),
+      unlockedBadges: new Set<string>(),
+      manuallyMarkedComplete: new Set<number>(),
+      currentLevelId: 0,
+    })
+    try {
+      localStorage.removeItem(PERSIST_KEY)
+    } catch {
+      /* ignore — quota / privacy mode */
+    }
+    await get().loadLevel(1)
+  },
+    }),
+    {
+      name: PERSIST_KEY,
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({
+        completedLevels: [...s.completedLevels],
+        unlockedBadges: [...s.unlockedBadges],
+        manuallyMarkedComplete: [...s.manuallyMarkedComplete],
+        currentLevelId: s.currentLevelId,
+      }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as {
+          completedLevels?: number[]
+          unlockedBadges?: string[]
+          manuallyMarkedComplete?: number[]
+          currentLevelId?: number
+        }
+        return {
+          ...current,
+          completedLevels: new Set(p.completedLevels ?? []),
+          unlockedBadges: new Set(p.unlockedBadges ?? []),
+          manuallyMarkedComplete: new Set(p.manuallyMarkedComplete ?? []),
+          currentLevelId: p.currentLevelId ?? 0,
+        }
+      },
+    },
+  ),
+)

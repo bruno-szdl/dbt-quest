@@ -87,11 +87,10 @@ export default function DatabaseExplorer() {
       style={{
         borderTop: '1px solid var(--color-border-subtle)',
         background: 'var(--color-base)',
-        flexShrink: 0,
+        flex: collapsed ? '0 0 auto' : '1 1 0',
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: collapsed ? '32px' : '220px',
-        transition: 'max-height 0.15s ease',
+        minHeight: 0,
         overflow: 'hidden',
       }}
     >
