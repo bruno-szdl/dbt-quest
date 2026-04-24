@@ -40,6 +40,7 @@ interface StoreState {
   currentLevelId: number
   completedLevels: Set<number>
   unlockedBadges: Set<string>
+  dismissedIntros: Set<number>
   hintRevealed: boolean
   levelJustCompleted: boolean
   showLevelComplete: boolean
@@ -109,6 +110,7 @@ export const useGameStore = create<StoreState>()(
   currentLevelId: 0,
   completedLevels: new Set<number>(),
   unlockedBadges: new Set<string>(),
+  dismissedIntros: new Set<number>(),
   hintRevealed: false,
   levelJustCompleted: false,
   showLevelComplete: false,
@@ -299,10 +301,10 @@ export const useGameStore = create<StoreState>()(
       checkLevelTimer = null
     }
 
-    // Show the intro modal only when moving to a different level — not on
-    // reset (same id) or reload.
-    const prevId = get().currentLevelId
-    const levelChanged = id !== prevId
+    // Show the intro modal until the player has dismissed it for this level.
+    // Persisting dismissedIntros means a reload before "Let's go" still shows
+    // the modal, but jumping back to a level you've already seen does not.
+    const showIntro = !get().dismissedIntros.has(id)
 
     const firstFile = Object.keys(level.initialFiles)[0] ?? null
     set({
@@ -319,7 +321,7 @@ export const useGameStore = create<StoreState>()(
       currentLevelId: id,
       hintRevealed: false,
       levelJustCompleted: false,
-      showLevelIntro: levelChanged,
+      showLevelIntro: showIntro,
       lastPreview: null,
       running: true,
       terminalHistory: [
@@ -445,7 +447,13 @@ export const useGameStore = create<StoreState>()(
 
   dismissLevelQuiz: () => set({ showLevelQuiz: false }),
 
-  dismissLevelIntro: () => set({ showLevelIntro: false }),
+  dismissLevelIntro: () =>
+    set((s) => ({
+      showLevelIntro: false,
+      dismissedIntros: s.currentLevelId
+        ? new Set([...s.dismissedIntros, s.currentLevelId])
+        : s.dismissedIntros,
+    })),
   openLevelIntro: () => set({ showLevelIntro: true }),
 
   resetAllProgress: async () => {
@@ -453,6 +461,7 @@ export const useGameStore = create<StoreState>()(
       completedLevels: new Set<number>(),
       unlockedBadges: new Set<string>(),
       manuallyMarkedComplete: new Set<number>(),
+      dismissedIntros: new Set<number>(),
       currentLevelId: 0,
     })
     try {
@@ -471,6 +480,7 @@ export const useGameStore = create<StoreState>()(
         completedLevels: [...s.completedLevels],
         unlockedBadges: [...s.unlockedBadges],
         manuallyMarkedComplete: [...s.manuallyMarkedComplete],
+        dismissedIntros: [...s.dismissedIntros],
         currentLevelId: s.currentLevelId,
       }),
       merge: (persisted, current) => {
@@ -478,13 +488,18 @@ export const useGameStore = create<StoreState>()(
           completedLevels?: number[]
           unlockedBadges?: string[]
           manuallyMarkedComplete?: number[]
+          dismissedIntros?: number[]
           currentLevelId?: number
         }
+        const completed = p.completedLevels ?? []
+        const dismissed =
+          p.dismissedIntros ?? (completed.length > 0 ? completed : [])
         return {
           ...current,
-          completedLevels: new Set(p.completedLevels ?? []),
+          completedLevels: new Set(completed),
           unlockedBadges: new Set(p.unlockedBadges ?? []),
           manuallyMarkedComplete: new Set(p.manuallyMarkedComplete ?? []),
+          dismissedIntros: new Set(dismissed),
           currentLevelId: p.currentLevelId ?? 0,
         }
       },

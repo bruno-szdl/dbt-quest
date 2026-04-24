@@ -482,19 +482,25 @@ function BadgePopover({ onClose }: { onClose: () => void }) {
         <button
           onClick={handleReset}
           style={{
-            background: 'transparent',
-            border: 'none',
-            padding: '2px 4px',
-            color: 'var(--color-muted)',
-            fontSize: '10px',
+            background: '#d23f3f',
+            border: '1px solid #b8302f',
+            borderRadius: '5px',
+            padding: '5px 12px',
+            color: '#ffffff',
+            fontSize: '11px',
             fontFamily: 'IBM Plex Sans, sans-serif',
+            fontWeight: 600,
             cursor: 'pointer',
-            textDecoration: 'underline',
-            textDecorationColor: 'var(--color-border)',
-            textUnderlineOffset: '2px',
+            transition: 'background 0.12s, border-color 0.12s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger, #e5534b)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-muted)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#b8302f'
+            e.currentTarget.style.borderColor = '#9c2625'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#d23f3f'
+            e.currentTarget.style.borderColor = '#b8302f'
+          }}
           title="Clear completed levels and badges stored in your browser"
         >
           Reset all progress
