@@ -1,92 +1,56 @@
 import type { Level } from '../engine/types'
-import { manuallyMarked, modelMaterialization, modelRan } from '../engine/validators'
-
-const RAW_EVENTS = `id,user_id,event_type,event_at
-1,1,login,2024-01-05
-2,2,login,2024-01-06
-3,1,purchase,2024-01-07
-4,3,login,2024-01-07
-5,2,purchase,2024-01-08
-6,1,logout,2024-01-08`
+import {
+  exactRan,
+  selectorsDagShape,
+  selectorsFiles,
+  selectorsSeeds,
+} from './_selectorsFixture'
 
 const level26: Level = {
   id: 26,
   chapter: 8,
-  title: 'Configure an incremental model as append',
-  description: `When a model's underlying data only grows (events, logs, immutable rows), rebuilding it from scratch every dbt run is wasteful. Incremental materializations let dbt process only the new rows each run.
+  title: 'Select a single model',
+  description: `\`dbt run\` builds every model in the project by default. Most of the time that's overkill — you've changed one model and want to rebuild only that one.
 
-The simplest incremental strategy is append — each run adds the fresh rows on top of what's already in the table. It fits append-only data perfectly: events, page views, audit logs.
+The \`--select\` flag (or its short form \`-s\`) tells dbt to build a subset:
 
-The syntax looks like this:
+  dbt run --select stg_customers
 
-  {{ config(
-      materialized='incremental',
-      incremental_strategy='append',
-      unique_key='id'
-  ) }}
+That builds stg_customers and nothing else.
 
-  select * from {{ source('raw', 'events') }}
-  {% if is_incremental() %}
-    where event_at > (select max(event_at) from {{ this }})
-  {% endif %}
-
-On the first run dbt builds the full table. On subsequent runs it only inserts rows newer than the latest row already stored.
-
-Your task: open fct_events.sql and set it to materialized='incremental' with incremental_strategy='append'. Then run dbt run. (dbt-quest runs the model as a full rebuild, but the configuration is the real thing.) When done, mark the lesson complete.`,
-  hint: "Replace the TODO config block with materialized='incremental' and incremental_strategy='append'.",
-  initialFiles: {
-    'models/fct_events.sql': `-- Task: configure this model as incremental with an append strategy.
-
-{{ config(
-    materialized='table'
-) }}
-
-select
-    id,
-    user_id,
-    event_type,
-    event_at
-from raw_events`,
-  },
-  seeds: {
-    raw_events: RAW_EVENTS,
-  },
-  requiredSteps: ['files', 'run'],
-  manualCompletion: true,
+Your task: open the lineage panel, get a feel for the six models in this project, then run \`dbt run --select stg_customers\`. The terminal should report exactly one model built.`,
+  hint: 'Type `dbt run --select stg_customers` (or `dbt run -s stg_customers`).',
+  initialFiles: selectorsFiles(),
+  seeds: selectorsSeeds,
+  requiredSteps: ['run'],
   goal: {
-    description: 'Configure fct_events as incremental+append, run dbt run, then mark complete.',
-    dagShape: {
-      nodes: [{ id: 'fct_events', label: 'fct_events', layer: 'mart' }],
-      edges: [],
-    },
+    description: 'Run `dbt run --select stg_customers` and build only that one model.',
+    dagShape: selectorsDagShape,
   },
   validate: (state) => {
-    if (!modelMaterialization(state, 'fct_events', 'incremental'))
-      return { passed: false, reason: "Configure fct_events with materialized='incremental'." }
-    const sql = state.files['models/fct_events.sql'] ?? ''
-    if (!/incremental_strategy\s*=\s*['"]append['"]/.test(sql))
-      return { passed: false, reason: "Add incremental_strategy='append' to the config." }
-    if (!modelRan(state, 'fct_events'))
-      return { passed: false, reason: 'Run dbt run to build fct_events.' }
-    if (!manuallyMarked(state))
-      return { passed: false, reason: 'Mark the lesson complete once you have run it.' }
+    if (state.ranModels.size === 0)
+      return { passed: false, reason: 'Run `dbt run --select stg_customers`.' }
+    if (!exactRan(state.ranModels, ['stg_customers']))
+      return {
+        passed: false,
+        reason: 'Only stg_customers should have run. Reset the level and try `dbt run --select stg_customers`.',
+      }
     return { passed: true }
   },
-  badge: { id: 'append-only', name: 'Append Only', emoji: '➕' },
+  badge: { id: 'sniper', name: 'Sniper Selector', emoji: '🎯' },
   quiz: {
-    question: 'What does an incremental+append model do on the second dbt run?',
+    question: 'What does `dbt run --select stg_customers` do?',
     options: [
-      'Rebuilds the whole table from scratch',
-      "Doesn't run at all — append models only build once",
-      'Inserts only the new rows on top of the existing table',
-      'Swaps the whole table with a freshly-built copy',
+      'Builds every model in the project, with stg_customers first',
+      'Builds only stg_customers — no other models, no upstreams, no downstreams',
+      'Builds stg_customers and every model that depends on it',
+      'Runs tests for stg_customers but does not build it',
     ],
-    correctIndex: 2,
-    explanation: 'Append strategy inserts only rows that match the incremental filter (typically newer than the latest already stored). The existing rows are preserved untouched.',
+    correctIndex: 1,
+    explanation: '`--select model_name` is the most precise selector. It builds exactly that one model — no upstream ancestors, no downstream descendants. Use it when you have changed a single file and want a fast iteration loop.',
   },
   docs: [
-    { label: 'Incremental models', url: 'https://docs.getdbt.com/docs/build/incremental-models' },
-    { label: 'Incremental strategies', url: 'https://docs.getdbt.com/docs/build/incremental-strategy' },
+    { label: 'Node selection syntax', url: 'https://docs.getdbt.com/reference/node-selection/syntax' },
   ],
 }
 

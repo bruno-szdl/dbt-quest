@@ -1,42 +1,46 @@
 import type { Level } from '../engine/types'
-import { modelMaterialization, modelRan } from '../engine/validators'
-
-const RAW_ORDERS = `id,customer_id,amount,status,created_at
-1,1,49.99,completed,2024-01-10
-2,1,24.99,completed,2024-01-20
-3,2,89.99,completed,2024-01-25
-4,3,12.99,pending,2024-02-05
-5,4,199.99,completed,2024-02-15
-6,5,39.99,refunded,2024-03-05
-7,1,59.99,completed,2024-03-12
-8,2,14.99,pending,2024-04-01`
+import { manuallyMarked } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@example.com,2024-01-05,US
 2,Bob Chen,bob@example.com,2024-01-17,CA
-3,Carol Silva,carol@example.com,2024-02-02,BR
-4,Dave Kumar,dave@example.com,2024-02-11,IN
-5,Eve Müller,eve@example.com,2024-03-01,DE`
+3,Carol Silva,carol@example.com,2024-02-02,BR`
+
+const RAW_ORDERS = `id,customer_id,amount,status,created_at
+1,1,49.99,completed,2024-01-10
+2,1,24.99,completed,2024-01-20
+3,2,89.99,completed,2024-01-25`
 
 const level24: Level = {
   id: 24,
   chapter: 7,
-  title: 'Configure an intermediate model as ephemeral',
-  description: `Sometimes you want a reusable chunk of SQL without creating a new object in the warehouse. That's what ephemeral models are for.
+  title: 'Understand staging, intermediate, and marts',
+  description: `Most production dbt projects organise models into three layers. The naming is convention, not enforcement, but it's worth learning because nearly every team uses it.
 
-An ephemeral model is never built as a view or table. Instead, every downstream model that ref()s it gets the ephemeral's SQL inlined as a CTE at compile time.
+Staging (stg_*)
+  • One staging model per source table.
+  • Cleans types, renames columns, applies light transformations.
+  • Thin — rarely joins other models.
 
-Why use it?
-  • Intermediate logic that's only used by one or two downstream models.
-  • Cuts down on warehouse clutter and storage.
-  • Trade-off: if many models reuse the same ephemeral, it's recomputed every time.
+Intermediate (int_*)
+  • Reusable building blocks between staging and marts.
+  • Joins or reshapes staging models to compute something shared.
+  • Often materialized as views or ephemeral.
 
-Your task: change int_customer_orders to materialized='ephemeral', then run dbt run. Look at the Database Explorer afterwards — int_customer_orders should NOT appear there anymore, but dim_customers_lite should still build successfully.`,
-  hint: "Add {{ config(materialized='ephemeral') }} as the first line of int_customer_orders.sql, then run dbt run.",
+Marts (dim_*, fct_*, or domain-named)
+  • The final business-facing models.
+  • Shape data the way stakeholders think about it.
+  • Usually materialized as tables for fast reads.
+
+Rule of thumb: if a transformation is reused by more than one mart, pull it into an intermediate model. Otherwise keep it inline.
+
+Open each file in the explorer and trace a row of customer data from raw → stg_ → int_ → dim_. When it clicks, mark the lesson complete.`,
+  hint: 'Open each .sql file and follow how one customer flows through the layers.',
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
+    email,
     country
 from raw_customers`,
     'models/stg_orders.sql': `select
@@ -45,20 +49,19 @@ from raw_customers`,
     amount,
     status
 from raw_orders`,
-    'models/int_customer_orders.sql': `-- Task: make this model ephemeral.
--- Add {{ config(materialized='ephemeral') }} at the top, then run dbt run.
-
+    'models/int_customer_orders.sql': `-- Intermediate: reusable rollup of orders per customer.
 select
     customer_id,
-    count(*)                  as orders_count,
-    coalesce(sum(amount), 0)  as lifetime_value
+    count(*)                 as orders_count,
+    coalesce(sum(amount), 0) as lifetime_value
 from {{ ref('stg_orders') }}
 group by customer_id`,
-    'models/dim_customers_lite.sql': `select
+    'models/dim_customers.sql': `-- Mart: business-facing customer dimension.
+select
     c.customer_id,
     c.customer_name,
     c.country,
-    coalesce(o.orders_count, 0)   as orders_count,
+    coalesce(o.orders_count, 0)  as orders_count,
     coalesce(o.lifetime_value, 0) as lifetime_value
 from {{ ref('stg_customers') }} as c
 left join {{ ref('int_customer_orders') }} as o
@@ -68,44 +71,44 @@ left join {{ ref('int_customer_orders') }} as o
     raw_customers: RAW_CUSTOMERS,
     raw_orders: RAW_ORDERS,
   },
-  requiredSteps: ['files', 'run'],
+  preRanModels: ['stg_customers', 'stg_orders', 'int_customer_orders', 'dim_customers'],
+  requiredSteps: [],
+  manualCompletion: true,
   goal: {
-    description: "Make int_customer_orders ephemeral and run dbt run.",
+    description: 'Trace data through stg_ → int_ → dim_, then mark complete.',
     dagShape: {
       nodes: [
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
         { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
         { id: 'int_customer_orders', label: 'int_customer_orders', layer: 'intermediate' },
-        { id: 'dim_customers_lite', label: 'dim_customers_lite', layer: 'mart' },
+        { id: 'dim_customers', label: 'dim_customers', layer: 'mart' },
       ],
       edges: [
         { source: 'stg_orders', target: 'int_customer_orders' },
-        { source: 'stg_customers', target: 'dim_customers_lite' },
-        { source: 'int_customer_orders', target: 'dim_customers_lite' },
+        { source: 'stg_customers', target: 'dim_customers' },
+        { source: 'int_customer_orders', target: 'dim_customers' },
       ],
     },
   },
   validate: (state) => {
-    if (!modelMaterialization(state, 'int_customer_orders', 'ephemeral'))
-      return { passed: false, reason: "Add {{ config(materialized='ephemeral') }} to int_customer_orders.sql." }
-    if (!modelRan(state, 'dim_customers_lite'))
-      return { passed: false, reason: 'Run dbt run. dim_customers_lite should still build.' }
+    if (!manuallyMarked(state))
+      return { passed: false, reason: 'Trace the layers, then mark complete.' }
     return { passed: true }
   },
-  badge: { id: 'ghost-model', name: 'Ghost Model', emoji: '👻' },
+  badge: { id: 'layer-cake', name: 'Layer Cake', emoji: '🎂' },
   quiz: {
-    question: 'What does dbt do when a model is configured as ephemeral?',
+    question: 'Which layer is the right home for "reusable join logic shared by two marts"?',
     options: [
-      'Builds it as a temporary table that expires after the run',
-      'Skips materialization and inlines its SQL as a CTE into downstream models',
-      'Refuses to run it unless another model ref()s it',
-      'Creates a materialized view that refreshes on every query',
+      'staging',
+      'intermediate',
+      'marts',
+      'seeds',
     ],
     correctIndex: 1,
-    explanation: "Ephemeral models are never objects in the warehouse. dbt takes their compiled SQL and inlines it as a CTE into every downstream model that ref()s them.",
+    explanation: 'Intermediate is precisely for reusable transformations that sit between staging and marts. Pulling shared logic here keeps the marts focused on presentation and prevents duplication.',
   },
   docs: [
-    { label: 'Materializations — ephemeral', url: 'https://docs.getdbt.com/docs/build/materializations#ephemeral' },
+    { label: 'How we structure our dbt projects', url: 'https://docs.getdbt.com/best-practices/how-we-structure/1-guide-overview' },
   ],
 }
 

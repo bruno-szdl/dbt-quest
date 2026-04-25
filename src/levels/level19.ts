@@ -1,5 +1,5 @@
 import type { Level } from '../engine/types'
-import { modelRan, modelRefs, outputColumnsInclude } from '../engine/validators'
+import { lineageHasSourceEdge, modelRan, sourceDefined } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@example.com,2024-01-05,US
@@ -8,83 +8,70 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 4,Dave Kumar,dave@example.com,2024-02-11,IN
 5,Eve Müller,eve@example.com,2024-03-01,DE`
 
-const COUNTRY_CODES = `code,country_name,region
-US,United States,Americas
-CA,Canada,Americas
-BR,Brazil,Americas
-IN,India,Asia
-DE,Germany,Europe
-FR,France,Europe
-JP,Japan,Asia`
-
 const level19: Level = {
   id: 19,
-  chapter: 5,
-  title: 'Reference the seed',
-  description: `Once a seed is loaded, you reference it from a model exactly like any other dataset — with ref().
+  chapter: 6,
+  title: 'Use source() in a staging model',
+  description: `Once a source is declared, staging models reference it with \`{{ source('name', 'table') }}\` instead of the bare table name. The declaration is reused — you don't have to repeat the schema name in every model.
 
-That's a nice property: models don't need to care whether the upstream is a staging model, an intermediate model, or a seed. They are all just ref() calls.
+The source \`raw.customers\` has already been declared in models/sources.yml.
 
-Your task: complete models/int_customer_enriched.sql so that it joins stg_customers with the country_codes seed on the country column. Add \`country_name\` and \`region\` to the SELECT list, then run dbt run.`,
-  hint: "Use `join {{ ref('country_codes') }} as cc on c.country = cc.code` and add cc.country_name, cc.region to the SELECT.",
+Your task: in stg_customers.sql replace \`from raw_customers\` with \`from {{ source('raw', 'customers') }}\`, then run dbt run. Once you do, the lineage tab will start showing raw.customers as an upstream node feeding into stg_customers.`,
+  hint: "Replace `from raw_customers` with `from {{ source('raw', 'customers') }}`. Then run `dbt run`.",
   initialFiles: {
-    'seeds/country_codes.csv': COUNTRY_CODES,
+    'models/sources.yml': `version: 2
+
+sources:
+  - name: raw
+    tables:
+      - name: customers
+`,
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
     email,
+    created_at,
     country
 from raw_customers`,
-    'models/int_customer_enriched.sql': `-- Task: join {{ ref('country_codes') }} to get country_name and region.
-
-select
-    c.customer_id,
-    c.customer_name,
-    c.country
-from {{ ref('stg_customers') }} as c`,
   },
   seeds: {
-    raw_customers: RAW_CUSTOMERS,
+    'raw.customers': RAW_CUSTOMERS,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: "Join {{ ref('country_codes') }} into int_customer_enriched and include country_name and region.",
+    description: "Use {{ source('raw', 'customers') }} in stg_customers.sql and run dbt run.",
     dagShape: {
       nodes: [
+        { id: 'raw.customers', label: 'raw.customers', layer: 'source' },
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-        { id: 'country_codes', label: 'country_codes', layer: 'source' },
-        { id: 'int_customer_enriched', label: 'int_customer_enriched', layer: 'intermediate' },
       ],
-      edges: [
-        { source: 'stg_customers', target: 'int_customer_enriched' },
-        { source: 'country_codes', target: 'int_customer_enriched' },
-      ],
+      edges: [{ source: 'raw.customers', target: 'stg_customers' }],
     },
   },
   validate: (state) => {
-    if (!modelRefs(state, 'int_customer_enriched', 'country_codes'))
-      return { passed: false, reason: "Use {{ ref('country_codes') }} to join the seed into int_customer_enriched." }
-    if (!modelRan(state, 'int_customer_enriched'))
-      return { passed: false, reason: 'Run dbt run to build int_customer_enriched.' }
-    if (!outputColumnsInclude(state, 'int_customer_enriched', ['country_name', 'region']))
-      return { passed: false, reason: 'Include country_name and region from the seed in the SELECT.' }
+    if (!sourceDefined(state, 'raw', 'customers'))
+      return { passed: false, reason: 'Keep the raw.customers declaration in sources.yml.' }
+    if (!lineageHasSourceEdge(state, 'raw', 'customers', 'stg_customers'))
+      return { passed: false, reason: "Replace the bare table name with {{ source('raw', 'customers') }}." }
+    if (!modelRan(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
     return { passed: true }
   },
-  badge: { id: 'seed-joined', name: 'Seed Joined', emoji: '🌍' },
+  badge: { id: 'source-used', name: 'Source Plugged In', emoji: '🔌' },
   quiz: {
-    question: 'How do you reference a seed from a model?',
+    question: "What does {{ source('raw', 'customers') }} compile to?",
     options: [
-      "With {{ source('seeds', 'name') }}",
-      "With {{ ref('seed_name') }}",
-      "By writing the raw CSV path",
-      "With {{ seed('name') }}",
+      'A bare Python import',
+      'A reference to a raw input declared in sources.yml, resolved to the correct schema and table',
+      "A dbt test on the 'customers' table",
+      "An empty string when raw is not set",
     ],
     correctIndex: 1,
-    explanation: 'Seeds are addressed with ref(), same as any model. This keeps downstream SQL uniform regardless of whether the upstream is a model, a snapshot, or a seed.',
+    explanation: 'source() looks up the declaration in sources.yml and resolves to the concrete schema.table for the current environment. It also registers the source as an upstream node in the lineage graph.',
   },
   docs: [
-    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
-    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
+    { label: 'About `source` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/source' },
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
   ],
 }
 

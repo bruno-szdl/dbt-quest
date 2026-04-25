@@ -1,82 +1,68 @@
 import type { Level } from '../engine/types'
-import { snapshotClosedAtLeast, snapshotRanAtLeast } from '../engine/validators'
-
-const RAW_CUSTOMERS_V1 = `id,name,email,status,updated_at
-1,Alice Martin,alice@example.com,active,2024-01-05
-2,Bob Chen,bob@example.com,active,2024-01-17
-3,Carol Silva,carol@example.com,active,2024-02-02`
+import { collectModels } from '../engine/compiler'
+import {
+  selectorsDagShape,
+  selectorsFiles,
+  selectorsSeeds,
+} from './_selectorsFixture'
 
 const level30: Level = {
   id: 30,
-  chapter: 9,
-  title: 'Change the source data and run the snapshot again',
-  description: `Snapshots become interesting the second time they run. The first run captures the initial state. Subsequent runs compare the current source rows to the last-captured versions and, for any row whose tracked column has changed, they store a new version alongside the old one.
+  chapter: 8,
+  title: 'Add tags to a model',
+  description: `Graph operators (\`+model\`, \`model+\`) are great when you know which model you're aiming at. But sometimes the natural grouping is semantic, not structural: "every model that runs hourly", "every PII-aware model", "every metric used by the finance dashboard".
 
-Your mission: walk the snapshot through two runs with a source change in between.
+That's what tags are for. A model can carry one or more tags, and any selector can match by tag.
 
-Step-by-step:
-  1. Run \`dbt seed\` and \`dbt snapshot\`. The first capture creates the snapshot table with 3 rows, all with dbt_valid_to = NULL (meaning "this is the current truth").
-  2. Use \`dbt show --select snap_customers\` to verify.
-  3. Open seeds/raw_customers.csv. Change Alice's email to \`alice.new@example.com\` AND bump her updated_at to \`2024-02-15\`. Do the same for Carol — change status to \`inactive\` and bump updated_at.
-  4. Run \`dbt seed\` again (to reload the CSV into the warehouse), then \`dbt snapshot\` again. This time the snapshot should close out the two old rows and insert two new versions.
-  5. Run \`dbt show --select snap_customers\` again. You should see 5 rows now: Bob still has one row; Alice and Carol each have two (an old one with dbt_valid_to set, and a new one with dbt_valid_to = NULL).
+You declare tags either inline in the SQL config, or in YAML next to the model:
 
-The lesson is complete once the second snapshot run has captured at least two historical versions.`,
-  hint: 'Run dbt seed + dbt snapshot. Edit seeds/raw_customers.csv (change Alice + Carol, bump updated_at). Run dbt seed + dbt snapshot again.',
-  initialFiles: {
-    'seeds/raw_customers.csv': RAW_CUSTOMERS_V1,
-    'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
-{{ config(
-    target_schema='snapshots',
-    strategy='timestamp',
-    unique_key='customer_id',
-    updated_at='updated_at'
-) }}
+  models:
+    - name: my_model
+      config:
+        tags: ['daily']
 
-select
-    id         as customer_id,
-    name       as customer_name,
-    email,
-    status,
-    updated_at
-from raw_customers
+Your task: open \`models/schema.yml\` and add the tag \`daily\` to BOTH stg_orders and int_customer_orders. Selecting them in the next lesson will only work cleanly if both ends of the chain are tagged — int_customer_orders depends on stg_orders, so tagging just one would leave a broken ref.`,
+  hint: "Under each model in models/schema.yml, replace the TODO with `config:\\n      tags: ['daily']`.",
+  initialFiles: selectorsFiles({
+    'models/schema.yml': `version: 2
 
-{% endsnapshot %}
+models:
+  - name: stg_orders
+    # TODO: add config.tags: ['daily']
+  - name: int_customer_orders
+    # TODO: add config.tags: ['daily']
 `,
-  },
-  seeds: {},
+  }),
+  seeds: selectorsSeeds,
   requiredSteps: ['files'],
   goal: {
-    description: 'Snapshot once, change the source, snapshot again — history should grow.',
-    dagShape: {
-      nodes: [
-        { id: 'raw_customers', label: 'raw_customers', layer: 'source' },
-        { id: 'snap_customers', label: 'snap_customers', layer: 'intermediate' },
-      ],
-      edges: [{ source: 'raw_customers', target: 'snap_customers' }],
-    },
+    description: "Tag stg_orders and int_customer_orders with 'daily' in models/schema.yml.",
+    dagShape: selectorsDagShape,
   },
   validate: (state) => {
-    if (!snapshotRanAtLeast(state, 'snap_customers', 2))
-      return { passed: false, reason: 'Run `dbt snapshot` at least twice — once for the initial capture and once after the change.' }
-    if (!snapshotClosedAtLeast(state, 'snap_customers', 1))
-      return { passed: false, reason: 'The second run did not close any rows. Make sure you edited the CSV (change a value AND bump updated_at) before rerunning seed + snapshot.' }
+    const models = collectModels(state.files)
+    const stgOrders = models.find((m) => m.name === 'stg_orders')
+    const intCo = models.find((m) => m.name === 'int_customer_orders')
+    if (!stgOrders?.tags.includes('daily'))
+      return { passed: false, reason: "Add the 'daily' tag to stg_orders in models/schema.yml." }
+    if (!intCo?.tags.includes('daily'))
+      return { passed: false, reason: "Add the 'daily' tag to int_customer_orders in models/schema.yml." }
     return { passed: true }
   },
-  badge: { id: 'historian', name: 'Historian', emoji: '📜' },
+  badge: { id: 'tagger', name: 'Tagger', emoji: '🏷️' },
   quiz: {
-    question: 'A snapshot row has `dbt_valid_to = NULL`. What does that tell you?',
+    question: "What's the main reason to use a tag instead of just listing models by name?",
     options: [
-      'The row has not been processed yet',
-      'It is the current (most recent) version of that unique_key',
-      'The snapshot run failed for this row',
-      'The row has no tracked column',
+      'Tags run faster than fully-qualified names',
+      'Tags let you group models by intent (schedule, owner, sensitivity), so a single selector keeps working as the project grows',
+      'Tags are required before a model can be referenced with `ref()`',
+      'Tags replace the need for `--select`',
     ],
     correctIndex: 1,
-    explanation: 'A NULL dbt_valid_to marks "this version is still the truth". When a newer version arrives, dbt sets the old row\'s dbt_valid_to and inserts a fresh row with NULL valid_to for the new current version.',
+    explanation: 'Tags decouple "which models to run together" from "where they live in the graph". A `tag:hourly` selector keeps doing the right thing as you add new hourly models, without anyone editing the schedule.',
   },
   docs: [
-    { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+    { label: 'Tags', url: 'https://docs.getdbt.com/reference/resource-configs/tags' },
   ],
 }
 

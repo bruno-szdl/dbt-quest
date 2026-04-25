@@ -1,60 +1,69 @@
 import type { Level } from '../engine/types'
-import { seedLoaded } from '../engine/validators'
+import { sourceDefined } from '../engine/validators'
 
-const COUNTRY_CODES = `code,country_name,region
-US,United States,Americas
-CA,Canada,Americas
-BR,Brazil,Americas
-IN,India,Asia
-DE,Germany,Europe
-FR,France,Europe
-JP,Japan,Asia`
+const RAW_CUSTOMERS = `id,name,email,created_at,country
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,carol@example.com,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE`
 
 const level18: Level = {
   id: 18,
-  chapter: 5,
-  title: 'Add a seed',
-  description: `Sources are for raw data loaded into the warehouse by someone else. Seeds are different — they are small CSV files that live inside the dbt project and that dbt itself loads into the warehouse for you.
+  chapter: 6,
+  title: 'Declare a source',
+  description: `Every raw input to your project comes from somewhere — an ingestion pipeline, an event stream, a production database replica. dbt calls these inputs sources.
 
-Seeds are a good fit for tiny reference tables (country codes, mapping tables, thresholds, demo data) where the file being version-controlled next to the code is a feature, not a bug.
+Before you can reference a source in SQL, you declare it in a YAML file. Declarations look like this:
 
-A seed file is just a CSV under \`seeds/\`. To load it, you run:
+  version: 2
 
-  dbt seed
+  sources:
+    - name: raw
+      tables:
+        - name: customers
+        - name: orders
 
-A seed called \`country_codes\` is already in the project at \`seeds/country_codes.csv\`. Your task: run \`dbt seed\` and watch it get loaded into the warehouse. It will appear in the Database Explorer on the left once the command finishes.`,
-  hint: 'Run `dbt seed` in the terminal.',
+\`name\` groups tables that share the same origin (for example, all tables replicated from the production app). Each \`- name:\` under \`tables:\` is one raw table.
+
+Your task: complete models/sources.yml so that a source called \`raw\` exposes a table called \`customers\`.`,
+  hint: "Add this block below `version: 2`:\nsources:\n  - name: raw\n    tables:\n      - name: customers",
   initialFiles: {
-    'seeds/country_codes.csv': COUNTRY_CODES,
+    'models/sources.yml': `version: 2
+
+# TODO: declare a source called "raw" with a table called "customers".
+`,
   },
-  seeds: {},
-  requiredSteps: [],
+  seeds: {
+    'raw.customers': RAW_CUSTOMERS,
+  },
+  requiredSteps: ['files'],
   goal: {
-    description: 'Run `dbt seed` to load the country_codes CSV into the warehouse.',
+    description: 'Declare raw.customers in models/sources.yml.',
     dagShape: {
-      nodes: [{ id: 'country_codes', label: 'country_codes', layer: 'source' }],
+      nodes: [{ id: 'raw.customers', label: 'raw.customers', layer: 'source' }],
       edges: [],
     },
   },
   validate: (state) => {
-    if (!seedLoaded(state, 'country_codes'))
-      return { passed: false, reason: 'Run `dbt seed` to load country_codes.' }
+    if (!sourceDefined(state, 'raw', 'customers'))
+      return { passed: false, reason: 'Add a source named `raw` with a table named `customers` to models/sources.yml.' }
     return { passed: true }
   },
-  badge: { id: 'seed-sower', name: 'Seed Sower', emoji: '🌾' },
+  badge: { id: 'source-declared', name: 'Source Declared', emoji: '📡' },
   quiz: {
-    question: 'Which of the following is a good use case for a dbt seed?',
+    question: 'Why declare raw tables as dbt sources instead of referencing them directly?',
     options: [
-      'A 50 GB event log refreshed nightly',
-      'The production customers table, replicated from the app database',
-      'A small CSV of country codes used to enrich reports',
-      'A Python script that generates synthetic data',
+      'dbt refuses to run otherwise',
+      'It makes the SQL faster at runtime',
+      'Sources give you documentation, lineage and freshness checks for raw inputs',
+      'Sources materialize the raw tables as views automatically',
     ],
     correctIndex: 2,
-    explanation: 'Seeds are designed for small, mostly-static reference data you want versioned next to your code. Big, frequently-changing data belongs in a real ingestion pipeline and should be a source, not a seed.',
+    explanation: 'Declaring sources makes raw inputs first-class: they show up in lineage, can have tests and docs attached, and can be monitored for freshness. dbt itself does not create or own them.',
   },
   docs: [
-    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
   ],
 }
 

@@ -20,39 +20,29 @@ const RAW_ORDERS = `id,customer_id,amount,status,created_at
 
 const level23: Level = {
   id: 23,
-  chapter: 6,
-  title: 'Create an intermediate model',
-  description: `Two different marts need per-customer order stats: the customer dimension wants lifetime totals, and a churn report will eventually need the same rollup. That's the signal to promote the logic into an intermediate model both marts can share.
+  chapter: 7,
+  title: 'Build a final mart',
+  description: `Staging cleans the raw data. Marts are the final, business-facing models that dashboards and stakeholders actually read. A good mart is shaped for analysis, not for storage: descriptive names, one row per entity, and only the columns people need.
 
-Your task: create models/int_customer_orders.sql. It should ref() stg_orders, group by customer_id, and expose:
-  • customer_id
-  • orders_count
-  • lifetime_value (sum of amount)
+The analytics team wants a customer dimension with totals per customer. That's a textbook mart.
 
-Then run dbt run and confirm the mart in dim_customers_lite joins cleanly to it.`,
-  hint: "select customer_id, count(*) as orders_count, coalesce(sum(amount), 0) as lifetime_value from {{ ref('stg_orders') }} group by customer_id",
+Your task: create models/dim_customers.sql that joins stg_customers and stg_orders to produce one row per customer, with their total number of orders and total spend. Produce columns customer_id, customer_name, country, orders_count, lifetime_value. Then run dbt run.`,
+  hint: "Use `count(o.order_id) as orders_count` and `coalesce(sum(o.amount), 0) as lifetime_value`. Left join stg_orders so customers with no orders still appear. Group by customer_id, customer_name, country.",
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
+    email,
+    created_at,
     country
 from raw_customers`,
     'models/stg_orders.sql': `select
     id         as order_id,
     customer_id,
     amount,
-    status
+    status,
+    created_at
 from raw_orders`,
-    'models/dim_customers_lite.sql': `-- Consumes the intermediate model you are about to create.
-select
-    c.customer_id,
-    c.customer_name,
-    c.country,
-    coalesce(o.orders_count, 0)   as orders_count,
-    coalesce(o.lifetime_value, 0) as lifetime_value
-from {{ ref('stg_customers') }} as c
-left join {{ ref('int_customer_orders') }} as o
-    on c.customer_id = o.customer_id`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
@@ -60,48 +50,44 @@ left join {{ ref('int_customer_orders') }} as o
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Create int_customer_orders and run dbt run.',
+    description: 'Create models/dim_customers.sql with orders_count and lifetime_value, then run dbt run.',
     dagShape: {
       nodes: [
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
         { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-        { id: 'int_customer_orders', label: 'int_customer_orders', layer: 'intermediate' },
-        { id: 'dim_customers_lite', label: 'dim_customers_lite', layer: 'mart' },
+        { id: 'dim_customers', label: 'dim_customers', layer: 'mart' },
       ],
       edges: [
-        { source: 'stg_orders', target: 'int_customer_orders' },
-        { source: 'stg_customers', target: 'dim_customers_lite' },
-        { source: 'int_customer_orders', target: 'dim_customers_lite' },
+        { source: 'stg_customers', target: 'dim_customers' },
+        { source: 'stg_orders', target: 'dim_customers' },
       ],
     },
   },
   validate: (state) => {
-    if (!hasModel(state, 'int_customer_orders'))
-      return { passed: false, reason: 'Create models/int_customer_orders.sql.' }
-    if (!modelRefs(state, 'int_customer_orders', 'stg_orders'))
-      return { passed: false, reason: "int_customer_orders should ref({'stg_orders'})." }
-    if (!modelRan(state, 'int_customer_orders'))
-      return { passed: false, reason: 'Run dbt run to build int_customer_orders.' }
-    if (!outputColumnsInclude(state, 'int_customer_orders', ['customer_id', 'orders_count', 'lifetime_value']))
-      return { passed: false, reason: 'Output customer_id, orders_count, and lifetime_value.' }
-    if (!modelRan(state, 'dim_customers_lite'))
-      return { passed: false, reason: 'dim_customers_lite did not build — check the intermediate model.' }
+    if (!hasModel(state, 'dim_customers'))
+      return { passed: false, reason: 'Create models/dim_customers.sql.' }
+    if (!modelRefs(state, 'dim_customers', 'stg_customers') || !modelRefs(state, 'dim_customers', 'stg_orders'))
+      return { passed: false, reason: 'dim_customers should ref() both stg_customers and stg_orders.' }
+    if (!modelRan(state, 'dim_customers'))
+      return { passed: false, reason: 'Run dbt run to build dim_customers.' }
+    if (!outputColumnsInclude(state, 'dim_customers', ['customer_id', 'customer_name', 'orders_count', 'lifetime_value']))
+      return { passed: false, reason: 'Include customer_id, customer_name, orders_count, and lifetime_value.' }
     return { passed: true }
   },
-  badge: { id: 'middle-layer', name: 'Middle Layer', emoji: '🧩' },
+  badge: { id: 'mart-maker', name: 'Mart Maker', emoji: '🏛️' },
   quiz: {
-    question: 'When should you reach for an intermediate model instead of inlining the logic in a mart?',
+    question: 'What is the primary job of a mart model?',
     options: [
-      'Never — intermediate models add needless complexity',
-      'Whenever the same transformation is needed by more than one downstream model',
-      'Only when the mart exceeds 1000 lines of SQL',
-      'Only when the upstream model is a seed',
+      'To clean up raw column types and names',
+      'To present business-ready data for analytics and reporting',
+      'To store a replica of the raw tables for auditing',
+      'To define generic tests shared across the project',
     ],
     correctIndex: 1,
-    explanation: 'Intermediate models pay for themselves when logic is shared. If two marts would otherwise reimplement the same joins or aggregations, promoting that logic to an int_ model removes the duplication.',
+    explanation: 'Marts are the final outputs — what dashboards query. They are shaped for how the business thinks (dim_customers, fct_orders), not for how the raw data arrived.',
   },
   docs: [
-    { label: 'How we structure — intermediate', url: 'https://docs.getdbt.com/best-practices/how-we-structure/3-intermediate' },
+    { label: 'How we structure — marts', url: 'https://docs.getdbt.com/best-practices/how-we-structure/4-marts' },
   ],
 }
 

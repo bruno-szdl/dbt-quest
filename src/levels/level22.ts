@@ -6,109 +6,85 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 2,Bob Chen,bob@example.com,2024-01-17,CA
 3,Carol Silva,carol@example.com,2024-02-02,BR`
 
-const RAW_ORDERS = `id,customer_id,amount,status,created_at
-1,1,49.99,completed,2024-01-10
-2,1,24.99,completed,2024-01-20
-3,2,89.99,completed,2024-01-25`
+const COUNTRY_CODES = `code,country_name,region
+US,United States,Americas
+CA,Canada,Americas
+BR,Brazil,Americas`
 
 const level22: Level = {
   id: 22,
   chapter: 6,
-  title: 'Understand staging, intermediate, and marts',
-  description: `Most production dbt projects organise models into three layers. The naming is convention, not enforcement, but it's worth learning because nearly every team uses it.
+  title: 'Compare source vs seed',
+  description: `Sources and seeds are both raw inputs, but they represent different things:
 
-Staging (stg_*)
-  • One staging model per source table.
-  • Cleans types, renames columns, applies light transformations.
-  • Thin — rarely joins other models.
+Source — data owned by something other than dbt.
+  • Loaded into the warehouse by an ingestion pipeline, ETL tool, or replication.
+  • Usually large and frequently-changing.
+  • Declared in YAML with \`sources:\` and referenced via \`{{ source(...) }}\`.
+  • Example: the production customers table replicated nightly.
 
-Intermediate (int_*)
-  • Reusable building blocks between staging and marts.
-  • Joins or reshapes staging models to compute something shared.
-  • Often materialized as views or ephemeral.
+Seed — data owned by the dbt project itself.
+  • A CSV file committed in \`seeds/\`, loaded by \`dbt seed\`.
+  • Usually small and rarely changes.
+  • Referenced via \`{{ ref(...) }}\`, just like a model.
+  • Example: a country-code lookup table used to enrich reports.
 
-Marts (dim_*, fct_*, or domain-named)
-  • The final business-facing models.
-  • Shape data the way stakeholders think about it.
-  • Usually materialized as tables for fast reads.
+Rule of thumb: if the data belongs in the warehouse regardless of dbt, it's a source. If the data only makes sense next to the dbt code, it's a seed.
 
-Rule of thumb: if a transformation is reused by more than one mart, pull it into an intermediate model. Otherwise keep it inline.
-
-Open each file in the explorer and trace a row of customer data from raw → stg_ → int_ → dim_. When it clicks, mark the lesson complete.`,
-  hint: 'Open each .sql file and follow how one customer flows through the layers.',
+Both files have been provided so you can open them side by side. When the distinction feels clear, mark the lesson complete.`,
+  hint: 'Open sources.yml and seeds/country_codes.csv and note how each is used.',
   initialFiles: {
+    'models/sources.yml': `version: 2
+
+sources:
+  - name: raw
+    tables:
+      - name: customers
+`,
+    'seeds/country_codes.csv': COUNTRY_CODES,
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
     email,
     country
-from raw_customers`,
-    'models/stg_orders.sql': `select
-    id         as order_id,
-    customer_id,
-    amount,
-    status
-from raw_orders`,
-    'models/int_customer_orders.sql': `-- Intermediate: reusable rollup of orders per customer.
-select
-    customer_id,
-    count(*)                 as orders_count,
-    coalesce(sum(amount), 0) as lifetime_value
-from {{ ref('stg_orders') }}
-group by customer_id`,
-    'models/dim_customers.sql': `-- Mart: business-facing customer dimension.
-select
-    c.customer_id,
-    c.customer_name,
-    c.country,
-    coalesce(o.orders_count, 0)  as orders_count,
-    coalesce(o.lifetime_value, 0) as lifetime_value
-from {{ ref('stg_customers') }} as c
-left join {{ ref('int_customer_orders') }} as o
-    on c.customer_id = o.customer_id`,
+from {{ source('raw', 'customers') }}`,
   },
   seeds: {
-    raw_customers: RAW_CUSTOMERS,
-    raw_orders: RAW_ORDERS,
+    'raw.customers': RAW_CUSTOMERS,
   },
-  preRanModels: ['stg_customers', 'stg_orders', 'int_customer_orders', 'dim_customers'],
   requiredSteps: [],
   manualCompletion: true,
   goal: {
-    description: 'Trace data through stg_ → int_ → dim_, then mark complete.',
+    description: 'Inspect the source and the seed, then mark complete.',
     dagShape: {
       nodes: [
+        { id: 'raw.customers', label: 'raw.customers', layer: 'source' },
+        { id: 'country_codes', label: 'country_codes', layer: 'source' },
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-        { id: 'int_customer_orders', label: 'int_customer_orders', layer: 'intermediate' },
-        { id: 'dim_customers', label: 'dim_customers', layer: 'mart' },
       ],
-      edges: [
-        { source: 'stg_orders', target: 'int_customer_orders' },
-        { source: 'stg_customers', target: 'dim_customers' },
-        { source: 'int_customer_orders', target: 'dim_customers' },
-      ],
+      edges: [{ source: 'raw.customers', target: 'stg_customers' }],
     },
   },
   validate: (state) => {
     if (!manuallyMarked(state))
-      return { passed: false, reason: 'Trace the layers, then mark complete.' }
+      return { passed: false, reason: 'Compare the two, then mark the lesson complete.' }
     return { passed: true }
   },
-  badge: { id: 'layer-cake', name: 'Layer Cake', emoji: '🎂' },
+  badge: { id: 'source-vs-seed', name: 'Source vs Seed', emoji: '🗺️' },
   quiz: {
-    question: 'Which layer is the right home for "reusable join logic shared by two marts"?',
+    question: 'Which data is most likely a seed rather than a source?',
     options: [
-      'staging',
-      'intermediate',
-      'marts',
-      'seeds',
+      'The production orders table replicated from the app database',
+      'A 100 GB event stream landed by a Kafka connector',
+      'A 12-row CSV mapping product SKUs to categories',
+      'A Salesforce contacts export refreshed hourly',
     ],
-    correctIndex: 1,
-    explanation: 'Intermediate is precisely for reusable transformations that sit between staging and marts. Pulling shared logic here keeps the marts focused on presentation and prevents duplication.',
+    correctIndex: 2,
+    explanation: 'Seeds shine for small, mostly-static reference data owned by the dbt project. Large or frequently-refreshed data belongs in a real ingestion pipeline and should be declared as a source.',
   },
   docs: [
-    { label: 'How we structure our dbt projects', url: 'https://docs.getdbt.com/best-practices/how-we-structure/1-guide-overview' },
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
+    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
   ],
 }
 

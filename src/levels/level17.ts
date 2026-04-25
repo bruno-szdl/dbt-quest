@@ -1,77 +1,66 @@
 import type { Level } from '../engine/types'
-import { lineageHasSourceEdge, modelRan, sourceDefined } from '../engine/validators'
-
-const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@example.com,2024-01-05,US
-2,Bob Chen,bob@example.com,2024-01-17,CA
-3,Carol Silva,carol@example.com,2024-02-02,BR
-4,Dave Kumar,dave@example.com,2024-02-11,IN
-5,Eve Müller,eve@example.com,2024-03-01,DE`
+import { manuallyMarked } from '../engine/validators'
 
 const level17: Level = {
   id: 17,
   chapter: 5,
-  title: 'Use source() in a staging model',
-  description: `Once a source is declared, staging models reference it with \`{{ source('name', 'table') }}\` instead of the bare table name. The declaration is reused — you don't have to repeat the schema name in every model.
+  title: 'Why documentation matters',
+  description: `A description is just a string in YAML, but it's load-bearing once a project has more than one author.
 
-The source \`raw.customers\` has already been declared in models/sources.yml.
+Where descriptions actually pay off
+  • Onboarding — new teammates can read what a model means without reverse-engineering the SQL.
+  • Lineage handoff — analysts following a graph from a dashboard back to a source can land on each node and read what it represents.
+  • The dbt docs site — \`dbt docs generate\` plus \`dbt docs serve\` builds a browsable site from your descriptions, tests, and lineage. dbt-quest doesn't simulate the rendered site, but in a real project that site is where most non-engineers look first.
+  • Self-documenting contracts — descriptions and tests in the same YAML file form the public contract of the model: what it is, and what guarantees it makes.
 
-Your task: in stg_customers.sql replace \`from raw_customers\` with \`from {{ source('raw', 'customers') }}\`, then run dbt run. Once you do, the lineage tab will start showing raw.customers as an upstream node feeding into stg_customers.`,
-  hint: "Replace `from raw_customers` with `from {{ source('raw', 'customers') }}`. Then run `dbt run`.",
+Where descriptions do NOT help
+  • Restating the column name in English ("customer_id is the customer id"). If the description equals the name, delete it.
+  • Internal implementation notes that change every refactor. Those belong in commit messages, not descriptions.
+  • Anything time-sensitive ("temporarily filtered, will fix Tuesday"). It will rot.
+
+Mental shortcut: write the one sentence you'd want to read if a stakeholder Slacked you "what's this column?". When you've thought it through, mark the lesson complete.`,
+  hint: 'Picture explaining one of your real models to a new teammate in one sentence. That sentence is the description.',
   initialFiles: {
-    'models/sources.yml': `version: 2
+    'models/schema.yml': `version: 2
 
-sources:
-  - name: raw
-    tables:
-      - name: customers
+models:
+  - name: dim_customers
+    description: One row per customer, with lifetime totals — the canonical customer dimension used by every dashboard.
+    columns:
+      - name: customer_id
+        description: Stable surrogate id, foreign-keyed by every fact table.
+        tests:
+          - not_null
+          - unique
+      - name: lifetime_value
+        description: Sum of completed-order amounts in USD, refreshed daily.
 `,
-    'models/stg_customers.sql': `select
-    id         as customer_id,
-    name       as customer_name,
-    email,
-    created_at,
-    country
-from raw_customers`,
   },
-  seeds: {
-    'raw.customers': RAW_CUSTOMERS,
-  },
-  requiredSteps: ['files', 'run'],
+  seeds: {},
+  requiredSteps: [],
+  manualCompletion: true,
   goal: {
-    description: "Use {{ source('raw', 'customers') }} in stg_customers.sql and run dbt run.",
-    dagShape: {
-      nodes: [
-        { id: 'raw.customers', label: 'raw.customers', layer: 'source' },
-        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-      ],
-      edges: [{ source: 'raw.customers', target: 'stg_customers' }],
-    },
+    description: 'Reflect on when descriptions earn their keep, then mark complete.',
   },
   validate: (state) => {
-    if (!sourceDefined(state, 'raw', 'customers'))
-      return { passed: false, reason: 'Keep the raw.customers declaration in sources.yml.' }
-    if (!lineageHasSourceEdge(state, 'raw', 'customers', 'stg_customers'))
-      return { passed: false, reason: "Replace the bare table name with {{ source('raw', 'customers') }}." }
-    if (!modelRan(state, 'stg_customers'))
-      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
+    if (!manuallyMarked(state))
+      return { passed: false, reason: 'Mark the lesson complete when ready.' }
     return { passed: true }
   },
-  badge: { id: 'source-used', name: 'Source Plugged In', emoji: '🔌' },
+  badge: { id: 'doc-thinker', name: 'Doc Thinker', emoji: '📚' },
   quiz: {
-    question: "What does {{ source('raw', 'customers') }} compile to?",
+    question: 'Which of these is the BEST candidate for a description?',
     options: [
-      'A bare Python import',
-      'A reference to a raw input declared in sources.yml, resolved to the correct schema and table',
-      "A dbt test on the 'customers' table",
-      "An empty string when raw is not set",
+      'customer_id — "The customer id."',
+      'lifetime_value — "Sum of completed-order amounts in USD, refreshed daily."',
+      'customer_name — "TODO: ask product team about this column."',
+      'created_at — "Temporarily filtered to last 90 days for the spike investigation."',
     ],
     correctIndex: 1,
-    explanation: 'source() looks up the declaration in sources.yml and resolves to the concrete schema.table for the current environment. It also registers the source as an upstream node in the lineage graph.',
+    explanation: 'A useful description tells a reader what the value means and how it is computed — not just a paraphrase of the column name, not a TODO, and not a temporary note that will rot.',
   },
   docs: [
-    { label: 'About `source` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/source' },
-    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
+    { label: 'Documentation', url: 'https://docs.getdbt.com/docs/build/documentation' },
   ],
 }
 

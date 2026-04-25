@@ -1,5 +1,5 @@
 import type { Level } from '../engine/types'
-import { hasModel, modelRan, modelRefs, outputColumnsInclude } from '../engine/validators'
+import { modelRan, modelRefs, outputColumnsInclude } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@example.com,2024-01-05,US
@@ -8,86 +8,83 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 4,Dave Kumar,dave@example.com,2024-02-11,IN
 5,Eve Müller,eve@example.com,2024-03-01,DE`
 
-const RAW_ORDERS = `id,customer_id,amount,status,created_at
-1,1,49.99,completed,2024-01-10
-2,1,24.99,completed,2024-01-20
-3,2,89.99,completed,2024-01-25
-4,3,12.99,pending,2024-02-05
-5,4,199.99,completed,2024-02-15
-6,5,39.99,refunded,2024-03-05
-7,1,59.99,completed,2024-03-12
-8,2,14.99,pending,2024-04-01`
+const COUNTRY_CODES = `code,country_name,region
+US,United States,Americas
+CA,Canada,Americas
+BR,Brazil,Americas
+IN,India,Asia
+DE,Germany,Europe
+FR,France,Europe
+JP,Japan,Asia`
 
 const level21: Level = {
   id: 21,
   chapter: 6,
-  title: 'Build a final mart',
-  description: `Staging cleans the raw data. Marts are the final, business-facing models that dashboards and stakeholders actually read. A good mart is shaped for analysis, not for storage: descriptive names, one row per entity, and only the columns people need.
+  title: 'Reference the seed',
+  description: `Once a seed is loaded, you reference it from a model exactly like any other dataset — with ref().
 
-The analytics team wants a customer dimension with totals per customer. That's a textbook mart.
+That's a nice property: models don't need to care whether the upstream is a staging model, an intermediate model, or a seed. They are all just ref() calls.
 
-Your task: create models/dim_customers.sql that joins stg_customers and stg_orders to produce one row per customer, with their total number of orders and total spend. Produce columns customer_id, customer_name, country, orders_count, lifetime_value. Then run dbt run.`,
-  hint: "Use `count(o.order_id) as orders_count` and `coalesce(sum(o.amount), 0) as lifetime_value`. Left join stg_orders so customers with no orders still appear. Group by customer_id, customer_name, country.",
+Your task: complete models/int_customer_enriched.sql so that it joins stg_customers with the country_codes seed on the country column. Add \`country_name\` and \`region\` to the SELECT list, then run dbt run.`,
+  hint: "Use `join {{ ref('country_codes') }} as cc on c.country = cc.code` and add cc.country_name, cc.region to the SELECT.",
   initialFiles: {
+    'seeds/country_codes.csv': COUNTRY_CODES,
     'models/stg_customers.sql': `select
     id         as customer_id,
     name       as customer_name,
     email,
-    created_at,
     country
 from raw_customers`,
-    'models/stg_orders.sql': `select
-    id         as order_id,
-    customer_id,
-    amount,
-    status,
-    created_at
-from raw_orders`,
+    'models/int_customer_enriched.sql': `-- Task: join {{ ref('country_codes') }} to get country_name and region.
+
+select
+    c.customer_id,
+    c.customer_name,
+    c.country
+from {{ ref('stg_customers') }} as c`,
   },
   seeds: {
     raw_customers: RAW_CUSTOMERS,
-    raw_orders: RAW_ORDERS,
   },
   requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Create models/dim_customers.sql with orders_count and lifetime_value, then run dbt run.',
+    description: "Join {{ ref('country_codes') }} into int_customer_enriched and include country_name and region.",
     dagShape: {
       nodes: [
         { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-        { id: 'stg_orders', label: 'stg_orders', layer: 'staging' },
-        { id: 'dim_customers', label: 'dim_customers', layer: 'mart' },
+        { id: 'country_codes', label: 'country_codes', layer: 'source' },
+        { id: 'int_customer_enriched', label: 'int_customer_enriched', layer: 'intermediate' },
       ],
       edges: [
-        { source: 'stg_customers', target: 'dim_customers' },
-        { source: 'stg_orders', target: 'dim_customers' },
+        { source: 'stg_customers', target: 'int_customer_enriched' },
+        { source: 'country_codes', target: 'int_customer_enriched' },
       ],
     },
   },
   validate: (state) => {
-    if (!hasModel(state, 'dim_customers'))
-      return { passed: false, reason: 'Create models/dim_customers.sql.' }
-    if (!modelRefs(state, 'dim_customers', 'stg_customers') || !modelRefs(state, 'dim_customers', 'stg_orders'))
-      return { passed: false, reason: 'dim_customers should ref() both stg_customers and stg_orders.' }
-    if (!modelRan(state, 'dim_customers'))
-      return { passed: false, reason: 'Run dbt run to build dim_customers.' }
-    if (!outputColumnsInclude(state, 'dim_customers', ['customer_id', 'customer_name', 'orders_count', 'lifetime_value']))
-      return { passed: false, reason: 'Include customer_id, customer_name, orders_count, and lifetime_value.' }
+    if (!modelRefs(state, 'int_customer_enriched', 'country_codes'))
+      return { passed: false, reason: "Use {{ ref('country_codes') }} to join the seed into int_customer_enriched." }
+    if (!modelRan(state, 'int_customer_enriched'))
+      return { passed: false, reason: 'Run dbt run to build int_customer_enriched.' }
+    if (!outputColumnsInclude(state, 'int_customer_enriched', ['country_name', 'region']))
+      return { passed: false, reason: 'Include country_name and region from the seed in the SELECT.' }
     return { passed: true }
   },
-  badge: { id: 'mart-maker', name: 'Mart Maker', emoji: '🏛️' },
+  badge: { id: 'seed-joined', name: 'Seed Joined', emoji: '🌍' },
   quiz: {
-    question: 'What is the primary job of a mart model?',
+    question: 'How do you reference a seed from a model?',
     options: [
-      'To clean up raw column types and names',
-      'To present business-ready data for analytics and reporting',
-      'To store a replica of the raw tables for auditing',
-      'To define generic tests shared across the project',
+      "With {{ source('seeds', 'name') }}",
+      "With {{ ref('seed_name') }}",
+      "By writing the raw CSV path",
+      "With {{ seed('name') }}",
     ],
     correctIndex: 1,
-    explanation: 'Marts are the final outputs — what dashboards query. They are shaped for how the business thinks (dim_customers, fct_orders), not for how the raw data arrived.',
+    explanation: 'Seeds are addressed with ref(), same as any model. This keeps downstream SQL uniform regardless of whether the upstream is a model, a snapshot, or a seed.',
   },
   docs: [
-    { label: 'How we structure — marts', url: 'https://docs.getdbt.com/best-practices/how-we-structure/4-marts' },
+    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
+    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
   ],
 }
 

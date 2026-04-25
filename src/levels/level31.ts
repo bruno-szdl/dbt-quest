@@ -1,70 +1,54 @@
 import type { Level } from '../engine/types'
-import { manuallyMarked } from '../engine/validators'
+import {
+  exactRan,
+  selectorsDagShape,
+  selectorsFilesWithTags,
+  selectorsSeeds,
+} from './_selectorsFixture'
 
 const level31: Level = {
   id: 31,
-  chapter: 9,
-  title: 'Understand when to use snapshots',
-  description: `Snapshots are powerful but also have a cost (extra rows, extra config, a run that must happen regularly). So it's worth being deliberate about when to reach for them.
+  chapter: 8,
+  title: 'Select models by tag',
+  description: `Once a tag is declared, you can target every model that carries it with the \`tag:\` selector method:
 
-Good fits for a snapshot
-  • A dimension table whose rows can change over time and you care about history. For example: customers (plan tier, country, status), employees (department, role), products (price, category).
-  • A source that arrives as a snapshot of current state only, and you need to reconstruct "what did this look like on day X?".
+  dbt run --select tag:daily
 
-Bad fits
-  • Append-only data (events, logs). Those rows never change — the raw table is already a history.
-  • Data where you only ever care about the current state. Snapshots add noise without benefit.
-  • Data you already own history for (e.g. a source already modelled as SCD-2). No point duplicating.
+The schema.yml in this project already has the \`daily\` tag on stg_orders and int_customer_orders (the same ones you tagged last lesson, pre-loaded so you can focus on the selector itself).
 
-Mental shortcut: "Would the business ever ask me 'what did this look like three months ago?'". If yes, snapshot. If no, skip.
-
-Your task: think of a table in a project you've worked on (or can imagine). Decide whether it should be a snapshot or not, and why. Then mark the lesson complete.`,
-  hint: 'Pick a real-or-imagined table and decide: snapshot or not? Why?',
-  initialFiles: {
-    'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
-{{ config(
-    target_schema='snapshots',
-    strategy='timestamp',
-    unique_key='customer_id',
-    updated_at='updated_at'
-) }}
-
-select
-    id         as customer_id,
-    name       as customer_name,
-    email,
-    status,
-    updated_at
-from {{ source('raw', 'customers') }}
-
-{% endsnapshot %}
-`,
-  },
-  seeds: {},
-  requiredSteps: [],
-  manualCompletion: true,
+Your task: run \`dbt run --select tag:daily\` and confirm exactly those two models built — no staging customers, no marts.`,
+  hint: 'Type `dbt run --select tag:daily`.',
+  initialFiles: selectorsFilesWithTags(),
+  seeds: selectorsSeeds,
+  requiredSteps: ['run'],
   goal: {
-    description: 'Reflect on when snapshots pay off, then mark complete.',
+    description: "Run `dbt run --select tag:daily` to build only the models tagged 'daily'.",
+    dagShape: selectorsDagShape,
   },
   validate: (state) => {
-    if (!manuallyMarked(state))
-      return { passed: false, reason: 'Mark the lesson complete when ready.' }
+    if (state.ranModels.size === 0)
+      return { passed: false, reason: 'Run `dbt run --select tag:daily`.' }
+    if (!exactRan(state.ranModels, ['stg_orders', 'int_customer_orders']))
+      return {
+        passed: false,
+        reason: "Expected only the two 'daily'-tagged models. Reset the level and try `dbt run --select tag:daily`.",
+      }
     return { passed: true }
   },
-  badge: { id: 'snapshot-strategist', name: 'Snapshot Strategist', emoji: '🗓️' },
+  badge: { id: 'tag-picker', name: 'Tag Picker', emoji: '🔖' },
   quiz: {
-    question: 'Which of these tables is the BEST candidate for a snapshot?',
+    question: 'You schedule `dbt run --select tag:hourly` to run every hour. Six months later your team adds three new hourly models. What do you need to change?',
     options: [
-      'app_clicks — one row per click, never updated after insertion',
-      'customers — rows update over time when users change plan or status, and the team asks historical questions',
-      'dim_dates — a static calendar table with one row per day',
-      'audit_log — an append-only log of admin actions',
+      'Edit the cron schedule to list the new model names',
+      'Nothing — as long as the new models carry the `hourly` tag, the existing selector picks them up automatically',
+      'Add `--include` flags for each new model',
+      'Re-run dbt parse on every CI build',
     ],
     correctIndex: 1,
-    explanation: 'Snapshots shine for mutable dimensions where history matters. Event-like append tables already are their own history. Static reference tables have nothing to snapshot.',
+    explanation: 'That is the whole point of selecting by tag — the selector describes intent ("hourly things"), not a list of names. New models that match the intent are picked up for free.',
   },
   docs: [
-    { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+    { label: 'tag method', url: 'https://docs.getdbt.com/reference/node-selection/methods#tag' },
   ],
 }
 

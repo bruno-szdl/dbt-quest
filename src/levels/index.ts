@@ -30,6 +30,16 @@ import level28 from './level28'
 import level29 from './level29'
 import level30 from './level30'
 import level31 from './level31'
+import level32 from './level32'
+import level33 from './level33'
+import level34 from './level34'
+import level35 from './level35'
+import level36 from './level36'
+import level37 from './level37'
+import level38 from './level38'
+import level39 from './level39'
+import level40 from './level40'
+import level41 from './level41'
 
 export const levels: Level[] = [
   level01,
@@ -63,6 +73,16 @@ export const levels: Level[] = [
   level29,
   level30,
   level31,
+  level32,
+  level33,
+  level34,
+  level35,
+  level36,
+  level37,
+  level38,
+  level39,
+  level40,
+  level41,
 ]
 
 export interface Module {
@@ -99,33 +119,45 @@ export const modules: Module[] = [
   },
   {
     id: 5,
-    title: 'Sources and seeds',
-    description: 'Formalise raw inputs with sources and small CSVs with seeds.',
-    levelIds: [16, 17, 18, 19, 20],
+    title: 'Documentation',
+    description: 'Make models self-explanatory with descriptions on models and columns.',
+    levelIds: [16, 17],
   },
   {
     id: 6,
-    title: 'Project structure',
-    description: 'Organise models into staging, intermediate and marts.',
-    levelIds: [21, 22, 23],
+    title: 'Sources and seeds',
+    description: 'Formalise raw inputs with sources and small CSVs with seeds.',
+    levelIds: [18, 19, 20, 21, 22],
   },
   {
     id: 7,
-    title: 'Ephemeral models',
-    description: 'Reusable SQL that never becomes a warehouse object.',
-    levelIds: [24, 25],
+    title: 'Project structure',
+    description: 'Organise models into staging, intermediate and marts.',
+    levelIds: [23, 24, 25],
   },
   {
     id: 8,
-    title: 'Incremental models',
-    description: 'Process only new rows instead of rebuilding from scratch.',
-    levelIds: [26, 27, 28],
+    title: 'Selectors and tags',
+    description: 'Run subsets of the project with graph operators and tag selectors.',
+    levelIds: [26, 27, 28, 29, 30, 31, 32, 33],
   },
   {
     id: 9,
+    title: 'Ephemeral models',
+    description: 'Reusable SQL that never becomes a warehouse object.',
+    levelIds: [34, 35],
+  },
+  {
+    id: 10,
+    title: 'Incremental models',
+    description: 'Process only new rows instead of rebuilding from scratch.',
+    levelIds: [36, 37, 38],
+  },
+  {
+    id: 11,
     title: 'Snapshots',
     description: 'Preserve historical versions of changing source data.',
-    levelIds: [29, 30, 31],
+    levelIds: [39, 40, 41],
   },
 ]
 
