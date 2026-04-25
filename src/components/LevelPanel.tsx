@@ -390,6 +390,51 @@ function ProgressChecklist() {
           {alreadyMarked ? 'Marked — finishing up…' : "I've read it — mark this lesson complete"}
         </button>
       )}
+
+      {level.docs && level.docs.length > 0 && (
+        <div
+          style={{
+            marginTop: '14px',
+            paddingTop: '12px',
+            borderTop: '1px solid var(--color-border)',
+          }}
+        >
+          <div
+            style={{
+              color: 'var(--color-muted)',
+              fontSize: '9px',
+              fontFamily: 'JetBrains Mono, monospace',
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              marginBottom: '8px',
+            }}
+          >
+            Learn more
+          </div>
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {level.docs.map((doc) => (
+              <li key={doc.url}>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: 'var(--color-text-secondary)',
+                    fontSize: '12px',
+                    fontFamily: 'IBM Plex Sans, sans-serif',
+                    textDecoration: 'none',
+                    borderBottom: '1px dashed var(--color-border)',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-secondary)' }}
+                >
+                  {doc.label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

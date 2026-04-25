@@ -61,4 +61,6 @@ export interface Level {
     correctIndex: number
     explanation: string
   }
+  /** Links to the official dbt docs that cover this level's topic. */
+  docs?: { label: string; url: string }[]
 }

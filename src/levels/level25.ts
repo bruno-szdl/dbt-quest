@@ -96,6 +96,9 @@ left join {{ ref('int_customer_orders') }} as o
     correctIndex: 1,
     explanation: "Because ephemerals are inlined as CTEs, the same logic is re-executed inside every downstream model. If many models share a heavy ephemeral, making it a view or table is usually better so the work happens once.",
   },
+  docs: [
+    { label: 'Materializations — ephemeral', url: 'https://docs.getdbt.com/docs/build/materializations#ephemeral' },
+  ],
 }
 
 export default level25

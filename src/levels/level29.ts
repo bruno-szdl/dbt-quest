@@ -87,6 +87,9 @@ from raw_customers
     correctIndex: 1,
     explanation: 'dbt uses unique_key to match each incoming row to its historical versions. Without it, dbt cannot tell whether a row is "the same customer, now changed" or "a brand-new customer".',
   },
+  docs: [
+    { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+  ],
 }
 
 export default level29

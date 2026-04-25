@@ -107,6 +107,9 @@ left join {{ ref('int_customer_orders') }} as o
     correctIndex: 1,
     explanation: 'Intermediate is precisely for reusable transformations that sit between staging and marts. Pulling shared logic here keeps the marts focused on presentation and prevents duplication.',
   },
+  docs: [
+    { label: 'How we structure our dbt projects', url: 'https://docs.getdbt.com/best-practices/how-we-structure/1-guide-overview' },
+  ],
 }
 
 export default level22

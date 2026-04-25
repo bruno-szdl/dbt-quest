@@ -59,6 +59,9 @@ from raw_customers`,
     correctIndex: 2,
     explanation: '`dbt run` re-executes the SELECT against your warehouse and replaces the view or table with the new definition. Without it, the warehouse still shows the previous version of the model.',
   },
+  docs: [
+    { label: 'SQL models', url: 'https://docs.getdbt.com/docs/build/sql-models' },
+  ],
 }
 
 export default level03

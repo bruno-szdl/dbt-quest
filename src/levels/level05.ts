@@ -71,6 +71,10 @@ from raw_customers`,
     correctIndex: 2,
     explanation: 'Every .sql file under models/ (including subdirectories) is treated as a dbt model. dbt discovers them automatically.',
   },
+  docs: [
+    { label: 'About dbt models', url: 'https://docs.getdbt.com/docs/build/models' },
+    { label: 'How we structure our dbt projects', url: 'https://docs.getdbt.com/best-practices/how-we-structure/1-guide-overview' },
+  ],
 }
 
 export default level05

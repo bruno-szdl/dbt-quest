@@ -104,6 +104,9 @@ left join {{ ref('int_customer_orders') }} as o
     correctIndex: 1,
     explanation: "Ephemeral models are never objects in the warehouse. dbt takes their compiled SQL and inlines it as a CTE into every downstream model that ref()s them.",
   },
+  docs: [
+    { label: 'Materializations — ephemeral', url: 'https://docs.getdbt.com/docs/build/materializations#ephemeral' },
+  ],
 }
 
 export default level24

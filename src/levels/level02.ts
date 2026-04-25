@@ -57,6 +57,9 @@ from raw_customers`,
     correctIndex: 1,
     explanation: 'By default dbt builds models as views. A view does not store rows — it re-executes the underlying SELECT each time someone queries it. You can see stg_customers listed under Views in the Database Explorer.',
   },
+  docs: [
+    { label: 'About `dbt show`', url: 'https://docs.getdbt.com/reference/commands/show' },
+  ],
 }
 
 export default level02

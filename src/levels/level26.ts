@@ -84,6 +84,10 @@ from raw_events`,
     correctIndex: 2,
     explanation: 'Append strategy inserts only rows that match the incremental filter (typically newer than the latest already stored). The existing rows are preserved untouched.',
   },
+  docs: [
+    { label: 'Incremental models', url: 'https://docs.getdbt.com/docs/build/incremental-models' },
+    { label: 'Incremental strategies', url: 'https://docs.getdbt.com/docs/build/incremental-strategy' },
+  ],
 }
 
 export default level26

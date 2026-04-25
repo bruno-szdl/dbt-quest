@@ -57,6 +57,10 @@ from raw_customers`,
     correctIndex: 1,
     explanation: '`dbt run` compiles every model into SQL and executes it against the warehouse, creating views or tables depending on the materialization.',
   },
+  docs: [
+    { label: 'About `dbt run`', url: 'https://docs.getdbt.com/reference/commands/run' },
+    { label: 'About dbt models', url: 'https://docs.getdbt.com/docs/build/models' },
+  ],
 }
 
 export default level01

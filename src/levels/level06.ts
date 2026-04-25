@@ -70,6 +70,9 @@ from stg_customers`,
     correctIndex: 2,
     explanation: "ref() declares a dependency. dbt uses it to order builds and to resolve the referenced model to the correct schema for each environment.",
   },
+  docs: [
+    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
+  ],
 }
 
 export default level06

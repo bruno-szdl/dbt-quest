@@ -87,6 +87,9 @@ from raw_customers`,
     correctIndex: 1,
     explanation: 'Without a unique_key, merge has no way to know which existing row corresponds to an incoming row. The key is what turns "update or insert" into a deterministic decision.',
   },
+  docs: [
+    { label: 'Incremental strategies — merge', url: 'https://docs.getdbt.com/docs/build/incremental-strategy#merge-strategy' },
+  ],
 }
 
 export default level27

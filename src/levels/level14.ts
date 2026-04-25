@@ -79,6 +79,9 @@ models:
     correctIndex: 2,
     explanation: 'Tests exist so failures surface real problems. Deleting or loosening the test hides the issue from everyone downstream. Fix the root cause or be intentional about dropping bad rows in the staging model.',
   },
+  docs: [
+    { label: 'About data tests', url: 'https://docs.getdbt.com/docs/build/data-tests' },
+  ],
 }
 
 export default level14

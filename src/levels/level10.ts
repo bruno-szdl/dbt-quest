@@ -78,6 +78,9 @@ from raw_customers`,
     correctIndex: 1,
     explanation: 'A table stores rows on disk, which makes reads fast. The trade-off: the data only reflects the state of the last dbt run — upstream changes are not seen until you re-run.',
   },
+  docs: [
+    { label: 'Materializations', url: 'https://docs.getdbt.com/docs/build/materializations' },
+  ],
 }
 
 export default level10

@@ -69,6 +69,10 @@ from raw_customers`,
     correctIndex: 1,
     explanation: 'source() looks up the declaration in sources.yml and resolves to the concrete schema.table for the current environment. It also registers the source as an upstream node in the lineage graph.',
   },
+  docs: [
+    { label: 'About `source` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/source' },
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
+  ],
 }
 
 export default level17

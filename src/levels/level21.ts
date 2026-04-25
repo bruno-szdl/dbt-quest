@@ -86,6 +86,9 @@ from raw_orders`,
     correctIndex: 1,
     explanation: 'Marts are the final outputs — what dashboards query. They are shaped for how the business thinks (dim_customers, fct_orders), not for how the raw data arrived.',
   },
+  docs: [
+    { label: 'How we structure — marts', url: 'https://docs.getdbt.com/best-practices/how-we-structure/4-marts' },
+  ],
 }
 
 export default level21

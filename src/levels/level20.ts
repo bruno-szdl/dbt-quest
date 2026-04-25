@@ -82,6 +82,10 @@ from {{ source('raw', 'customers') }}`,
     correctIndex: 2,
     explanation: 'Seeds shine for small, mostly-static reference data owned by the dbt project. Large or frequently-refreshed data belongs in a real ingestion pipeline and should be declared as a source.',
   },
+  docs: [
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
+    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
+  ],
 }
 
 export default level20

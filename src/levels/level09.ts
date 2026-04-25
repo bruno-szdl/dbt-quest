@@ -94,6 +94,9 @@ join {{ ref('stg_orders') }} as o
     correctIndex: 1,
     explanation: "A table persists the result rows, so reads are fast but must be rebuilt to reflect upstream changes. A view just stores the query definition — every read re-executes it against the latest upstream data.",
   },
+  docs: [
+    { label: 'Materializations', url: 'https://docs.getdbt.com/docs/build/materializations' },
+  ],
 }
 
 export default level09

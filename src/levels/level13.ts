@@ -78,6 +78,10 @@ models:
     correctIndex: 1,
     explanation: 'Tests live in YAML files (commonly schema.yml) alongside the models they describe. Each model lists its columns and attaches tests to each column.',
   },
+  docs: [
+    { label: 'Generic data tests', url: 'https://docs.getdbt.com/docs/build/data-tests#generic-data-tests' },
+    { label: 'Data test properties', url: 'https://docs.getdbt.com/reference/resource-properties/data-tests' },
+  ],
 }
 
 export default level13

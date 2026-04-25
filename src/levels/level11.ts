@@ -61,6 +61,9 @@ from raw_customers`,
     correctIndex: 2,
     explanation: 'Row counts changing over time is normal — data evolves. NULLs in non-nullable columns and duplicates on identifiers, on the other hand, are classic quality issues and the main target of dbt tests.',
   },
+  docs: [
+    { label: 'About data tests', url: 'https://docs.getdbt.com/docs/build/data-tests' },
+  ],
 }
 
 export default level11

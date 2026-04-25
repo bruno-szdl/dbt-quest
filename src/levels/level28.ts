@@ -91,6 +91,9 @@ from raw_customers
     correctIndex: 1,
     explanation: 'If the rows are truly immutable after insertion, append is the right fit. Merge would pay the cost of key matching with no benefit. (If later you discover a row can change — a correction, a refund — that is the signal to switch to merge.)',
   },
+  docs: [
+    { label: 'Incremental strategies', url: 'https://docs.getdbt.com/docs/build/incremental-strategy' },
+  ],
 }
 
 export default level28

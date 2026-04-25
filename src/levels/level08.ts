@@ -94,6 +94,9 @@ from {{ ref('stg_customers') }} as c`,
     correctIndex: 1,
     explanation: 'dbt walks the DAG in topological order. Any model referenced via ref() is guaranteed to be built before the model that depends on it.',
   },
+  docs: [
+    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
+  ],
 }
 
 export default level08

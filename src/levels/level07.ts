@@ -69,6 +69,10 @@ from {{ ref('stg_customers') }}`,
     correctIndex: 2,
     explanation: 'The lineage graph is built from every ref() and source() call in your project. It is the canonical view of how data flows through your transformations.',
   },
+  docs: [
+    { label: 'About dbt projects', url: 'https://docs.getdbt.com/docs/build/projects' },
+    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
+  ],
 }
 
 export default level07

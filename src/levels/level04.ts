@@ -57,6 +57,9 @@ from raw_customers`,
     correctIndex: 2,
     explanation: 'The AS keyword creates a column alias. Writing `id as customer_id` keeps the underlying column the same but renames it in the result.',
   },
+  docs: [
+    { label: 'SQL models', url: 'https://docs.getdbt.com/docs/build/sql-models' },
+  ],
 }
 
 export default level04

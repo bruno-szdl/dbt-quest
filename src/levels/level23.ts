@@ -100,6 +100,9 @@ left join {{ ref('int_customer_orders') }} as o
     correctIndex: 1,
     explanation: 'Intermediate models pay for themselves when logic is shared. If two marts would otherwise reimplement the same joins or aggregations, promoting that logic to an int_ model removes the duplication.',
   },
+  docs: [
+    { label: 'How we structure — intermediate', url: 'https://docs.getdbt.com/best-practices/how-we-structure/3-intermediate' },
+  ],
 }
 
 export default level23

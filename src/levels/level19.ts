@@ -82,6 +82,10 @@ from {{ ref('stg_customers') }} as c`,
     correctIndex: 1,
     explanation: 'Seeds are addressed with ref(), same as any model. This keeps downstream SQL uniform regardless of whether the upstream is a model, a snapshot, or a seed.',
   },
+  docs: [
+    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
+    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
+  ],
 }
 
 export default level19

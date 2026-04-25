@@ -75,6 +75,9 @@ from raw_customers
     correctIndex: 1,
     explanation: 'A NULL dbt_valid_to marks "this version is still the truth". When a newer version arrives, dbt sets the old row\'s dbt_valid_to and inserts a fresh row with NULL valid_to for the new current version.',
   },
+  docs: [
+    { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+  ],
 }
 
 export default level30

@@ -62,6 +62,9 @@ Your task: complete models/sources.yml so that a source called \`raw\` exposes a
     correctIndex: 2,
     explanation: 'Declaring sources makes raw inputs first-class: they show up in lineage, can have tests and docs attached, and can be monitored for freshness. dbt itself does not create or own them.',
   },
+  docs: [
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
+  ],
 }
 
 export default level16

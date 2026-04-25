@@ -68,6 +68,9 @@ models:
     correctIndex: 1,
     explanation: 'build interleaves models and tests in dependency order. When a test fails, downstream models that depend on the failing one are skipped — protecting the rest of the graph from bad data.',
   },
+  docs: [
+    { label: 'About `dbt build`', url: 'https://docs.getdbt.com/reference/commands/build' },
+  ],
 }
 
 export default level15

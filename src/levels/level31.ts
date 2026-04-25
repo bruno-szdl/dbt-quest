@@ -63,6 +63,9 @@ from {{ source('raw', 'customers') }}
     correctIndex: 1,
     explanation: 'Snapshots shine for mutable dimensions where history matters. Event-like append tables already are their own history. Static reference tables have nothing to snapshot.',
   },
+  docs: [
+    { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+  ],
 }
 
 export default level31

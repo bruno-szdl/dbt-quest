@@ -53,6 +53,9 @@ A seed called \`country_codes\` is already in the project at \`seeds/country_cod
     correctIndex: 2,
     explanation: 'Seeds are designed for small, mostly-static reference data you want versioned next to your code. Big, frequently-changing data belongs in a real ingestion pipeline and should be a source, not a seed.',
   },
+  docs: [
+    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
+  ],
 }
 
 export default level18
