@@ -105,6 +105,8 @@ export default function Editor() {
               lineNumbers: 'on',
               renderLineHighlight: 'line',
               padding: { top: 8 },
+              acceptSuggestionOnCommitCharacter: false,
+              wordBasedSuggestions: 'off',
             }}
           />
         )}
