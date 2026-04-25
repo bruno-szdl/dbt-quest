@@ -10,10 +10,13 @@ import LevelCompleteModal from './components/LevelCompleteModal'
 import LevelQuizModal from './components/LevelQuizModal'
 import CourseCompleteModal from './components/CourseCompleteModal'
 import { useGameStore } from './store/gameStore'
+import { useIsMobile } from './hooks/useIsMobile'
+import MobileLayout from './components/MobileLayout'
 
 export default function App() {
   const loadLevel = useGameStore((s) => s.loadLevel)
   const initializedRef = useRef(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (initializedRef.current) return
@@ -71,6 +74,21 @@ export default function App() {
       window.removeEventListener('mouseup', onUp)
     }
   }, [])
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-base)' }}>
+        <Header />
+        <div className="flex-1 overflow-hidden">
+          <MobileLayout />
+        </div>
+        <LevelIntroModal />
+        <LevelCompleteModal />
+        <LevelQuizModal />
+        <CourseCompleteModal />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-base)' }}>

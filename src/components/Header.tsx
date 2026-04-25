@@ -1,52 +1,64 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLevelById, levels, modules } from '../levels'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 export default function Header() {
+  const isMobile = useIsMobile()
   return (
     <header
-      className="flex items-center justify-between px-5 py-0 shrink-0"
-      style={{ height: '52px', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}
+      className="flex items-center justify-between shrink-0"
+      style={{
+        height: '52px',
+        background: 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+        padding: isMobile ? '0 10px' : '0 20px',
+        gap: '8px',
+      }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 min-w-0" style={{ flex: 1 }}>
         <DbtLogo />
-        <div className="flex flex-col justify-center" style={{ gap: '1px' }}>
-          <div className="flex items-center gap-1.5">
-            <span
-              className="font-semibold tracking-tight"
-              style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-accent-orange)', fontSize: '15px' }}
-            >
-              dbt
-            </span>
-            <span
-              className="font-semibold tracking-tight"
-              style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-text)', fontSize: '15px' }}
-            >
-              quest
-            </span>
-          </div>
-          <span
-            style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-muted)', fontSize: '10px', lineHeight: 1 }}
-          >
-            Free dbt practice for the community
-          </span>
-        </div>
+        {!isMobile && (
+          <>
+            <div className="flex flex-col justify-center" style={{ gap: '1px' }}>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="font-semibold tracking-tight"
+                  style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-accent-orange)', fontSize: '15px' }}
+                >
+                  dbt
+                </span>
+                <span
+                  className="font-semibold tracking-tight"
+                  style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-text)', fontSize: '15px' }}
+                >
+                  quest
+                </span>
+              </div>
+              <span
+                style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-muted)', fontSize: '10px', lineHeight: 1 }}
+              >
+                Free dbt practice for the community
+              </span>
+            </div>
 
-        <div className="w-px h-4 ml-1" style={{ background: 'var(--color-border)' }} />
+            <div className="w-px h-4 ml-1" style={{ background: 'var(--color-border)' }} />
+          </>
+        )}
 
-        <LevelSelector />
+        <LevelSelector compact={isMobile} />
       </div>
 
-      <div className="flex items-center gap-3">
-        <BadgeStrip />
+      <div className="flex items-center gap-2 shrink-0">
+        {!isMobile && <BadgeStrip />}
         <ThemeToggleButton />
-        <HelpButton />
+        {!isMobile && <HelpButton />}
       </div>
     </header>
   )
 }
 
-function LevelSelector() {
+function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const currentLevelId = useGameStore((s) => s.currentLevelId)
@@ -64,7 +76,7 @@ function LevelSelector() {
   }, [open])
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative', minWidth: 0, flex: compact ? 1 : 'initial' }}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2"
@@ -74,6 +86,7 @@ function LevelSelector() {
           padding: '4px 6px',
           borderRadius: '5px',
           cursor: 'pointer',
+          maxWidth: '100%',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(128,128,128,0.08)' }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
@@ -90,14 +103,25 @@ function LevelSelector() {
             color: 'var(--color-accent-orange)',
             fontSize: '13px',
             fontFamily: 'JetBrains Mono, monospace',
+            flexShrink: 0,
           }}
         >
           {currentLevelId || '—'}
         </span>
         {level && (
           <>
-            <span style={{ color: 'var(--color-muted)', fontSize: '12px' }}>—</span>
-            <span style={{ color: 'var(--color-text-muted)', fontSize: '12px', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+            <span style={{ color: 'var(--color-muted)', fontSize: '12px', flexShrink: 0 }}>—</span>
+            <span
+              style={{
+                color: 'var(--color-text-muted)',
+                fontSize: '12px',
+                fontFamily: 'IBM Plex Sans, sans-serif',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+              }}
+            >
               {level.title}
             </span>
           </>

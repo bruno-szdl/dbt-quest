@@ -52,6 +52,12 @@ html {
   zoom: 1.1;
 }
 
+@media (max-width: 767px) {
+  html {
+    zoom: 1;
+  }
+}
+
 html,
 body,
 #root {
@@ -61,6 +67,12 @@ body,
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+body {
+  /* Prevent iOS double-tap zoom on buttons without disabling pinch-zoom */
+  touch-action: manipulation;
 }
 
 * {
@@ -106,4 +118,19 @@ body,
 /* React Flow overrides */
 .react-flow__attribution {
   display: none;
+}
+
+@media (max-width: 767px) {
+  /* React Flow controls — make tap targets larger on touch */
+  .react-flow__controls {
+    bottom: 8px !important;
+    left: 8px !important;
+  }
+  .react-flow__controls-button {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .react-flow__minimap {
+    display: none !important;
+  }
 }
