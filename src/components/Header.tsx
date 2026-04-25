@@ -265,7 +265,7 @@ function BadgeStrip() {
     .map((l) => ({ ...(l.badge as NonNullable<typeof l.badge>), levelId: l.id }))
 
   const count = earned.length
-  const recent = earned.slice(-5)
+  const recent = earned.slice(-3)
   const overflow = Math.max(0, count - recent.length)
   const isEmpty = count === 0
 

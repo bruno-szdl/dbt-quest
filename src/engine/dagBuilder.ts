@@ -21,11 +21,15 @@ function getModelLayer(name: string, path: string): Exclude<NodeLayer, 'source'>
   return 'mart'
 }
 
+function stripLineComments(sql: string): string {
+  return sql.replace(/--[^\n]*/g, '')
+}
+
 function extractRefs(sql: string): string[] {
   const out: string[] = []
   const re = /\{\{\s*ref\s*\(\s*['"]([^'"]+)['"]\s*\)\s*\}\}/g
   let m
-  while ((m = re.exec(sql))) out.push(m[1])
+  while ((m = re.exec(stripLineComments(sql)))) out.push(m[1])
   return out
 }
 
@@ -33,7 +37,7 @@ function extractSourceCalls(sql: string): Array<[string, string]> {
   const out: Array<[string, string]> = []
   const re = /\{\{\s*source\s*\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)\s*\}\}/g
   let m
-  while ((m = re.exec(sql))) out.push([m[1], m[2]])
+  while ((m = re.exec(stripLineComments(sql)))) out.push([m[1], m[2]])
   return out
 }
 

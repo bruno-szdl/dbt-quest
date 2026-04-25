@@ -74,6 +74,10 @@ export function compileModel(name: string, path: string, raw: string): CompiledM
   let materialization: Materialization = 'view'
   const tags: string[] = []
 
+  // Strip line comments before any Jinja parsing so refs/sources inside
+  // comments don't create false edges or get compiled into the SQL.
+  raw = raw.replace(/--[^\n]*/g, '')
+
   // Extract config(), then strip all config calls.
   raw.replace(CONFIG_RE, (_m, inner) => {
     const mat = MATERIALIZED_RE.exec(inner)
