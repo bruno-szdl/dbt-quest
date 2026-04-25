@@ -129,7 +129,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
             flexShrink: 0,
           }}
         >
-          dbt&nbsp;&gt;&nbsp;
+        type here&nbsp;&gt;&nbsp;
         </span>
         <input
           ref={inputRef}

@@ -160,7 +160,7 @@ export const useGameStore = create<StoreState>()(
   runCommand: async (input: string) => {
     if (get().running) return
 
-    const cmdLine: TerminalLine = { text: `dbt > ${input}` }
+    const cmdLine: TerminalLine = { text: `type here > ${input}` }
     const parsed = parseCommand(input)
 
     if (!parsed.ok) {
@@ -247,7 +247,7 @@ export const useGameStore = create<StoreState>()(
       running: true,
       bottomTab: 'results',
       bottomCollapsed: false,
-      terminalHistory: [...s.terminalHistory, { text: `dbt > dbt show --select ${name}` }],
+      terminalHistory: [...s.terminalHistory, { text: `type here > dbt show --select ${name}` }],
     }))
     try {
       if (!get().ranModels.has(name)) {
