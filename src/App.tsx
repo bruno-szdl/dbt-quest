@@ -8,6 +8,7 @@ import BottomPanel from './components/BottomPanel'
 import LevelIntroModal from './components/LevelIntroModal'
 import LevelCompleteModal from './components/LevelCompleteModal'
 import LevelQuizModal from './components/LevelQuizModal'
+import CourseCompleteModal from './components/CourseCompleteModal'
 import { useGameStore } from './store/gameStore'
 
 export default function App() {
@@ -131,6 +132,7 @@ export default function App() {
       <LevelIntroModal />
       <LevelCompleteModal />
       <LevelQuizModal />
+      <CourseCompleteModal />
     </div>
   )
 }

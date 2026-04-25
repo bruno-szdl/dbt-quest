@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useGameStore } from '../store/gameStore'
-import { getLevelById, levels } from '../levels'
+import { getLastLevelId, getLevelById } from '../levels'
 
 export default function LevelQuizModal() {
   const show = useGameStore((s) => s.showLevelQuiz)
@@ -13,7 +13,7 @@ export default function LevelQuizModal() {
 
   const level = getLevelById(currentLevelId)
   const quiz = level?.quiz
-  const isLastLevel = currentLevelId >= levels.length
+  const isLastLevel = currentLevelId === getLastLevelId()
 
   function handleOptionClick(index: number) {
     if (revealed) return

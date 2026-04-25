@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/gameStore'
-import { getLevelById, levels } from '../levels'
+import { getLastLevelId, getLevelById } from '../levels'
 
 export default function LevelCompleteModal() {
   const show = useGameStore((s) => s.showLevelComplete)
@@ -8,7 +8,7 @@ export default function LevelCompleteModal() {
   const loadLevel = useGameStore((s) => s.loadLevel)
 
   const level = getLevelById(currentLevelId)
-  const isLastLevel = currentLevelId >= levels.length
+  const isLastLevel = currentLevelId === getLastLevelId()
   const hasQuiz = level?.quiz != null
 
   function handleContinue() {
@@ -23,7 +23,12 @@ export default function LevelCompleteModal() {
   }
 
   function handleSkipQuiz() {
-    useGameStore.setState({ showLevelComplete: false, showLevelQuiz: false })
+    const { courseCompleteSeen } = useGameStore.getState()
+    useGameStore.setState({
+      showLevelComplete: false,
+      showLevelQuiz: false,
+      showCourseComplete: isLastLevel && !courseCompleteSeen,
+    })
     if (!isLastLevel) loadLevel(currentLevelId + 1)
   }
 

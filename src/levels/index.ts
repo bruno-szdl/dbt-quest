@@ -40,6 +40,7 @@ import level38 from './level38'
 import level39 from './level39'
 import level40 from './level40'
 import level41 from './level41'
+import level42 from './level42'
 
 export const levels: Level[] = [
   level01,
@@ -83,6 +84,7 @@ export const levels: Level[] = [
   level39,
   level40,
   level41,
+  level42,
 ]
 
 export interface Module {
@@ -159,6 +161,12 @@ export const modules: Module[] = [
     description: 'Preserve historical versions of changing source data.',
     levelIds: [39, 40, 41],
   },
+  {
+    id: 12,
+    title: 'Final challenge',
+    description: 'Debug a half-finished pipeline and ship it green.',
+    levelIds: [42],
+  },
 ]
 
 export function getLevelById(id: number): Level | undefined {
@@ -167,4 +175,9 @@ export function getLevelById(id: number): Level | undefined {
 
 export function getModuleForLevel(levelId: number): Module | undefined {
   return modules.find((m) => m.levelIds.includes(levelId))
+}
+
+/** The id of the highest-numbered level — used to detect the curriculum finale. */
+export function getLastLevelId(): number {
+  return levels.reduce((max, l) => (l.id > max ? l.id : max), 0)
 }

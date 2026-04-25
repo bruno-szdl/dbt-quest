@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { parseCommand } from '../engine/commandParser'
 import { execute } from '../engine/runner'
 import { previewModel, plan, materializeModels } from '../engine/executor'
-import { getLevelById } from '../levels'
+import { getLastLevelId, getLevelById } from '../levels'
 import type { TerminalLine } from '../engine/runner'
 import { registerCsv, resetDb } from '../engine/duckdb'
 import { sourceViewName } from '../engine/compiler'
@@ -46,6 +46,8 @@ interface StoreState {
   showLevelComplete: boolean
   showLevelIntro: boolean
   showLevelQuiz: boolean
+  showCourseComplete: boolean
+  courseCompleteSeen: boolean
 
   bottomTab: BottomTab
   bottomCollapsed: boolean
@@ -68,6 +70,7 @@ interface StoreState {
   dismissLevelIntro: () => void
   dismissLevelQuiz: () => void
   openLevelIntro: () => void
+  dismissCourseComplete: () => void
 
   setBottomTab: (tab: BottomTab) => void
   setBottomCollapsed: (collapsed: boolean) => void
@@ -116,6 +119,8 @@ export const useGameStore = create<StoreState>()(
   showLevelComplete: false,
   showLevelIntro: false,
   showLevelQuiz: false,
+  showCourseComplete: false,
+  courseCompleteSeen: false,
 
   bottomTab: 'commands',
   bottomCollapsed: false,
@@ -441,11 +446,29 @@ export const useGameStore = create<StoreState>()(
   openLevelComplete: () => set({ showLevelComplete: true }),
 
   dismissLevelCompleteModal: () => {
-    const level = getLevelById(get().currentLevelId)
-    set({ showLevelComplete: false, showLevelQuiz: level?.quiz != null })
+    const s = get()
+    const level = getLevelById(s.currentLevelId)
+    const hasQuiz = level?.quiz != null
+    const isLast = s.currentLevelId === getLastLevelId()
+    set({
+      showLevelComplete: false,
+      showLevelQuiz: hasQuiz,
+      // No quiz on the last level → trigger the course-complete modal directly.
+      showCourseComplete: !hasQuiz && isLast && !s.courseCompleteSeen,
+    })
   },
 
-  dismissLevelQuiz: () => set({ showLevelQuiz: false }),
+  dismissLevelQuiz: () => {
+    const s = get()
+    const isLast = s.currentLevelId === getLastLevelId()
+    set({
+      showLevelQuiz: false,
+      showCourseComplete: isLast && !s.courseCompleteSeen,
+    })
+  },
+
+  dismissCourseComplete: () =>
+    set({ showCourseComplete: false, courseCompleteSeen: true }),
 
   dismissLevelIntro: () =>
     set((s) => ({
@@ -463,6 +486,8 @@ export const useGameStore = create<StoreState>()(
       manuallyMarkedComplete: new Set<number>(),
       dismissedIntros: new Set<number>(),
       currentLevelId: 0,
+      courseCompleteSeen: false,
+      showCourseComplete: false,
     })
     try {
       localStorage.removeItem(PERSIST_KEY)
@@ -482,6 +507,7 @@ export const useGameStore = create<StoreState>()(
         manuallyMarkedComplete: [...s.manuallyMarkedComplete],
         dismissedIntros: [...s.dismissedIntros],
         currentLevelId: s.currentLevelId,
+        courseCompleteSeen: s.courseCompleteSeen,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as {
@@ -490,6 +516,7 @@ export const useGameStore = create<StoreState>()(
           manuallyMarkedComplete?: number[]
           dismissedIntros?: number[]
           currentLevelId?: number
+          courseCompleteSeen?: boolean
         }
         const completed = p.completedLevels ?? []
         const dismissed =
@@ -501,6 +528,7 @@ export const useGameStore = create<StoreState>()(
           manuallyMarkedComplete: new Set(p.manuallyMarkedComplete ?? []),
           dismissedIntros: new Set(dismissed),
           currentLevelId: p.currentLevelId ?? 0,
+          courseCompleteSeen: p.courseCompleteSeen ?? false,
         }
       },
     },
