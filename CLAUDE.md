@@ -57,6 +57,17 @@ Each level file exports an object with:
 
 To add a new level: create `src/levels/levelNN.ts` and register it in `src/levels/index.ts`.
 
+#### Adding levels beyond the current maximum — "last level" rule
+
+`getLastLevelId()` (in `src/levels/index.ts`) returns `max(level.id)` across all registered levels. This is the **single source of truth** for detecting the final level. Everything that gates the course-complete modal flows through it:
+
+- `gameStore.ts` — triggers `showCourseComplete` when `currentLevelId === getLastLevelId()` after a level is passed.
+- `LevelCompleteModal.tsx`, `LevelQuizModal.tsx`, `LevelPanel.tsx` — all use `getLastLevelId()` to decide whether to show "Next level →" or the course-complete path.
+
+When you add a new level (say level 43), `getLastLevelId()` automatically returns 43 — no other change is needed. The `CourseCompleteModal` (the full-screen celebration window with the 🎓 animation) will only fire on the new last level.
+
+**Important:** do not guard "is this the last level?" with `levels.length` — level IDs are 1-indexed and `levels.length === max(id)` only holds by coincidence while IDs are a gapless 1..N sequence. Always use `getLastLevelId()`.
+
 ### Theming
 
 CSS variables defined in `index.css` drive all colors. Theme (dark/light) is persisted to `localStorage` and applied via `document.documentElement.dataset.theme`. Components use CSS vars rather than hardcoded colors.

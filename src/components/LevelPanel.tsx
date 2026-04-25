@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/gameStore'
-import { getLevelById, levels } from '../levels'
+import { getLevelById, getLastLevelId } from '../levels'
 
 export default function LevelPanel() {
   const currentLevelId = useGameStore((s) => s.currentLevelId)
@@ -12,7 +12,7 @@ export default function LevelPanel() {
   const level = getLevelById(currentLevelId)
   if (!level) return null
 
-  const isLastLevel = currentLevelId >= levels.length
+  const isLastLevel = currentLevelId === getLastLevelId()
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-surface)' }}>
