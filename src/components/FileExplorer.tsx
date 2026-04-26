@@ -136,7 +136,7 @@ function DirItem({ node, depth, activeFile, onOpen, onDelete, onCreateInDir }: I
             border: 'none',
             cursor: 'pointer',
             color: 'var(--color-text-secondary)',
-            fontSize: '11px',
+            fontSize: '0.6875rem',
             fontFamily: 'JetBrains Mono, monospace',
             textAlign: 'left',
             userSelect: 'none',
@@ -225,7 +225,7 @@ function FileItem({ node, depth, activeFile, onOpen, onDelete }: ItemProps & { n
           borderLeft: `2px solid ${isActive ? 'var(--color-accent-orange)' : 'transparent'}`,
           cursor: 'pointer',
           color: isActive ? 'var(--color-text)' : 'var(--color-text-secondary)',
-          fontSize: '11px',
+          fontSize: '0.6875rem',
           fontFamily: 'JetBrains Mono, monospace',
           textAlign: 'left',
           boxSizing: 'border-box',
@@ -352,7 +352,7 @@ export default function FileExplorer() {
           style={{
             color: 'var(--color-text-muted)',
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '10px',
+            fontSize: '0.625rem',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
           }}
@@ -422,7 +422,7 @@ export default function FileExplorer() {
               border: '1px solid var(--color-accent-orange-dim)',
               borderRadius: '3px',
               color: 'var(--color-text)',
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               fontFamily: 'JetBrains Mono, monospace',
               padding: '4px 6px',
               outline: 'none',
@@ -432,7 +432,7 @@ export default function FileExplorer() {
           <div
             style={{
               color: 'var(--color-muted)',
-              fontSize: '9px',
+              fontSize: '0.5625rem',
               fontFamily: 'JetBrains Mono, monospace',
               marginTop: '3px',
             }}
@@ -448,7 +448,7 @@ export default function FileExplorer() {
           <div
             style={{
               color: 'var(--color-muted)',
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontFamily: 'JetBrains Mono, monospace',
               padding: '16px 8px',
               textAlign: 'center',

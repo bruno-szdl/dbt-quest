@@ -34,19 +34,19 @@ export default function Header() {
               <div className="flex items-center gap-1.5">
                 <span
                   className="font-semibold tracking-tight"
-                  style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-accent-orange)', fontSize: '15px' }}
+                  style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-accent-orange)', fontSize: '0.9375rem' }}
                 >
                   dbt
                 </span>
                 <span
                   className="font-semibold tracking-tight"
-                  style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-text)', fontSize: '15px' }}
+                  style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-text)', fontSize: '0.9375rem' }}
                 >
                   quest
                 </span>
               </div>
               <span
-                style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-muted)', fontSize: '10px', lineHeight: 1 }}
+                style={{ fontFamily: 'IBM Plex Sans, sans-serif', color: 'var(--color-muted)', fontSize: '0.625rem', lineHeight: 1 }}
               >
                 Free dbt practice for the community
               </span>
@@ -91,6 +91,9 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={level ? `Level ${currentLevelId} — ${level.title}. Click to choose another level.` : 'Choose a level'}
         style={{
           background: 'transparent',
           border: 'none',
@@ -103,7 +106,7 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
         title="Select a level"
       >
-        <span style={{ color: 'var(--color-text-muted)', fontSize: '12px', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', fontFamily: 'IBM Plex Sans, sans-serif' }}>
           Level
         </span>
         <span
@@ -112,7 +115,7 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
             background: 'var(--color-accent-bg)',
             border: '1px solid var(--color-accent-orange-dim)',
             color: 'var(--color-accent-orange)',
-            fontSize: '13px',
+            fontSize: '0.8125rem',
             fontFamily: 'JetBrains Mono, monospace',
             flexShrink: 0,
           }}
@@ -121,11 +124,11 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
         </span>
         {level && (
           <>
-            <span style={{ color: 'var(--color-muted)', fontSize: '12px', flexShrink: 0 }}>—</span>
+            <span style={{ color: 'var(--color-muted)', fontSize: '0.75rem', flexShrink: 0 }}>—</span>
             <span
               style={{
                 color: 'var(--color-text-muted)',
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontFamily: 'IBM Plex Sans, sans-serif',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -154,6 +157,8 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
 
       {open && (
         <div
+          role="listbox"
+          aria-label="Levels"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -177,7 +182,7 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
               <div
                 style={{
                   color: 'var(--color-muted)',
-                  fontSize: '9px',
+                  fontSize: '0.5625rem',
                   fontFamily: 'JetBrains Mono, monospace',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
@@ -217,7 +222,7 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
                     <span
                       style={{
                         fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: '10px',
+                        fontSize: '0.625rem',
                         color: isCurrent ? 'var(--color-accent-orange)' : isCompleted ? 'var(--color-success)' : 'var(--color-muted)',
                         width: '16px',
                         textAlign: 'right',
@@ -229,7 +234,7 @@ function LevelSelector({ compact = false }: { compact?: boolean } = {}) {
                     <span
                       style={{
                         fontFamily: 'IBM Plex Sans, sans-serif',
-                        fontSize: '11.5px',
+                        fontSize: '0.71875rem',
                         color: isCurrent ? 'var(--color-text)' : 'var(--color-text-muted)',
                         flex: 1,
                       }}
@@ -321,6 +326,9 @@ function BadgeStrip() {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2"
         title={isEmpty ? 'No badges earned yet' : `${count} of ${total} badges earned`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={isEmpty ? 'No badges earned yet' : `${count} of ${total} badges earned`}
         style={{
           background: 'transparent',
           border: '1px solid var(--color-border)',
@@ -342,7 +350,7 @@ function BadgeStrip() {
         {isEmpty ? (
           <>
             <TrophyIcon />
-            <span style={{ color: 'var(--color-muted)', fontSize: '11px', fontFamily: 'IBM Plex Sans, sans-serif' }}>
+            <span style={{ color: 'var(--color-muted)', fontSize: '0.6875rem', fontFamily: 'IBM Plex Sans, sans-serif' }}>
               No badges yet
             </span>
           </>
@@ -352,7 +360,7 @@ function BadgeStrip() {
               <span
                 style={{
                   color: 'var(--color-muted)',
-                  fontSize: '10px',
+                  fontSize: '0.625rem',
                   fontFamily: 'JetBrains Mono, monospace',
                   padding: '1px 5px',
                   border: '1px solid var(--color-border)',
@@ -371,7 +379,7 @@ function BadgeStrip() {
                     key={b.id}
                     className={isNewest ? 'btn-pulse-success' : ''}
                     style={{
-                      fontSize: '15px',
+                      fontSize: '0.9375rem',
                       lineHeight: 1,
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -388,11 +396,11 @@ function BadgeStrip() {
             </div>
           </>
         )}
-        <span style={{ color: 'var(--color-border)', fontSize: '11px' }}>·</span>
+        <span style={{ color: 'var(--color-border)', fontSize: '0.6875rem' }}>·</span>
         <span
           style={{
             color: count > 0 ? 'var(--color-text-muted)' : 'var(--color-muted)',
-            fontSize: '11px',
+            fontSize: '0.6875rem',
             fontFamily: 'JetBrains Mono, monospace',
           }}
         >
@@ -446,6 +454,8 @@ function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
 
   return (
     <div
+      role="dialog"
+      aria-label="Badges earned"
       style={{
         position: 'absolute',
         top: 'calc(100% + 8px)',
@@ -465,7 +475,7 @@ function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
         <span
           style={{
             color: 'var(--color-text)',
-            fontSize: '12px',
+            fontSize: '0.75rem',
             fontFamily: 'IBM Plex Sans, sans-serif',
             fontWeight: 600,
           }}
@@ -475,7 +485,7 @@ function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
         <span
           style={{
             color: 'var(--color-muted)',
-            fontSize: '10px',
+            fontSize: '0.625rem',
             fontFamily: 'JetBrains Mono, monospace',
           }}
         >
@@ -500,7 +510,7 @@ function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
           >
             <span
               style={{
-                fontSize: '20px',
+                fontSize: '1.25rem',
                 lineHeight: 1,
                 width: '22px',
                 textAlign: 'center',
@@ -515,7 +525,7 @@ function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
               <span
                 style={{
                   fontFamily: 'IBM Plex Sans, sans-serif',
-                  fontSize: '12px',
+                  fontSize: '0.75rem',
                   fontWeight: 600,
                   color: r.earned ? 'var(--color-text)' : 'var(--color-text-muted)',
                   overflow: 'hidden',
@@ -528,7 +538,7 @@ function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
               <span
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '10px',
+                  fontSize: '0.625rem',
                   color: r.earned ? 'var(--color-success)' : 'var(--color-muted)',
                 }}
               >
@@ -573,7 +583,7 @@ function ResetLevelButton({ compact = false }: { compact?: boolean }) {
         background: 'transparent',
         border: '1px solid var(--color-border)',
         color: 'var(--color-text-muted)',
-        fontSize: '12px',
+        fontSize: '0.75rem',
         fontFamily: 'IBM Plex Sans, sans-serif',
         cursor: running || !currentLevelId ? 'not-allowed' : 'pointer',
         opacity: running || !currentLevelId ? 0.5 : 1,
@@ -767,7 +777,7 @@ function SettingsItem({
         style={{
           color: danger ? '#e25b5b' : 'var(--color-text)',
           fontFamily: 'IBM Plex Sans, sans-serif',
-          fontSize: '12.5px',
+          fontSize: '0.78125rem',
           fontWeight: 600,
         }}
       >
@@ -777,7 +787,7 @@ function SettingsItem({
         style={{
           color: 'var(--color-text-muted)',
           fontFamily: 'IBM Plex Sans, sans-serif',
-          fontSize: '10.5px',
+          fontSize: '0.65625rem',
         }}
       >
         {description}

@@ -34,7 +34,7 @@ export default function Editor() {
             style={{
               color: 'var(--color-text-muted)',
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
             }}
@@ -58,7 +58,7 @@ export default function Editor() {
                   borderRight: '1px solid var(--color-border)',
                   borderTop: isActive ? '1px solid var(--color-accent-orange)' : '1px solid transparent',
                   color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)',
-                  fontSize: '11px',
+                  fontSize: '0.6875rem',
                   fontFamily: 'JetBrains Mono, monospace',
                   outline: 'none',
                 }}
@@ -80,7 +80,7 @@ export default function Editor() {
               style={{
                 color: 'var(--color-text-muted)',
                 fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
               }}
@@ -90,7 +90,7 @@ export default function Editor() {
           </div>
         ) : (
           <MonacoEditor
-            key={`${currentLevelId}-${activeFile}-${theme}`}
+            key={`${currentLevelId}-${activeFile}`}
             height="100%"
             language={detectLanguage(activeFile)}
             theme={theme === 'dark' ? 'vs-dark' : 'light'}
@@ -99,7 +99,7 @@ export default function Editor() {
             onMount={(editor) => editor.focus()}
             options={{
               minimap: { enabled: false },
-              fontSize: 13,
+              fontSize: 14,
               fontFamily: '"JetBrains Mono", "Fira Code", monospace',
               scrollBeyondLastLine: false,
               lineNumbers: 'on',

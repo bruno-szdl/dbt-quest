@@ -113,7 +113,7 @@ export default function DatabaseExplorer() {
         <span
           style={{
             color: 'var(--color-text-muted)',
-            fontSize: '10px',
+            fontSize: '0.625rem',
             fontFamily: 'JetBrains Mono, monospace',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
@@ -126,7 +126,7 @@ export default function DatabaseExplorer() {
             style={{
               marginLeft: 'auto',
               color: 'var(--color-muted)',
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontFamily: 'JetBrains Mono, monospace',
             }}
           >
@@ -143,7 +143,7 @@ export default function DatabaseExplorer() {
               style={{
                 padding: '4px 16px 8px',
                 color: 'var(--color-muted)',
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontFamily: 'IBM Plex Sans, sans-serif',
                 fontStyle: 'italic',
               }}
@@ -172,7 +172,7 @@ export default function DatabaseExplorer() {
                   <span
                     style={{
                       color: 'var(--color-text-muted)',
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
                   >
@@ -203,7 +203,7 @@ export default function DatabaseExplorer() {
                         <span
                           style={{
                             color: 'var(--color-text-secondary)',
-                            fontSize: '11px',
+                            fontSize: '0.6875rem',
                             fontFamily: 'JetBrains Mono, monospace',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -236,7 +236,7 @@ export default function DatabaseExplorer() {
                         <span
                           style={{
                             color: 'var(--color-text-secondary)',
-                            fontSize: '11px',
+                            fontSize: '0.6875rem',
                             fontFamily: 'JetBrains Mono, monospace',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',

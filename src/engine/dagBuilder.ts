@@ -1,3 +1,5 @@
+import { getModelName } from './compiler'
+
 export type NodeLayer = 'source' | 'staging' | 'intermediate' | 'mart'
 
 export interface DagNode {
@@ -202,7 +204,7 @@ export function buildDag(files: Record<string, string>): { nodes: DagNode[]; edg
   }
 
   for (const [path, content] of modelFiles) {
-    const name = path.split('/').pop()!.replace(/\.sql$/, '')
+    const name = getModelName(path)
     const layer = getModelLayer(name, path)
     if (!nodesMap.has(name)) {
       nodesMap.set(name, { id: name, label: name, layer, hasCycle: false })

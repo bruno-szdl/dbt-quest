@@ -1,5 +1,6 @@
 import { useGameStore } from '../store/gameStore'
 import { getLastLevelId, getLevelById, modules, moduleEndingAt } from '../levels'
+import { useModalA11y } from '../hooks/useModalA11y'
 
 export default function LevelCompleteModal() {
   const show = useGameStore((s) => s.showLevelComplete)
@@ -11,6 +12,7 @@ export default function LevelCompleteModal() {
   const level = getLevelById(currentLevelId)
   const isLastLevel = currentLevelId === getLastLevelId()
   const hasQuiz = level?.quiz != null
+  const dialogRef = useModalA11y(show && !!level)
 
   // Module-completion celebration: this level is the last in its module → unlock the module badge.
   const closingModule = moduleEndingAt(currentLevelId)
@@ -69,6 +71,11 @@ export default function LevelCompleteModal() {
         }
       `}</style>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="level-complete-title"
+        tabIndex={-1}
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-success-border)',
@@ -82,12 +89,13 @@ export default function LevelCompleteModal() {
           animation: 'slideUp 0.22s ease-out',
           padding: '36px 32px 28px',
           textAlign: 'center',
+          outline: 'none',
         }}
       >
         {/* Emoji — module badge if closing a module, else the per-level stamp */}
         <div
           style={{
-            fontSize: closingModule ? '64px' : '48px',
+            fontSize: closingModule ? '4rem' : '3rem',
             lineHeight: 1,
             marginBottom: '16px',
             animation: 'badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both',
@@ -103,7 +111,7 @@ export default function LevelCompleteModal() {
             background: 'var(--color-success-bg)',
             border: '1px solid var(--color-success-border)',
             color: 'var(--color-success)',
-            fontSize: '10px',
+            fontSize: '0.625rem',
             fontFamily: 'JetBrains Mono, monospace',
             padding: '2px 8px',
             borderRadius: '4px',
@@ -120,11 +128,12 @@ export default function LevelCompleteModal() {
 
         {/* Title */}
         <h2
+          id="level-complete-title"
           style={{
             margin: '0 0 8px',
             color: 'var(--color-text)',
             fontFamily: 'IBM Plex Sans, sans-serif',
-            fontSize: '20px',
+            fontSize: '1.25rem',
             fontWeight: 700,
             letterSpacing: '-0.01em',
           }}
@@ -140,7 +149,7 @@ export default function LevelCompleteModal() {
               margin: '0 0 14px',
               color: 'var(--color-text-secondary)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '12.5px',
+              fontSize: '0.78125rem',
               fontStyle: 'italic',
               lineHeight: 1.5,
             }}
@@ -155,7 +164,7 @@ export default function LevelCompleteModal() {
             margin: '0 0 28px',
             color: 'var(--color-text-muted)',
             fontFamily: 'IBM Plex Sans, sans-serif',
-            fontSize: '13px',
+            fontSize: '0.8125rem',
             lineHeight: 1.6,
           }}
         >
@@ -179,7 +188,7 @@ export default function LevelCompleteModal() {
             borderRadius: '6px',
             color: '#0d1117',
             fontFamily: 'IBM Plex Sans, sans-serif',
-            fontSize: '13px',
+            fontSize: '0.8125rem',
             fontWeight: 700,
             padding: '10px 24px',
             cursor: 'pointer',
@@ -209,7 +218,7 @@ export default function LevelCompleteModal() {
               border: 'none',
               color: 'var(--color-text-muted)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               padding: '4px 8px',
               cursor: 'pointer',
               textDecoration: 'underline',

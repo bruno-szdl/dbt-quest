@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLevelById, getModuleForLevel } from '../levels'
 import StoryThread from './StoryThread'
+import { useModalA11y } from '../hooks/useModalA11y'
 
 export default function LevelIntroModal() {
   const show = useGameStore((s) => s.showLevelIntro)
@@ -10,6 +11,7 @@ export default function LevelIntroModal() {
 
   const level = getLevelById(currentLevelId)
   const mod = getModuleForLevel(currentLevelId)
+  const dialogRef = useModalA11y(show && !!level)
 
   useEffect(() => {
     if (!show) return
@@ -45,6 +47,11 @@ export default function LevelIntroModal() {
         }
       `}</style>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="level-intro-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--color-surface)',
@@ -57,6 +64,7 @@ export default function LevelIntroModal() {
           flexDirection: 'column',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
           animation: 'slideUp 0.22s ease-out',
+          outline: 'none',
         }}
       >
         {/* Header */}
@@ -78,7 +86,7 @@ export default function LevelIntroModal() {
               border: 'none',
               color: 'var(--color-text-muted)',
               cursor: 'pointer',
-              fontSize: '22px',
+              fontSize: '1.375rem',
               lineHeight: 1,
               padding: '4px 8px',
               borderRadius: '4px',
@@ -108,7 +116,7 @@ export default function LevelIntroModal() {
                 background: 'var(--color-accent-bg)',
                 border: '1px solid var(--color-accent-orange-dim)',
                 color: 'var(--color-accent-orange)',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontFamily: 'JetBrains Mono, monospace',
                 padding: '2px 7px',
                 borderRadius: '4px',
@@ -122,7 +130,7 @@ export default function LevelIntroModal() {
               <span
                 style={{
                   color: 'var(--color-text-muted)',
-                  fontSize: '11px',
+                  fontSize: '0.6875rem',
                   fontFamily: 'IBM Plex Sans, sans-serif',
                 }}
               >
@@ -132,11 +140,12 @@ export default function LevelIntroModal() {
           </div>
 
           <h2
+            id="level-intro-title"
             style={{
               margin: 0,
               color: 'var(--color-text)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '22px',
+              fontSize: '1.375rem',
               fontWeight: 600,
               letterSpacing: '-0.01em',
             }}
@@ -164,7 +173,7 @@ export default function LevelIntroModal() {
               margin: 0,
               color: 'var(--color-text-secondary)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '14px',
+              fontSize: '0.875rem',
               lineHeight: 1.7,
               whiteSpace: 'pre-wrap',
             }}
@@ -187,7 +196,7 @@ export default function LevelIntroModal() {
             <span
               style={{
                 color: 'var(--color-success)',
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontFamily: 'JetBrains Mono, monospace',
                 lineHeight: 1.6,
                 textTransform: 'uppercase',
@@ -201,7 +210,7 @@ export default function LevelIntroModal() {
             <span
               style={{
                 color: 'var(--color-text-secondary)',
-                fontSize: '13px',
+                fontSize: '0.8125rem',
                 fontFamily: 'IBM Plex Sans, sans-serif',
                 lineHeight: 1.6,
               }}
@@ -225,7 +234,7 @@ export default function LevelIntroModal() {
           <span
             style={{
               color: 'var(--color-muted)',
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontFamily: 'JetBrains Mono, monospace',
               marginRight: 'auto',
             }}
@@ -242,7 +251,7 @@ export default function LevelIntroModal() {
               borderRadius: '6px',
               color: '#0d1117',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 600,
               padding: '8px 18px',
               cursor: 'pointer',

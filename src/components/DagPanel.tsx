@@ -31,6 +31,7 @@ interface ModelNodeData {
   layer: NodeLayer
   status: NodeStatus
   hasCycle: boolean
+  isDark: boolean
 }
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -38,35 +39,70 @@ interface ModelNodeData {
 const NODE_W = 160
 const NODE_H = 46
 
-const LAYER_COLOR: Record<NodeLayer, string> = {
+// Layer palettes are theme-aware. ReactFlow needs concrete hex strings (it can't
+// resolve CSS variables in its style props), so we keep both palettes here and
+// pick by theme. Dark uses the GitHub primer-dark colors; light uses primer-light
+// equivalents so contrast against the light surface stays readable.
+const LAYER_PALETTE_DARK: Record<NodeLayer, string> = {
   source: '#3fb950',
   staging: '#388bfd',
   intermediate: '#d29922',
   mart: '#8957e5',
 }
 
-const LAYER_BG: Record<NodeLayer, string> = {
-  source: '#3fb95012',
-  staging: '#388bfd12',
-  intermediate: '#d2992212',
-  mart: '#8957e512',
+const LAYER_PALETTE_LIGHT: Record<NodeLayer, string> = {
+  source: '#1a7f37',
+  staging: '#0969da',
+  intermediate: '#9a6700',
+  mart: '#8250df',
 }
+
+function layerColor(layer: NodeLayer, isDark: boolean): string {
+  return (isDark ? LAYER_PALETTE_DARK : LAYER_PALETTE_LIGHT)[layer]
+}
+
+function layerBg(layer: NodeLayer, isDark: boolean): string {
+  // 12 = ~7% alpha, matches the previous "barely tinted" feel in dark mode.
+  return `${layerColor(layer, isDark)}12`
+}
+
+const FAIL_COLOR_DARK = '#f85149'
+const FAIL_COLOR_LIGHT = '#cf222e'
+const IDLE_DOT_DARK = '#484f58'
+const IDLE_DOT_LIGHT = '#8c959f'
 
 // ── custom node ───────────────────────────────────────────────────────────────
 
 function ModelNode({ data }: { data: ModelNodeData }) {
-  const color = LAYER_COLOR[data.layer]
-  const bg = LAYER_BG[data.layer]
-  const borderColor = data.hasCycle ? '#f85149' : color
+  const color = layerColor(data.layer, data.isDark)
+  const bg = layerBg(data.layer, data.isDark)
+  const failColor = data.isDark ? FAIL_COLOR_DARK : FAIL_COLOR_LIGHT
+  const okColor = data.isDark ? LAYER_PALETTE_DARK.source : LAYER_PALETTE_LIGHT.source
+  const idleColor = data.isDark ? IDLE_DOT_DARK : IDLE_DOT_LIGHT
+  const borderColor = data.hasCycle ? failColor : color
 
   const statusDot =
     data.hasCycle || data.status === 'error'
-      ? '#f85149'
+      ? failColor
       : data.status === 'ok'
-        ? '#3fb950'
+        ? okColor
         : data.status === 'fail'
-          ? '#f85149'
-          : '#484f58'
+          ? failColor
+          : idleColor
+
+  // Glyph reinforces the color so colour-blind users can tell pass / fail apart.
+  const statusGlyph =
+    data.hasCycle || data.status === 'error' || data.status === 'fail'
+      ? '✗'
+      : data.status === 'ok'
+        ? '✓'
+        : ''
+  const statusLabel =
+    data.hasCycle || data.status === 'error' || data.status === 'fail'
+      ? 'Failed'
+      : data.status === 'ok'
+        ? 'Passed'
+        : 'Not run'
 
   return (
     <div
@@ -96,7 +132,7 @@ function ModelNode({ data }: { data: ModelNodeData }) {
           style={{
             color,
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '9px',
+            fontSize: '0.5625rem',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             opacity: 0.8,
@@ -105,15 +141,33 @@ function ModelNode({ data }: { data: ModelNodeData }) {
           {data.layer}
         </span>
         <span
-          style={{ width: 7, height: 7, borderRadius: '50%', background: statusDot, flexShrink: 0 }}
-        />
+          aria-label={statusLabel}
+          title={statusLabel}
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            background: statusDot,
+            color: '#fff',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: '0.5rem',
+            fontWeight: 700,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            lineHeight: 1,
+          }}
+        >
+          {statusGlyph}
+        </span>
       </div>
 
       <div
         style={{
           color: 'var(--color-text)',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '11px',
+          fontSize: '0.6875rem',
           fontWeight: 500,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -163,6 +217,7 @@ function toRfNodes(
   dagNodes: DagNode[],
   ranModels: Set<string>,
   testResults: Record<string, 'pass' | 'fail' | 'untested'>,
+  isDark: boolean,
 ): Node[] {
   return dagNodes.map((n) => {
     let status: NodeStatus = 'idle'
@@ -175,7 +230,7 @@ function toRfNodes(
       id: n.id,
       type: 'modelNode',
       position: { x: 0, y: 0 },
-      data: { label: n.label, layer: n.layer, status, hasCycle: n.hasCycle } satisfies ModelNodeData,
+      data: { label: n.label, layer: n.layer, status, hasCycle: n.hasCycle, isDark } satisfies ModelNodeData,
     }
   })
 }
@@ -193,7 +248,7 @@ function toRfEdges(dagEdges: DagEdge[], isDark: boolean): Edge[] {
 
 // ── ghost goal overlay ────────────────────────────────────────────────────────
 
-function GhostGoal({ shape }: { shape: GoalDagShape }) {
+function GhostGoal({ shape, isDark }: { shape: GoalDagShape; isDark: boolean }) {
   const count = shape.nodes.length
   if (count === 0) return null
   const cols = Math.max(1, Math.ceil(Math.sqrt(count)))
@@ -207,7 +262,7 @@ function GhostGoal({ shape }: { shape: GoalDagShape }) {
           const totalCols = Math.min(cols, count)
           const left = `${10 + col * (80 / Math.max(totalCols - 1, 1))}%`
           const top = `${25 + row * 40}%`
-          const color = LAYER_COLOR[n.layer]
+          const color = layerColor(n.layer, isDark)
           return (
             <div
               key={n.id}
@@ -221,7 +276,7 @@ function GhostGoal({ shape }: { shape: GoalDagShape }) {
                 padding: '5px 10px',
                 color,
                 fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '9px',
+                fontSize: '0.5625rem',
                 whiteSpace: 'nowrap',
                 background: `${color}08`,
               }}
@@ -278,9 +333,12 @@ function DagCanvas({ rfNodes, rfEdges, goalShape, isDark }: DagCanvasProps) {
   const controlsBg = isDark ? '#161b22' : '#ffffff'
   const controlsBorder = isDark ? '#30363d' : '#d0d7de'
 
+  const failColor = isDark ? FAIL_COLOR_DARK : FAIL_COLOR_LIGHT
+  const idleColor = isDark ? IDLE_DOT_DARK : IDLE_DOT_LIGHT
+
   return (
     <div className="relative w-full h-full">
-      {goalShape && <GhostGoal shape={goalShape} />}
+      {goalShape && <GhostGoal shape={goalShape} isDark={isDark} />}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -303,7 +361,7 @@ function DagCanvas({ rfNodes, rfEdges, goalShape, isDark }: DagCanvasProps) {
         <MiniMap
           nodeColor={(n) => {
             const d = n.data as ModelNodeData
-            return d.hasCycle ? '#f85149' : LAYER_COLOR[d.layer] ?? '#484f58'
+            return d.hasCycle ? failColor : layerColor(d.layer, isDark) ?? idleColor
           }}
           style={{
             background: minimapBg,
@@ -337,7 +395,7 @@ function EmptyState() {
         style={{
           color: 'var(--color-text-muted)',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '11px',
+          fontSize: '0.6875rem',
           textTransform: 'uppercase',
           letterSpacing: '0.15em',
         }}
@@ -345,7 +403,7 @@ function EmptyState() {
         DAG Viewer
       </span>
       <span
-        style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }}
+        style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.625rem' }}
       >
         add a model to see the graph
       </span>
@@ -369,7 +427,7 @@ export default function DagPanel({ goalShape, embedded = false }: DagPanelProps)
 
   const { rfNodes, rfEdges } = useMemo(() => {
     const { nodes: dagNodes, edges: dagEdges } = buildDag(files)
-    const rawNodes = toRfNodes(dagNodes, ranModels, testResults)
+    const rawNodes = toRfNodes(dagNodes, ranModels, testResults, isDark)
     const rawEdges = toRfEdges(dagEdges, isDark)
     const { nodes, edges } = applyDagreLayout(rawNodes, rawEdges)
     return { rfNodes: nodes, rfEdges: edges }
@@ -393,7 +451,7 @@ export default function DagPanel({ goalShape, embedded = false }: DagPanelProps)
             style={{
               color: 'var(--color-text-muted)',
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
             }}
@@ -411,7 +469,7 @@ export default function DagPanel({ goalShape, embedded = false }: DagPanelProps)
             <span
               style={{
                 color: 'var(--color-muted)',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontFamily: 'JetBrains Mono, monospace',
               }}
             >

@@ -19,7 +19,7 @@ export default function ResultsPanel() {
           style={{
             color: 'var(--color-text-muted)',
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '10px',
+            fontSize: '0.625rem',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
           }}
@@ -31,7 +31,7 @@ export default function ResultsPanel() {
           style={{
             color: 'var(--color-accent-orange)',
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '11px',
+            fontSize: '0.6875rem',
           }}
         >
           {name}
@@ -41,7 +41,7 @@ export default function ResultsPanel() {
             marginLeft: 'auto',
             color: 'var(--color-muted)',
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '10px',
+            fontSize: '0.625rem',
           }}
         >
           {rows.length} of {rowCount} row{rowCount !== 1 ? 's' : ''}
@@ -52,7 +52,7 @@ export default function ResultsPanel() {
         {rows.length === 0 ? (
           <div
             className="flex items-center justify-center h-full"
-            style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}
+            style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.6875rem' }}
           >
             (no rows)
           </div>
@@ -62,7 +62,7 @@ export default function ResultsPanel() {
               borderCollapse: 'collapse',
               width: '100%',
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '12px',
+              fontSize: '0.75rem',
             }}
           >
             <thead>
@@ -77,7 +77,7 @@ export default function ResultsPanel() {
                       borderBottom: '1px solid var(--color-border)',
                       color: 'var(--color-text-muted)',
                       fontWeight: 500,
-                      fontSize: '10px',
+                      fontSize: '0.625rem',
                       textTransform: 'uppercase',
                       letterSpacing: '0.08em',
                       position: 'sticky',
@@ -131,7 +131,7 @@ function EmptyState() {
         style={{
           color: 'var(--color-text-muted)',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '11px',
+          fontSize: '0.6875rem',
           letterSpacing: '0.15em',
           textTransform: 'uppercase',
         }}
@@ -142,7 +142,7 @@ function EmptyState() {
         style={{
           color: 'var(--color-muted)',
           fontFamily: 'JetBrains Mono, monospace',
-          fontSize: '10px',
+          fontSize: '0.625rem',
           textAlign: 'center',
           lineHeight: '1.6',
           maxWidth: '280px',

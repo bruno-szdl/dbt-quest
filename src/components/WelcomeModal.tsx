@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { modules } from '../levels'
+import { useModalA11y } from '../hooks/useModalA11y'
 
 /**
  * Single-card welcome that fires once on first visit and gives the new learner
@@ -10,12 +11,13 @@ import { modules } from '../levels'
 const BEATS: Record<number, string> = {
   4: 'first stakeholder review',
   7: 'first mart pinned',
-  12: '🎓 board meeting',
+  13: '🎓 board meeting',
 }
 
 export default function WelcomeModal() {
   const show = useGameStore((s) => s.showWelcome)
   const dismiss = useGameStore((s) => s.dismissWelcome)
+  const dialogRef = useModalA11y(show)
 
   useEffect(() => {
     if (!show) return
@@ -51,6 +53,11 @@ export default function WelcomeModal() {
         }
       `}</style>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="welcome-modal-title"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--color-surface)',
@@ -63,6 +70,7 @@ export default function WelcomeModal() {
           flexDirection: 'column',
           boxShadow: '0 24px 80px rgba(0, 0, 0, 0.85)',
           animation: 'slideUp 0.24s ease-out',
+          outline: 'none',
         }}
       >
         {/* Header */}
@@ -73,7 +81,7 @@ export default function WelcomeModal() {
                 background: 'var(--color-accent-bg)',
                 border: '1px solid var(--color-accent-orange-dim)',
                 color: 'var(--color-accent-orange)',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontFamily: 'JetBrains Mono, monospace',
                 padding: '2px 8px',
                 borderRadius: '4px',
@@ -86,7 +94,7 @@ export default function WelcomeModal() {
             <span
               style={{
                 color: 'var(--color-text-muted)',
-                fontSize: '11px',
+                fontSize: '0.6875rem',
                 fontFamily: 'IBM Plex Sans, sans-serif',
               }}
             >
@@ -94,11 +102,12 @@ export default function WelcomeModal() {
             </span>
           </div>
           <h2
+            id="welcome-modal-title"
             style={{
               margin: '0 0 6px',
               color: 'var(--color-text)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '22px',
+              fontSize: '1.375rem',
               fontWeight: 700,
               letterSpacing: '-0.01em',
               lineHeight: 1.25,
@@ -111,7 +120,7 @@ export default function WelcomeModal() {
               margin: 0,
               color: 'var(--color-text-secondary)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '13.5px',
+              fontSize: '0.84375rem',
               lineHeight: 1.55,
             }}
           >
@@ -158,7 +167,7 @@ export default function WelcomeModal() {
                   <span
                     style={{
                       fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: '10px',
+                      fontSize: '0.625rem',
                       color: 'var(--color-muted)',
                       width: '20px',
                       textAlign: 'right',
@@ -170,7 +179,7 @@ export default function WelcomeModal() {
                   <span
                     style={{
                       fontFamily: 'IBM Plex Sans, sans-serif',
-                      fontSize: '13px',
+                      fontSize: '0.8125rem',
                       color: 'var(--color-text)',
                       flex: 1,
                       minWidth: 0,
@@ -185,7 +194,7 @@ export default function WelcomeModal() {
                     <span
                       style={{
                         fontFamily: 'IBM Plex Sans, sans-serif',
-                        fontSize: '11px',
+                        fontSize: '0.6875rem',
                         fontStyle: 'italic',
                         color: 'var(--color-accent-orange)',
                         flexShrink: 0,
@@ -197,7 +206,7 @@ export default function WelcomeModal() {
                   <span
                     style={{
                       fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: '10px',
+                      fontSize: '0.625rem',
                       color: 'var(--color-text-muted)',
                       width: '52px',
                       textAlign: 'right',
@@ -230,7 +239,7 @@ export default function WelcomeModal() {
               border: 'none',
               color: 'var(--color-text-muted)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               cursor: 'pointer',
               marginRight: 'auto',
               padding: '4px 6px',
@@ -243,7 +252,7 @@ export default function WelcomeModal() {
           <span
             style={{
               color: 'var(--color-muted)',
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontFamily: 'JetBrains Mono, monospace',
             }}
           >
@@ -257,7 +266,7 @@ export default function WelcomeModal() {
               borderRadius: '6px',
               color: '#0d1117',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 700,
               padding: '9px 20px',
               cursor: 'pointer',

@@ -77,7 +77,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
             style={{
               color: 'var(--color-text-muted)',
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
             }}
@@ -103,7 +103,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
             key={i}
             style={{
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               lineHeight: '1.65',
               color: lineColor(line),
               whiteSpace: 'pre',
@@ -123,7 +123,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
         <span
           style={{
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '12px',
+            fontSize: '0.75rem',
             color: 'var(--color-accent-orange)',
             userSelect: 'none',
             flexShrink: 0,
@@ -140,6 +140,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
           spellCheck={false}
           autoComplete="off"
           autoCapitalize="off"
+          aria-label="dbt-quest terminal input"
           style={{
             flex: 1,
             background: 'transparent',
@@ -147,7 +148,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
             outline: 'none',
             color: 'var(--color-text)',
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '12px',
+            fontSize: '0.75rem',
             caretColor: 'var(--color-text)',
           }}
         />

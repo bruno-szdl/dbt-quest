@@ -9,7 +9,9 @@
   --color-hint-bg: #1c2128;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
-  --color-muted: #484f58;
+  /* `--color-muted` is used for both decorative chrome and small text labels.
+     Set at WCAG AA (~4.5:1) against `--color-base` so text usage stays legible. */
+  --color-muted: #6e7681;
   --color-text: #e6edf3;
   --color-text-secondary: #c9d1d9;
   --color-text-muted: #7d8590;
@@ -34,7 +36,7 @@
   --color-hint-bg: #f6f8fa;
   --color-border: #d0d7de;
   --color-border-subtle: #eaeef2;
-  --color-muted: #8c959f;
+  --color-muted: #656c76;
   --color-text: #1f2328;
   --color-text-secondary: #3d444d;
   --color-text-muted: #636c76;
@@ -48,13 +50,16 @@
   --color-warning: #9a6700;
 }
 
+/* Type scale: bump root font-size 10% on desktop so all rem-based typography
+   renders comfortably without the non-standard `zoom` property. Mobile keeps
+   the browser default so pinch-zoom and small-screen layouts behave normally. */
 html {
-  zoom: 1.1;
+  font-size: 110%;
 }
 
 @media (max-width: 767px) {
   html {
-    zoom: 1;
+    font-size: 100%;
   }
 }
 

@@ -26,17 +26,19 @@ export default function StoryThread({ messages, compact = false }: StoryThreadPr
 
 function StoryBubble({ msg, compact }: { msg: StoryMessage; compact: boolean }) {
   const sender = CAST[msg.from]
-  const avatarSize = compact ? 22 : 28
-  const nameSize = compact ? 11 : 12
-  const metaSize = compact ? 10 : 11
-  const bodySize = compact ? 12 : 13.5
+  // Avatar dimensions stay in px (layout), font sizes in rem (typography).
+  const avatarPx = compact ? 22 : 28
+  const avatarFontRem = compact ? '0.5rem' : '0.875rem'
+  const nameFontRem = compact ? '0.6875rem' : '0.75rem'
+  const metaFontRem = compact ? '0.625rem' : '0.6875rem'
+  const bodyFontRem = compact ? '0.75rem' : '0.84375rem'
   return (
     <div style={{ display: 'flex', gap: compact ? '8px' : '10px', alignItems: 'flex-start' }}>
       <div
         style={{
           flexShrink: 0,
-          width: `${avatarSize}px`,
-          height: `${avatarSize}px`,
+          width: `${avatarPx}px`,
+          height: `${avatarPx}px`,
           borderRadius: '50%',
           background: sender.accent,
           color: '#0d1117',
@@ -44,7 +46,7 @@ function StoryBubble({ msg, compact }: { msg: StoryMessage; compact: boolean }) 
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'IBM Plex Sans, sans-serif',
-          fontSize: `${avatarSize - 14}px`,
+          fontSize: avatarFontRem,
           fontWeight: 700,
           marginTop: '2px',
         }}
@@ -59,12 +61,12 @@ function StoryBubble({ msg, compact }: { msg: StoryMessage; compact: boolean }) 
             gap: '6px',
             marginBottom: '4px',
             fontFamily: 'IBM Plex Sans, sans-serif',
-            fontSize: `${nameSize}px`,
+            fontSize: nameFontRem,
             flexWrap: 'wrap',
           }}
         >
           <span style={{ color: sender.accent, fontWeight: 600 }}>{sender.name}</span>
-          <span style={{ color: 'var(--color-text-muted)', fontSize: `${metaSize}px` }}>
+          <span style={{ color: 'var(--color-text-muted)', fontSize: metaFontRem }}>
             {sender.role}
             {msg.time ? ` · ${msg.time}` : ''}
           </span>
@@ -77,7 +79,7 @@ function StoryBubble({ msg, compact }: { msg: StoryMessage; compact: boolean }) 
             padding: compact ? '8px 10px' : '10px 12px',
             color: 'var(--color-text)',
             fontFamily: 'IBM Plex Sans, sans-serif',
-            fontSize: `${bodySize}px`,
+            fontSize: bodyFontRem,
             lineHeight: 1.55,
             whiteSpace: 'pre-wrap',
           }}

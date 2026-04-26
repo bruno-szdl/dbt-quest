@@ -1,9 +1,21 @@
+import { useEffect } from 'react'
 import { useGameStore } from '../store/gameStore'
 import StoryThread from './StoryThread'
+import { useModalA11y } from '../hooks/useModalA11y'
 
 export default function CourseCompleteModal() {
   const show = useGameStore((s) => s.showCourseComplete)
   const dismiss = useGameStore((s) => s.dismissCourseComplete)
+  const dialogRef = useModalA11y(show)
+
+  useEffect(() => {
+    if (!show) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismiss()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [show, dismiss])
 
   if (!show) return null
 
@@ -34,6 +46,11 @@ export default function CourseCompleteModal() {
         }
       `}</style>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="course-complete-title"
+        tabIndex={-1}
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-success-border)',
@@ -44,6 +61,7 @@ export default function CourseCompleteModal() {
           flexDirection: 'column',
           boxShadow: '0 24px 80px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--color-success-border)',
           animation: 'slideUp 0.26s ease-out',
+          outline: 'none',
         }}
       >
         {/* Hero */}
@@ -56,7 +74,7 @@ export default function CourseCompleteModal() {
         >
           <div
             style={{
-              fontSize: '64px',
+              fontSize: '4rem',
               lineHeight: 1,
               marginBottom: '14px',
               animation: 'capPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
@@ -70,7 +88,7 @@ export default function CourseCompleteModal() {
               background: 'var(--color-success-bg)',
               border: '1px solid var(--color-success-border)',
               color: 'var(--color-success)',
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontFamily: 'JetBrains Mono, monospace',
               padding: '2px 8px',
               borderRadius: '4px',
@@ -83,11 +101,12 @@ export default function CourseCompleteModal() {
             Course complete
           </span>
           <h2
+            id="course-complete-title"
             style={{
               margin: '0 0 8px',
               color: 'var(--color-text)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '22px',
+              fontSize: '1.375rem',
               fontWeight: 700,
               letterSpacing: '-0.01em',
             }}
@@ -99,7 +118,7 @@ export default function CourseCompleteModal() {
               margin: 0,
               color: 'var(--color-text-muted)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               lineHeight: 1.6,
             }}
           >
@@ -117,14 +136,14 @@ export default function CourseCompleteModal() {
             padding: '20px 32px 8px',
             color: 'var(--color-text-secondary)',
             fontFamily: 'IBM Plex Sans, sans-serif',
-            fontSize: '13px',
+            fontSize: '0.8125rem',
             lineHeight: 1.65,
           }}
         >
           {/* 3-months-later epilogue */}
           <div
             style={{
-              fontSize: '10px',
+              fontSize: '0.625rem',
               fontFamily: 'JetBrains Mono, monospace',
               color: 'var(--color-text-muted)',
               textTransform: 'uppercase',
@@ -159,7 +178,7 @@ export default function CourseCompleteModal() {
 
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '0.6875rem',
               fontFamily: 'JetBrains Mono, monospace',
               color: 'var(--color-text-muted)',
               textTransform: 'uppercase',
@@ -232,7 +251,7 @@ export default function CourseCompleteModal() {
               margin: 0,
               color: 'var(--color-text-muted)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               lineHeight: 1.6,
               fontStyle: 'italic',
               textAlign: 'center',
@@ -249,7 +268,7 @@ export default function CourseCompleteModal() {
               borderRadius: '6px',
               color: '#0d1117',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '13px',
+              fontSize: '0.8125rem',
               fontWeight: 700,
               padding: '10px 24px',
               cursor: 'pointer',

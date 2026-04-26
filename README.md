@@ -6,20 +6,48 @@ Each level presents a target DAG that you need to reach by editing dbt files and
 
 ## Features
 
-- Visual DAG editor powered by React Flow
+- Visual DAG viewer powered by React Flow
 - Monaco-based code editor with dbt SQL/YAML support
-- Fake-but-realistic dbt terminal (xterm.js)
-- Progressive levels covering core dbt concepts
+- Real SQL execution in the browser via DuckDB-WASM
+- Fake-but-realistic dbt terminal
+- 44 progressive levels covering core dbt concepts
 - Shareable completion badges
 - Progress saved in localStorage
 
+## What you'll learn
+
+dbt Quest is a focused on-ramp, not a complete reference. Here's what's in scope vs. what's intentionally left to the real dbt:
+
+| Concept | dbt Quest | Real dbt |
+|---|---|---|
+| `ref()`, `source()`, lineage | ✅ Hands-on | ✅ |
+| Materializations: view, table | ✅ | ✅ |
+| Materializations: incremental, ephemeral | ✅ | ✅ |
+| Materializations: materialized_view | — | ✅ |
+| Generic tests: `not_null`, `unique`, `accepted_values`, `relationships` | ✅ | ✅ |
+| Singular tests / custom data tests | — | ✅ |
+| Source freshness checks | — | ✅ |
+| Snapshots (timestamp + check strategies) | ✅ | ✅ |
+| Seeds | ✅ | ✅ |
+| Project structure (staging / intermediate / marts) | ✅ | ✅ |
+| Selectors: graph operators, tags, paths, set ops | ✅ | ✅ |
+| Documentation: model & column descriptions | ✅ | ✅ |
+| Jinja templating | Mocked | ✅ executed |
+| Macros, packages, `dbt deps`, dbt-utils | — | ✅ |
+| dbt Mesh: contracts, access, versions, groups | — | ✅ |
+| Semantic layer / metrics / exposures | — | ✅ |
+| Hooks (`on-run-start`, `pre-hook`, `post-hook`) | — | ✅ |
+| Profile / `dbt_project.yml` configuration | Abstracted | ✅ |
+
+After finishing dbt Quest you'll be ready to set up a real dbt project against DuckDB / Postgres / BigQuery / Snowflake and explore the larger ecosystem.
+
 ## Tech Stack
 
-- Vite + React 18 + TypeScript
-- Tailwind CSS
+- Vite + React 19 + TypeScript
+- Tailwind CSS 4
 - Monaco Editor (`@monaco-editor/react`)
-- React Flow (`reactflow`)
-- xterm.js (`@xterm/xterm`)
+- React Flow (`reactflow`) + Dagre layout
+- DuckDB-WASM (`@duckdb/duckdb-wasm`) for in-browser SQL
 - Zustand (state management)
 
 ## Getting Started

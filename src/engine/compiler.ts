@@ -8,6 +8,14 @@ export interface CompiledModel {
   refs: string[]
   sources: Array<{ source: string; table: string }>
   tags: string[]
+  /**
+   * For incremental models, the SQL captured from the `{% if is_incremental() %}`
+   * block — typically a WHERE-clause filter such as `where created_at > (select
+   * max(created_at) from "this")`. dbt-quest still full-rebuilds the table on
+   * each run, but on subsequent runs it evaluates this filter as a diagnostic
+   * count so learners see how many rows would have been appended.
+   */
+  incrementalFilter?: string
 }
 
 const REF_RE = /\{\{\s*ref\s*\(\s*['"]([^'"]+)['"]\s*\)\s*\}\}/g
@@ -19,6 +27,10 @@ const TAGS_RE = /\btags\s*=\s*(\[[^\]]*\]|['"][^'"]*['"])/
 // stripped entirely — dbt-quest doesn't execute Jinja, and leaving them in
 // would make DuckDB fail to parse the SQL.
 const JINJA_BLOCK_RE = /\{%[\s\S]*?%\}/g
+// Capture the body of `{% if is_incremental() %} ... {% endif %}` so we can
+// re-evaluate it as a diagnostic on subsequent runs of an incremental model.
+const INCREMENTAL_IF_RE =
+  /\{%\s*if\s+is_incremental\s*\(\s*\)\s*%\}([\s\S]*?)\{%\s*endif\s*%\}/i
 // {{ this }} is only meaningful during incremental runs. Replace with the
 // model's own name so simple self-references don't break.
 const THIS_RE = /\{\{\s*this\s*\}\}/g
@@ -92,27 +104,63 @@ export function compileModel(name: string, path: string, raw: string): CompiledM
   })
   let sql = raw.replace(CONFIG_RE, '')
 
-  // Substitute ref() with a quoted identifier matching the model's view/table name.
-  sql = sql.replace(REF_RE, (_m, modelName: string) => {
-    refs.push(modelName)
-    return `"${modelName}"`
-  })
+  // Capture the `{% if is_incremental() %} … {% endif %}` body, if any, before
+  // we strip Jinja blocks. The captured filter still contains ref()/source()/
+  // {{ this }}; we resolve those purely (without re-collecting refs/sources)
+  // since the surrounding SQL substitution will have already collected them.
+  let incrementalFilter: string | undefined
+  const ifMatch = INCREMENTAL_IF_RE.exec(sql)
+  if (ifMatch) incrementalFilter = ifMatch[1]
 
-  // Substitute source() with the view/table registered from seeds.
-  sql = sql.replace(SOURCE_RE, (_m, src: string, tbl: string) => {
-    sources.push({ source: src, table: tbl })
-    return `"${sourceViewName(src, tbl)}"`
-  })
+  // Substitutions on the main SQL collect refs/sources as side effects.
+  sql = sql
+    .replace(REF_RE, (_m, modelName: string) => {
+      refs.push(modelName)
+      return `"${modelName}"`
+    })
+    .replace(SOURCE_RE, (_m, src: string, tbl: string) => {
+      sources.push({ source: src, table: tbl })
+      return `"${sourceViewName(src, tbl)}"`
+    })
+    .replace(THIS_RE, `"${name}"`)
 
-  // Strip Jinja control blocks ({% ... %}) and resolve {{ this }}.
+  if (incrementalFilter !== undefined) {
+    incrementalFilter = incrementalFilter
+      .replace(REF_RE, (_m, modelName: string) => `"${modelName}"`)
+      .replace(SOURCE_RE, (_m, src: string, tbl: string) => `"${sourceViewName(src, tbl)}"`)
+      .replace(THIS_RE, `"${name}"`)
+      .trim()
+  }
+
+  // Strip Jinja control blocks ({% ... %}) from the main SQL — they were just
+  // captured above where they matter.
   sql = sql.replace(JINJA_BLOCK_RE, '')
-  sql = sql.replace(THIS_RE, `"${name}"`)
 
-  return { name, path, sql: sql.trim(), materialization, refs, sources, tags }
+  return {
+    name,
+    path,
+    sql: sql.trim(),
+    materialization,
+    refs,
+    sources,
+    tags,
+    ...(incrementalFilter ? { incrementalFilter } : {}),
+  }
+}
+
+/** Last path segment, with no trailing slash assumption. */
+export function basename(path: string): string {
+  const i = path.lastIndexOf('/')
+  return i === -1 ? path : path.slice(i + 1)
 }
 
 export function getModelName(path: string): string {
-  return path.split('/').pop()!.replace(/\.sql$/, '')
+  return basename(path).replace(/\.sql$/, '')
+}
+
+/** Strip both directory and a known extension (e.g. ".csv"). */
+export function getFileStem(path: string, ext: string): string {
+  return basename(path).replace(new RegExp(`\\${ext}$`), '')
 }
 
 export function collectModels(files: Record<string, string>): CompiledModel[] {

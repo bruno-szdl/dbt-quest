@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLevelById } from '../levels'
+import { getModelName } from '../engine/compiler'
 import LevelPanel from './LevelPanel'
 import FileExplorer from './FileExplorer'
 import DatabaseExplorer from './DatabaseExplorer'
@@ -29,7 +30,14 @@ export default function MobileLayout() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--color-base)' }}>
+    <div
+      className="flex flex-col h-full overflow-hidden"
+      style={{
+        background: 'var(--color-base)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
+    >
       {/* Body */}
       <div className="flex-1 overflow-hidden">
         {tab === 'lesson' && (
@@ -71,6 +79,8 @@ export default function MobileLayout() {
       {/* Bottom tab bar */}
       <nav
         className="flex shrink-0"
+        role="tablist"
+        aria-label="Mobile sections"
         style={{
           background: 'var(--color-surface)',
           borderTop: '1px solid var(--color-border)',
@@ -83,6 +93,9 @@ export default function MobileLayout() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
+              role="tab"
+              aria-selected={active}
+              aria-label={t.label}
               style={{
                 flex: 1,
                 background: 'transparent',
@@ -90,7 +103,7 @@ export default function MobileLayout() {
                 borderTop: active ? '2px solid var(--color-accent-orange)' : '2px solid transparent',
                 color: active ? 'var(--color-accent-orange)' : 'var(--color-text-muted)',
                 fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 padding: '10px 4px 12px',
@@ -121,7 +134,7 @@ function MobileActionBar({
 
   const model =
     activeFile && activeFile.startsWith('models/') && activeFile.endsWith('.sql')
-      ? activeFile.split('/').pop()!.replace(/\.sql$/, '')
+      ? getModelName(activeFile)
       : null
   const canShow = !!model && ranModels.has(model)
 
@@ -174,7 +187,7 @@ function ActBtn({
         padding: '0 12px',
         borderRadius: '5px',
         fontFamily: 'IBM Plex Sans, sans-serif',
-        fontSize: '12px',
+        fontSize: '0.75rem',
         fontWeight: 600,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.45 : 1,
@@ -231,7 +244,7 @@ function SubTabBtn({
         borderBottom: active ? '2px solid var(--color-accent-orange)' : '2px solid transparent',
         color: active ? 'var(--color-text)' : 'var(--color-text-muted)',
         fontFamily: 'JetBrains Mono, monospace',
-        fontSize: '11px',
+        fontSize: '0.6875rem',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
         padding: '10px 8px',
