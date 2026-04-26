@@ -1,9 +1,10 @@
 import type { ParsedCommand, SelectorGroup, SelectorTerm } from './commandParser'
 import { materializeModels, plan, previewModel, type ModelOutcome } from './executor'
 import { parseTests, runTests, type TestOutcome } from './tests'
-import type { CompiledModel } from './compiler'
+import { type CompiledModel, getFileStem } from './compiler'
 import { registerCsv } from './duckdb'
 import { collectSnapshots, runSnapshot, type SnapshotOutcome } from './snapshots'
+import { errorMessage } from './errors'
 
 export interface TerminalLine {
   text: string
@@ -254,7 +255,7 @@ export async function execute(
     let okCount = 0
     let failCount = 0
     for (const [path, content] of seedFiles) {
-      const name = path.split('/').pop()!.replace(/\.csv$/, '')
+      const name = getFileStem(path, '.csv')
       try {
         await registerCsv(name, content.trim())
         newSeeds.add(name)
@@ -263,7 +264,7 @@ export async function execute(
       } catch (e) {
         failCount++
         lines.push({
-          text: `ERROR loading ${name}: ${e instanceof Error ? e.message : String(e)}`,
+          text: `ERROR loading ${name}: ${errorMessage(e)}`,
           color: 'red',
         })
       }
@@ -326,7 +327,7 @@ export async function execute(
       }
       lines.push({ text: '' })
     } catch (e) {
-      lines.push({ text: e instanceof Error ? e.message : String(e), color: 'red' })
+      lines.push({ text: errorMessage(e), color: 'red' })
       lines.push({ text: '' })
     }
     return { lines, updatedState: {} }
@@ -359,6 +360,26 @@ export async function execute(
       let totalTime = 0
       outcomes.forEach((o, i) => {
         lines.push(formatModelLine(i, outcomes.length, o))
+        if (o.passed && o.materialization === 'incremental' && o.incrementalAppendedRows !== undefined) {
+          // Diagnostic: how many rows the user's `is_incremental()` filter would
+          // have appended on this run. The table is still full-rebuilt — this is
+          // a teaching aid so the WHERE clause feels real.
+          const n = o.incrementalAppendedRows
+          lines.push({
+            text: `  → incremental filter would append ${n} new row${n === 1 ? '' : 's'} (full rebuild applied).`,
+            color: 'gray',
+          })
+        }
+        if (o.passed && o.inlinedEphemerals && o.inlinedEphemerals.length) {
+          // Surface the CTE inlining so the "ephemeral" wow lands: the model
+          // ran with the upstream's SQL embedded as a CTE, no warehouse object.
+          const list = o.inlinedEphemerals.map((n) => `"${n}"`).join(', ')
+          const word = o.inlinedEphemerals.length === 1 ? 'ephemeral' : 'ephemerals'
+          lines.push({
+            text: `  → inlined ${word} ${list} as CTE${o.inlinedEphemerals.length === 1 ? '' : 's'} in the compiled SQL.`,
+            color: 'gray',
+          })
+        }
         if (o.passed && !o.skipped) {
           newRan.add(o.name)
           newColumns[o.name] = o.columns

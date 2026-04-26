@@ -1,5 +1,6 @@
 import { sourceViewName } from './compiler'
 import { exec, runQuery } from './duckdb'
+import { errorMessage } from './errors'
 
 export type SnapshotStrategy = 'timestamp' | 'check'
 
@@ -240,7 +241,7 @@ export async function runSnapshot(snap: CompiledSnapshot): Promise<SnapshotOutco
       rowCount: 0,
       closed: 0,
       inserted: 0,
-      error: e instanceof Error ? e.message : String(e),
+      error: errorMessage(e),
     }
   } finally {
     try { await exec(`DROP TABLE IF EXISTS "${staging}" CASCADE`) } catch { /* */ }

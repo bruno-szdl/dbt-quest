@@ -1,34 +1,39 @@
 import type { Level } from '../engine/types'
-import { manuallyMarked } from '../engine/validators'
+import { modelShown, snapshotRanAtLeast } from '../engine/validators'
+
+const RAW_CUSTOMERS = `id,name,email,status,updated_at
+1,Alice Martin,alice@example.com,active,2024-01-05
+2,Bob Chen,bob@example.com,active,2024-01-17
+3,Carol Silva,carol@example.com,active,2024-02-02`
 
 const level41: Level = {
   id: 41,
-  chapter: 11,
-  title: 'Understand when to use snapshots',
-  description: `Snapshots are powerful but also have a cost (extra rows, extra config, a run that must happen regularly). So it's worth being deliberate about when to reach for them.
+  chapter: 12,
+  title: 'Inspect what dbt added',
+  description: `The snapshot from the previous level captured 3 rows. But snap_customers has more columns than raw_customers — dbt adds three SCD-2 columns of its own. These are what make a snapshot useful as a history table.
 
-Good fits for a snapshot
-  • A dimension table whose rows can change over time and you care about history. For example: customers (plan tier, country, status), employees (department, role), products (price, category).
-  • A source that arrives as a snapshot of current state only, and you need to reconstruct "what did this look like on day X?".
+Run \`dbt show --select snap_customers\` and look at the columns in the output. The new ones are:
 
-Bad fits
-  • Append-only data (events, logs). Those rows never change — the raw table is already a history.
-  • Data where you only ever care about the current state. Snapshots add noise without benefit.
-  • Data you already own history for (e.g. a source already modelled as SCD-2). No point duplicating.
+  • \`dbt_valid_from\`  — when this version of the row became the truth.
+  • \`dbt_valid_to\`    — when it stopped being the truth (NULL if it still is).
+  • \`dbt_updated_at\`  — the timestamp dbt observed for this version.
 
-Mental shortcut: "Would the business ever ask me 'what did this look like three months ago?'". If yes, snapshot. If no, skip.
+Right after a first run every row has \`dbt_valid_to = NULL\` — meaning "this is the current version and there's no newer one yet". When you re-run the snapshot after the source has changed (next level), dbt will close out the old row by setting its \`dbt_valid_to\`, and insert a fresh row with NULL valid_to for the new state.
 
-Your task: think of a table in a project you've worked on (or can imagine). Decide whether it should be a snapshot or not, and why. Then mark the lesson complete.`,
-  hint: 'Pick a real-or-imagined table and decide: snapshot or not? Why?',
+That pair — \`(dbt_valid_from, dbt_valid_to)\` — is the SCD-2 contract. Every consumer model that wants the current view filters \`dbt_valid_to IS NULL\`. Every consumer that wants a point-in-time view filters \`<some_date> BETWEEN dbt_valid_from AND COALESCE(dbt_valid_to, now())\`.
+
+Your task: run \`dbt show --select snap_customers\`. Read the columns. The lesson completes once you have shown the snapshot.`,
+  hint: 'Type `dbt show --select snap_customers` in the terminal.',
   story: {
     messages: [
       {
         from: 'priya',
-        body: `think of a real table you've worked with. snapshot or not? events: no. customers: yes. audit log: no. read, decide, mark complete.`,
+        body: `take a look at what dbt added — \`dbt show --select snap_customers\`. three new cols: \`dbt_valid_from\`, \`dbt_valid_to\`, \`dbt_updated_at\`. \`valid_to IS NULL\` is how every consumer asks "what's true now?".`,
       },
     ],
   },
   initialFiles: {
+    'seeds/raw_customers.csv': RAW_CUSTOMERS,
     'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
 {{ config(
     target_schema='snapshots',
@@ -43,33 +48,47 @@ select
     email,
     status,
     updated_at
-from {{ source('raw', 'customers') }}
+from raw_customers
 
 {% endsnapshot %}
 `,
   },
   seeds: {},
+  preRanSnapshots: ['snap_customers'],
   requiredSteps: [],
-  manualCompletion: true,
   goal: {
-    description: 'Reflect on when snapshots pay off, then mark complete.',
+    description: 'Run `dbt show --select snap_customers` and inspect the SCD-2 columns dbt added.',
+    dagShape: {
+      nodes: [
+        { id: 'raw_customers', label: 'raw_customers', layer: 'source' },
+        { id: 'snap_customers', label: 'snap_customers', layer: 'intermediate' },
+      ],
+      edges: [{ source: 'raw_customers', target: 'snap_customers' }],
+    },
   },
   validate: (state) => {
-    if (!manuallyMarked(state))
-      return { passed: false, reason: 'Mark the lesson complete when ready.' }
+    if (!snapshotRanAtLeast(state, 'snap_customers', 1))
+      return { passed: false, reason: 'snap_customers should already be captured for this level. Try resetting if it isn\'t.' }
+    if (!modelShown(state, 'snap_customers'))
+      return { passed: false, reason: 'Run `dbt show --select snap_customers` to inspect the SCD-2 columns.' }
     return { passed: true }
   },
-  badge: { id: 'snapshot-strategist', name: 'Snapshot Strategist', emoji: '🗓️' },
+  badge: {
+    id: 'scd2-reader',
+    name: 'SCD-2 Reader',
+    emoji: '🪞',
+    caption: 'valid_from / valid_to / updated_at',
+  },
   quiz: {
-    question: 'Which of these tables is the BEST candidate for a snapshot?',
+    question: 'What does `dbt_valid_to IS NULL` tell you about a row in a snapshot table?',
     options: [
-      'app_clicks — one row per click, never updated after insertion',
-      'customers — rows update over time when users change plan or status, and the team asks historical questions',
-      'dim_dates — a static calendar table with one row per day',
-      'audit_log — an append-only log of admin actions',
+      'The snapshot run failed for that row',
+      'The row is the current truth — no newer version has superseded it yet',
+      'The row was inserted in the very first snapshot run',
+      'The unique_key was missing when this row was captured',
     ],
     correctIndex: 1,
-    explanation: 'Snapshots shine for mutable dimensions where history matters. Event-like append tables already are their own history. Static reference tables have nothing to snapshot.',
+    explanation: 'A NULL `dbt_valid_to` is SCD-2 for "still current". When a newer version arrives, dbt sets the old row\'s `dbt_valid_to` and inserts a fresh row with NULL `valid_to` — so at any moment, exactly one row per unique_key has `valid_to IS NULL`.',
   },
   docs: [
     { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },

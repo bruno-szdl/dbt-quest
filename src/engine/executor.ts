@@ -1,5 +1,6 @@
 import { exec, runQuery, type QueryResult } from './duckdb'
 import { collectModels, type CompiledModel } from './compiler'
+import { errorMessage } from './errors'
 
 export interface ModelOutcome {
   name: string
@@ -12,6 +13,18 @@ export interface ModelOutcome {
   compiledSql: string
   /** True when the model was skipped (ephemeral). */
   skipped?: boolean
+  /**
+   * For incremental models: the number of rows that the user's
+   * `is_incremental()` filter would have appended on this run, evaluated
+   * against the prior incarnation of the table. Undefined on the first run
+   * (no prior table to diff against) or when the model isn't incremental.
+   */
+  incrementalAppendedRows?: number
+  /**
+   * Names of upstream ephemeral models that were inlined as CTEs into this
+   * model's compiled SQL. Empty for models with no ephemeral upstreams.
+   */
+  inlinedEphemerals?: string[]
 }
 
 export interface ExecutionPlan {
@@ -85,7 +98,7 @@ function inlineEphemeralCtes(
     const ctes = ephs
       .map((name) => `"${name}" AS (\n${byName.get(name)!.sql}\n)`)
       .join(',\n')
-    return { ...m, sql: `WITH ${ctes}\n${m.sql}` }
+    return { ...m, sql: `WITH ${ctes}\n${m.sql}`, _inlinedEphemerals: ephs } as CompiledModel & { _inlinedEphemerals: string[] }
   })
 }
 
@@ -108,6 +121,29 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
       continue
     }
     try {
+      // For incremental models on a re-run, evaluate the user's filter against
+      // the prior table snapshot to surface a real "would-have-appended" count.
+      // Run before the DROP so the filter's `(select max(...) from "this")`
+      // sub-queries see the existing data.
+      let incrementalAppendedRows: number | undefined
+      if (m.materialization === 'incremental' && m.incrementalFilter) {
+        try {
+          const exists = await runQuery(
+            `SELECT 1 FROM information_schema.tables WHERE table_name = '${m.name}' LIMIT 1`,
+          )
+          if (exists.rows.length > 0) {
+            const diag = await runQuery(
+              `SELECT COUNT(*) FROM (${m.sql}) AS _diag ${m.incrementalFilter}`,
+            )
+            incrementalAppendedRows = Number(diag.rows[0]?.[0] ?? 0)
+          }
+        } catch {
+          // Diagnostic is best-effort. If the filter doesn't evaluate cleanly
+          // (e.g. the user's WHERE clause has a typo) we silently skip it and
+          // proceed with the normal full rebuild.
+        }
+      }
+
       // IF EXISTS only protects against "not found" — DuckDB still errors if
       // the object exists but is the other kind (e.g. DROP TABLE on a view).
       // Try both and swallow the type-mismatch error.
@@ -119,6 +155,7 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
       const preview = await runQuery(`SELECT * FROM "${m.name}" LIMIT 0`)
       const count = await runQuery(`SELECT COUNT(*) AS c FROM "${m.name}"`)
       const rowCount = Number(count.rows[0]?.[0] ?? 0)
+      const inlinedEphemerals = (m as CompiledModel & { _inlinedEphemerals?: string[] })._inlinedEphemerals
       outcomes.push({
         name: m.name,
         materialization: m.materialization,
@@ -127,6 +164,8 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
         rowCount,
         columns: preview.columns,
         compiledSql: m.sql,
+        ...(incrementalAppendedRows !== undefined ? { incrementalAppendedRows } : {}),
+        ...(inlinedEphemerals && inlinedEphemerals.length ? { inlinedEphemerals } : {}),
       })
     } catch (e) {
       outcomes.push({
@@ -136,7 +175,7 @@ export async function materializeModels(models: CompiledModel[]): Promise<ModelO
         elapsed: (performance.now() - start) / 1000,
         rowCount: 0,
         columns: [],
-        error: e instanceof Error ? e.message : String(e),
+        error: errorMessage(e),
         compiledSql: m.sql,
       })
       // Stop on the first failure to mirror dbt's default behaviour.
