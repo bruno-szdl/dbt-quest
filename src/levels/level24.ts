@@ -1,5 +1,5 @@
 import type { Level } from '../engine/types'
-import { manuallyMarked } from '../engine/validators'
+import { quizCorrect } from '../engine/validators'
 
 const RAW_CUSTOMERS = `id,name,email,created_at,country
 1,Alice Martin,alice@example.com,2024-01-05,US
@@ -34,13 +34,13 @@ Marts (dim_*, fct_*, or domain-named)
 
 Rule of thumb: if a transformation is reused by more than one mart, pull it into an intermediate model. Otherwise keep it inline.
 
-Open each file in the explorer and trace a row of customer data from raw → stg_ → int_ → dim_. When it clicks, mark the lesson complete.`,
+Open each file in the explorer and trace a row of customer data from raw → stg_ → int_ → dim_. When it clicks, take the quiz to complete the lesson.`,
   hint: 'Open each .sql file and follow how one customer flows through the layers.',
   story: {
     messages: [
       {
         from: 'priya',
-        body: `we hire two more analysts next month. right now nobody knows where to put a new model. read this, then trace one row from raw → stg_ → int_ → dim_ so the layering clicks.`,
+        body: `we hire two more analysts next month. right now nobody knows where to put a new model — marcus left us 40 .sql files flat in models/ with no convention. read this, then trace one row from raw → stg_ → int_ → dim_ so the layering clicks.`,
       },
     ],
   },
@@ -81,7 +81,7 @@ left join {{ ref('int_customer_orders') }} as o
   },
   preRanModels: ['stg_customers', 'stg_orders', 'int_customer_orders', 'dim_customers'],
   requiredSteps: [],
-  manualCompletion: true,
+  quizGates: true,
   goal: {
     description: 'Trace data through stg_ → int_ → dim_, then mark complete.',
     dagShape: {
@@ -99,8 +99,8 @@ left join {{ ref('int_customer_orders') }} as o
     },
   },
   validate: (state) => {
-    if (!manuallyMarked(state))
-      return { passed: false, reason: 'Trace the layers, then mark complete.' }
+    if (!quizCorrect(state))
+      return { passed: false, reason: 'Trace the layers, then take the quiz to complete the lesson.' }
     return { passed: true }
   },
   badge: { id: 'layer-cake', name: 'Layer Cake', emoji: '🎂' },

@@ -1,77 +1,74 @@
 import type { Level } from '../engine/types'
-import { sourceDefined } from '../engine/validators'
-
-const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@example.com,2024-01-05,US
-2,Bob Chen,bob@example.com,2024-01-17,CA
-3,Carol Silva,carol@example.com,2024-02-02,BR
-4,Dave Kumar,dave@example.com,2024-02-11,IN
-5,Eve Müller,eve@example.com,2024-03-01,DE`
+import { quizCorrect } from '../engine/validators'
 
 const level18: Level = {
   id: 18,
-  chapter: 6,
-  title: 'Declare a source',
-  description: `Every raw input to your project comes from somewhere — an ingestion pipeline, an event stream, a production database replica. dbt calls these inputs sources.
+  chapter: 5,
+  title: 'Why documentation matters',
+  description: `A description is just a string in YAML, but it's load-bearing once a project has more than one author.
 
-Before you can reference a source in SQL, you declare it in a YAML file. Declarations look like this:
+Where descriptions actually pay off
+  • Onboarding — new teammates can read what a model means without reverse-engineering the SQL.
+  • Lineage handoff — analysts following a graph from a dashboard back to a source can land on each node and read what it represents.
+  • The dbt docs site — \`dbt docs generate\` plus \`dbt docs serve\` builds a browsable site from your descriptions, tests, and lineage. dbt-quest doesn't simulate the rendered site, but in a real project that site is where most non-engineers look first.
+  • Self-documenting contracts — descriptions and tests in the same YAML file form the public contract of the model: what it is, and what guarantees it makes.
 
-  version: 2
+Where descriptions do NOT help
+  • Restating the column name in English ("customer_id is the customer id"). If the description equals the name, delete it.
+  • Internal implementation notes that change every refactor. Those belong in commit messages, not descriptions.
+  • Anything time-sensitive ("temporarily filtered, will fix Tuesday"). It will rot.
 
-  sources:
-    - name: raw
-      tables:
-        - name: customers
-        - name: orders
-
-\`name\` groups tables that share the same origin (for example, all tables replicated from the production app). Each \`- name:\` under \`tables:\` is one raw table.
-
-Your task: complete models/sources.yml so that a source called \`raw\` exposes a table called \`customers\`.`,
-  hint: "Add this block below `version: 2`:\nsources:\n  - name: raw\n    tables:\n      - name: customers",
+Mental shortcut: write the one sentence you'd want to read if a stakeholder Slacked you "what's this column?". When you've thought it through, take the quiz to complete the lesson.`,
+  hint: 'Picture explaining one of your real models to a new teammate in one sentence. That sentence is the description.',
   story: {
     messages: [
       {
         from: 'priya',
-        body: `marcus pointed every model at \`raw_customers\` directly — like the warehouse name was magic. that's how stuff breaks when we promote to prod. let's declare it properly: a source called \`raw\` with a table called \`customers\`.`,
+        body: `quick read before monday — when a description earns its keep vs. when it's noise. this is the stuff i'd want the new analyst to internalize before they touch yaml. quick quiz at the end to lock it in.`,
       },
     ],
   },
   initialFiles: {
-    'models/sources.yml': `version: 2
+    'models/schema.yml': `version: 2
 
-# TODO: declare a source called "raw" with a table called "customers".
+models:
+  - name: dim_customers
+    description: One row per customer, with lifetime totals — the canonical customer dimension used by every dashboard.
+    columns:
+      - name: customer_id
+        description: Stable surrogate id, foreign-keyed by every fact table.
+        tests:
+          - not_null
+          - unique
+      - name: lifetime_value
+        description: Sum of completed-order amounts in USD, refreshed daily.
 `,
   },
-  seeds: {
-    'raw.customers': RAW_CUSTOMERS,
-  },
-  requiredSteps: ['files'],
+  seeds: {},
+  requiredSteps: [],
+  quizGates: true,
   goal: {
-    description: 'Declare raw.customers in models/sources.yml.',
-    dagShape: {
-      nodes: [{ id: 'raw.customers', label: 'raw.customers', layer: 'source' }],
-      edges: [],
-    },
+    description: 'Read the lesson, then take the quiz to complete the level.',
   },
   validate: (state) => {
-    if (!sourceDefined(state, 'raw', 'customers'))
-      return { passed: false, reason: 'Add a source named `raw` with a table named `customers` to models/sources.yml.' }
+    if (!quizCorrect(state))
+      return { passed: false, reason: 'Take the quiz and answer correctly to complete the lesson.' }
     return { passed: true }
   },
-  badge: { id: 'source-declared', name: 'Source Declared', emoji: '📡' },
+  badge: { id: 'doc-thinker', name: 'Doc Thinker', emoji: '📚' },
   quiz: {
-    question: 'Why declare raw tables as dbt sources instead of referencing them directly?',
+    question: 'Which of these is the BEST candidate for a description?',
     options: [
-      'dbt refuses to run otherwise',
-      'It makes the SQL faster at runtime',
-      'Sources give you documentation, lineage and freshness checks for raw inputs',
-      'Sources materialize the raw tables as views automatically',
+      'customer_id — "The customer id."',
+      'lifetime_value — "Sum of completed-order amounts in USD, refreshed daily."',
+      'order_count — "See order_count_v2 for the new logic; this one is deprecated."',
+      'created_at — "Temporarily filtered to last 90 days for the spike investigation."',
     ],
-    correctIndex: 2,
-    explanation: 'Declaring sources makes raw inputs first-class: they show up in lineage, can have tests and docs attached, and can be monitored for freshness. dbt itself does not create or own them.',
+    correctIndex: 1,
+    explanation: 'A useful description explains what the value means and how it is computed. The other three are anti-patterns: option 1 just paraphrases the column name (delete it), option 3 documents an internal refactor that belongs in a commit message, and option 4 is a time-bound note that will rot.',
   },
   docs: [
-    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
+    { label: 'Documentation', url: 'https://docs.getdbt.com/docs/build/documentation' },
   ],
 }
 

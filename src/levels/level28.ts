@@ -23,8 +23,12 @@ Your task: run \`dbt run --select stg_orders+\` and confirm exactly four models 
   story: {
     messages: [
       {
+        from: 'yuki',
+        body: `revenue chart looked weird this morning — turns out it was an stg_orders bug. priya's pushing a fix now. but the marts won't see it until they rebuild 😬`,
+      },
+      {
         from: 'priya',
-        body: `i fixed a small bug in stg_orders. need every downstream model to repick the change up so the dashboards aren't stale. \`stg_orders+\`.`,
+        body: `fix is in. need every downstream model to pick the change up so yuki's dashboards aren't stale. \`stg_orders+\` will cascade it.`,
       },
     ],
   },

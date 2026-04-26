@@ -17,7 +17,7 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 
 const level35: Level = {
   id: 35,
-  chapter: 9,
+  chapter: 10,
   title: 'See how ephemeral is inlined',
   description: `If an ephemeral model is never created in the warehouse, where does its SQL actually end up?
 

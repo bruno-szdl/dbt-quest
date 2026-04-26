@@ -8,7 +8,7 @@ import {
 
 const level32: Level = {
   id: 32,
-  chapter: 8,
+  chapter: 9,
   title: 'Combine tag and graph selectors',
   description: `Graph operators (\`+\`, \`+\`) compose with tag selectors. Mix them and you get expressive shortcuts.
 

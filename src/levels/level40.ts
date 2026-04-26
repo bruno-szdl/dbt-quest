@@ -1,44 +1,55 @@
 import type { Level } from '../engine/types'
-import { snapshotClosedAtLeast, snapshotRanAtLeast } from '../engine/validators'
+import { snapshotRanAtLeast } from '../engine/validators'
 
-const RAW_CUSTOMERS_V1 = `id,name,email,status,updated_at
+const RAW_CUSTOMERS = `id,name,email,status,updated_at
 1,Alice Martin,alice@example.com,active,2024-01-05
 2,Bob Chen,bob@example.com,active,2024-01-17
 3,Carol Silva,carol@example.com,active,2024-02-02`
 
 const level40: Level = {
   id: 40,
-  chapter: 11,
-  title: 'Change the source data and run the snapshot again',
-  description: `Snapshots become interesting the second time they run. The first run captures the initial state. Subsequent runs compare the current source rows to the last-captured versions and, for any row whose tracked column has changed, they store a new version alongside the old one.
+  chapter: 12,
+  title: 'Configure and run a snapshot',
+  description: `Sources change over time — customers update their email, orders change status, a plan tier gets downgraded. Most of the time, the source only shows you the current state.
 
-Your mission: walk the snapshot through two runs with a source change in between.
+Snapshots are dbt's answer to "what did this row look like last month?". They watch a source table and, every time a tracked column changes, keep a new historical version of the row alongside the current one.
 
-Step-by-step:
-  1. Run \`dbt seed\` and \`dbt snapshot\`. The first capture creates the snapshot table with 3 rows, all with dbt_valid_to = NULL (meaning "this is the current truth").
-  2. Use \`dbt show --select snap_customers\` to verify.
-  3. Open seeds/raw_customers.csv. Change Alice's email to \`alice.new@example.com\` AND bump her updated_at to \`2024-02-15\`. Do the same for Carol — change status to \`inactive\` and bump updated_at.
-  4. Run \`dbt seed\` again (to reload the CSV into the warehouse), then \`dbt snapshot\` again. This time the snapshot should close out the two old rows and insert two new versions.
-  5. Run \`dbt show --select snap_customers\` again. You should see 5 rows now: Bob still has one row; Alice and Carol each have two (an old one with dbt_valid_to set, and a new one with dbt_valid_to = NULL).
+A snapshot is declared in a .sql file under \`snapshots/\` with a special config:
 
-The lesson is complete once the second snapshot run has captured at least two historical versions.`,
-  hint: 'Run dbt seed + dbt snapshot. Edit seeds/raw_customers.csv (change Alice + Carol, bump updated_at). Run dbt seed + dbt snapshot again.',
+  {% snapshot snap_customers %}
+  {{ config(
+      target_schema='snapshots',
+      strategy='timestamp',
+      unique_key='customer_id',
+      updated_at='updated_at'
+  ) }}
+  select ... from ...
+  {% endsnapshot %}
+
+Key pieces:
+  • \`unique_key\` — how to identify a row across runs.
+  • \`strategy='timestamp'\` — detect changes using a column like \`updated_at\`.
+  • \`strategy='check'\` — alternative that compares specific columns row-by-row.
+
+The starter snap_customers.sql is missing \`unique_key\` and \`updated_at\`. Fill them in, then run \`dbt snapshot\`. dbt-quest will create the snapshot table with SCD-2 columns (dbt_valid_from, dbt_valid_to, dbt_updated_at). Once it runs, use \`dbt show --select snap_customers\` to see the captured rows.`,
+  hint: "Add `unique_key='customer_id'` and `updated_at='updated_at'` to the config block, then run `dbt snapshot`.",
   story: {
     messages: [
       {
+        from: 'sofie',
+        body: `For the board deck I need active subscribers as of June 1 last year. raw_customers only shows the current state. Can we start capturing history? Anything we don't snapshot now, we lose.`,
+      },
+      {
         from: 'priya',
-        body: `i'll touch the seed file to simulate a real change — alice updates her email, carol churns. snapshot once, edit the csv, snapshot again. the old version stays alongside the new one — that's the whole point.`,
+        body: `snap_customers is started in /snapshots — fill in \`unique_key\` + \`updated_at\`, then \`dbt snapshot\`.`,
       },
     ],
   },
   initialFiles: {
-    'seeds/raw_customers.csv': RAW_CUSTOMERS_V1,
     'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
 {{ config(
     target_schema='snapshots',
-    strategy='timestamp',
-    unique_key='customer_id',
-    updated_at='updated_at'
+    strategy='timestamp'
 ) }}
 
 select
@@ -52,10 +63,12 @@ from raw_customers
 {% endsnapshot %}
 `,
   },
-  seeds: {},
+  seeds: {
+    raw_customers: RAW_CUSTOMERS,
+  },
   requiredSteps: ['files'],
   goal: {
-    description: 'Snapshot once, change the source, snapshot again — history should grow.',
+    description: 'Complete the snapshot config and run `dbt snapshot`.',
     dagShape: {
       nodes: [
         { id: 'raw_customers', label: 'raw_customers', layer: 'source' },
@@ -65,28 +78,26 @@ from raw_customers
     },
   },
   validate: (state) => {
-    if (!snapshotRanAtLeast(state, 'snap_customers', 2))
-      return { passed: false, reason: 'Run `dbt snapshot` at least twice — once for the initial capture and once after the change.' }
-    if (!snapshotClosedAtLeast(state, 'snap_customers', 1))
-      return { passed: false, reason: 'The second run did not close any rows. Make sure you edited the CSV (change a value AND bump updated_at) before rerunning seed + snapshot.' }
+    const sql = state.files['snapshots/snap_customers.sql'] ?? ''
+    if (!/unique_key\s*=\s*['"][^'"]+['"]/.test(sql))
+      return { passed: false, reason: "Add `unique_key='customer_id'` to the config." }
+    if (!/updated_at\s*=\s*['"][^'"]+['"]/.test(sql))
+      return { passed: false, reason: "Add `updated_at='updated_at'` to the config." }
+    if (!snapshotRanAtLeast(state, 'snap_customers', 1))
+      return { passed: false, reason: 'Run `dbt snapshot` to capture the first snapshot.' }
     return { passed: true }
   },
-  badge: {
-    id: 'historian',
-    name: 'Historian',
-    emoji: '📜',
-    caption: 'Last year is now safe to ask about',
-  },
+  badge: { id: 'time-traveler', name: 'Time Traveler', emoji: '⏳' },
   quiz: {
-    question: 'A snapshot row has `dbt_valid_to = NULL`. What does that tell you?',
+    question: 'What is the purpose of `unique_key` in a snapshot configuration?',
     options: [
-      'The row has not been processed yet',
-      'It is the current (most recent) version of that unique_key',
-      'The snapshot run failed for this row',
-      'The row has no tracked column',
+      'It becomes the primary key of the snapshot table',
+      'It tells dbt how to identify the same row across different snapshot runs',
+      'It sorts the historical versions within the snapshot table',
+      'It prevents duplicate rows in the source table',
     ],
     correctIndex: 1,
-    explanation: 'A NULL dbt_valid_to marks "this version is still the truth". When a newer version arrives, dbt sets the old row\'s dbt_valid_to and inserts a fresh row with NULL valid_to for the new current version.',
+    explanation: 'dbt uses unique_key to match each incoming row to its historical versions. Without it, dbt cannot tell whether a row is "the same customer, now changed" or "a brand-new customer".',
   },
   docs: [
     { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },

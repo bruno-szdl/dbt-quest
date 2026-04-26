@@ -79,7 +79,7 @@ models:
       'relationships',
     ],
     correctIndex: 1,
-    explanation: '`not_null` fails if any row has NULL in the target column. `unique` checks for duplicates, `accepted_values` validates a fixed list, and `relationships` checks referential integrity.',
+    explanation: '`not_null` fails if any row has NULL in the target column. `unique` checks for duplicates, `accepted_values` validates a fixed list, and `relationships` checks referential integrity to another model.',
   },
   docs: [
     { label: 'Generic data tests', url: 'https://docs.getdbt.com/docs/build/data-tests#generic-data-tests' },

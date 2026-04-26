@@ -1,55 +1,56 @@
 import type { Level } from '../engine/types'
-import { snapshotRanAtLeast } from '../engine/validators'
-
-const RAW_CUSTOMERS = `id,name,email,status,updated_at
-1,Alice Martin,alice@example.com,active,2024-01-05
-2,Bob Chen,bob@example.com,active,2024-01-17
-3,Carol Silva,carol@example.com,active,2024-02-02`
+import { manuallyMarked } from '../engine/validators'
 
 const level39: Level = {
   id: 39,
   chapter: 11,
-  title: 'Configure and run a snapshot',
-  description: `Sources change over time — customers update their email, orders change status, a plan tier gets downgraded. Most of the time, the source only shows you the current state.
+  title: 'Compare append vs merge',
+  description: `Choosing between append and merge is almost always about whether your rows can change.
 
-Snapshots are dbt's answer to "what did this row look like last month?". They watch a source table and, every time a tracked column changes, keep a new historical version of the row alongside the current one.
+append
+  • Inserts only new rows on top of what's stored.
+  • Fastest strategy, no row matching required.
+  • Right for immutable data: events, logs, page views, audit rows.
+  • Wrong for anything where rows can be updated — stale data will stay forever.
 
-A snapshot is declared in a .sql file under \`snapshots/\` with a special config:
+merge
+  • Matches each incoming row against the existing table by a unique_key.
+  • Updates existing rows, inserts new ones.
+  • Required for data where fields can change: customer dims, order status, any mutable entity.
+  • Slightly more work per run than append, because of the key matching.
 
-  {% snapshot snap_customers %}
-  {{ config(
-      target_schema='snapshots',
-      strategy='timestamp',
-      unique_key='customer_id',
-      updated_at='updated_at'
-  ) }}
-  select ... from ...
-  {% endsnapshot %}
+Rule of thumb:
+  • "Does this row ever change after it's written?" → Yes: merge. No: append.
 
-Key pieces:
-  • \`unique_key\` — how to identify a row across runs.
-  • \`strategy='timestamp'\` — detect changes using a column like \`updated_at\`.
-  • \`strategy='check'\` — alternative that compares specific columns row-by-row.
-
-The starter snap_customers.sql is missing \`unique_key\` and \`updated_at\`. Fill them in, then run \`dbt snapshot\`. dbt-quest will create the snapshot table with SCD-2 columns (dbt_valid_from, dbt_valid_to, dbt_updated_at). Once it runs, use \`dbt show --select snap_customers\` to see the captured rows.`,
-  hint: "Add `unique_key='customer_id'` and `updated_at='updated_at'` to the config block, then run `dbt snapshot`.",
+Both example models are included in this lesson so you can inspect the two config blocks side by side. When you feel confident picking one over the other, mark complete.`,
+  hint: 'Open fct_events.sql and fct_customers.sql and compare their config() blocks.',
   story: {
     messages: [
       {
-        from: 'sofie',
-        body: `For the board deck I need active subscribers as of June 1 last year. raw_customers only shows the current state. Can we start capturing history? Anything we don't snapshot now, we lose.`,
-      },
-      {
         from: 'priya',
-        body: `snap_customers is started in /snapshots — fill in \`unique_key\` + \`updated_at\`, then \`dbt snapshot\`.`,
+        body: `read both configs side by side. mental model: "do these rows ever change?". if no → append. if yes → merge. mark complete.`,
       },
     ],
   },
   initialFiles: {
-    'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
+    'models/fct_events.sql': `-- Append example: immutable events.
 {{ config(
-    target_schema='snapshots',
-    strategy='timestamp'
+    materialized='incremental',
+    incremental_strategy='append'
+) }}
+
+select
+    id,
+    user_id,
+    event_type,
+    event_at
+from raw_events
+`,
+    'models/fct_customers.sql': `-- Merge example: mutable customer records.
+{{ config(
+    materialized='incremental',
+    incremental_strategy='merge',
+    unique_key='customer_id'
 ) }}
 
 select
@@ -59,48 +60,47 @@ select
     status,
     updated_at
 from raw_customers
-
-{% endsnapshot %}
 `,
   },
   seeds: {
-    raw_customers: RAW_CUSTOMERS,
+    raw_events: `id,user_id,event_type,event_at
+1,1,login,2024-01-05
+2,2,login,2024-01-06`,
+    raw_customers: `id,name,email,updated_at,status
+1,Alice Martin,alice@example.com,2024-01-05,active
+2,Bob Chen,bob@example.com,2024-01-17,active`,
   },
-  requiredSteps: ['files'],
+  requiredSteps: [],
+  manualCompletion: true,
   goal: {
-    description: 'Complete the snapshot config and run `dbt snapshot`.',
+    description: 'Compare the two config blocks, then mark complete.',
     dagShape: {
       nodes: [
-        { id: 'raw_customers', label: 'raw_customers', layer: 'source' },
-        { id: 'snap_customers', label: 'snap_customers', layer: 'intermediate' },
+        { id: 'fct_events', label: 'fct_events', layer: 'mart' },
+        { id: 'fct_customers', label: 'fct_customers', layer: 'mart' },
       ],
-      edges: [{ source: 'raw_customers', target: 'snap_customers' }],
+      edges: [],
     },
   },
   validate: (state) => {
-    const sql = state.files['snapshots/snap_customers.sql'] ?? ''
-    if (!/unique_key\s*=\s*['"][^'"]+['"]/.test(sql))
-      return { passed: false, reason: "Add `unique_key='customer_id'` to the config." }
-    if (!/updated_at\s*=\s*['"][^'"]+['"]/.test(sql))
-      return { passed: false, reason: "Add `updated_at='updated_at'` to the config." }
-    if (!snapshotRanAtLeast(state, 'snap_customers', 1))
-      return { passed: false, reason: 'Run `dbt snapshot` to capture the first snapshot.' }
+    if (!manuallyMarked(state))
+      return { passed: false, reason: 'Compare append vs merge, then mark complete.' }
     return { passed: true }
   },
-  badge: { id: 'time-traveler', name: 'Time Traveler', emoji: '⏳' },
+  badge: { id: 'strategist', name: 'Strategist', emoji: '🎯' },
   quiz: {
-    question: 'What is the purpose of `unique_key` in a snapshot configuration?',
+    question: 'A team is loading a customer_orders table where each row represents an order and order rows never change after insertion. Which incremental strategy fits best?',
     options: [
-      'It becomes the primary key of the snapshot table',
-      'It tells dbt how to identify the same row across different snapshot runs',
-      'It sorts the historical versions within the snapshot table',
-      'It prevents duplicate rows in the source table',
+      'merge — always safer to match keys',
+      'append — orders are immutable, so new rows just need to be added',
+      'delete+insert — always required for fact tables',
+      'snapshot — because we are tracking customers',
     ],
     correctIndex: 1,
-    explanation: 'dbt uses unique_key to match each incoming row to its historical versions. Without it, dbt cannot tell whether a row is "the same customer, now changed" or "a brand-new customer".',
+    explanation: 'If the rows are truly immutable after insertion, append is the right fit. Merge would pay the cost of key matching with no benefit. (If later you discover a row can change — a correction, a refund — that is the signal to switch to merge.)',
   },
   docs: [
-    { label: 'About snapshots', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+    { label: 'Incremental strategies', url: 'https://docs.getdbt.com/docs/build/incremental-strategy' },
   ],
 }
 

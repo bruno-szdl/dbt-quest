@@ -8,7 +8,7 @@ import {
 
 const level30: Level = {
   id: 30,
-  chapter: 8,
+  chapter: 9,
   title: 'Add tags to a model',
   description: `Graph operators (\`+model\`, \`model+\`) are great when you know which model you're aiming at. But sometimes the natural grouping is semantic, not structural: "every model that runs hourly", "every PII-aware model", "every metric used by the finance dashboard".
 
@@ -27,7 +27,7 @@ Your task: open \`models/schema.yml\` and add the tag \`daily\` to BOTH stg_orde
     messages: [
       {
         from: 'priya',
-        body: `marketing's launching a campaign wednesday. yuki only needs orders-side stuff refreshed at 6am that day. tag stg_orders + int_customer_orders as \`daily\` so we can target them.`,
+        body: `marketing's launching a campaign wednesday. yuki only needs orders-side stuff refreshed at 6am that day. marcus's "schedule" was a list of model names in a wiki — we'll do this with tags instead. tag stg_orders + int_customer_orders as \`daily\` so we can target them.`,
       },
     ],
   },

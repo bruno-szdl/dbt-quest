@@ -1,74 +1,102 @@
 import type { Level } from '../engine/types'
-import { manuallyMarked } from '../engine/validators'
+import { allTestsPass, modelRan } from '../engine/validators'
+
+const RAW_CUSTOMERS = `id,name,email,created_at,country
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,carol@example.com,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE`
+
+function countYamlDescriptions(yml: string): number {
+  return (yml.match(/^[ \t]+description:\s*\S/gm) ?? []).length
+}
 
 const level17: Level = {
   id: 17,
   chapter: 5,
-  title: 'Why documentation matters',
-  description: `A description is just a string in YAML, but it's load-bearing once a project has more than one author.
+  title: 'Add a description to a model',
+  description: `Models earn their keep when other people can read them. The fastest way to make a model self-explanatory is to write a one-line \`description:\` next to its name in the YAML — and one for each column too.
 
-Where descriptions actually pay off
-  • Onboarding — new teammates can read what a model means without reverse-engineering the SQL.
-  • Lineage handoff — analysts following a graph from a dashboard back to a source can land on each node and read what it represents.
-  • The dbt docs site — \`dbt docs generate\` plus \`dbt docs serve\` builds a browsable site from your descriptions, tests, and lineage. dbt-quest doesn't simulate the rendered site, but in a real project that site is where most non-engineers look first.
-  • Self-documenting contracts — descriptions and tests in the same YAML file form the public contract of the model: what it is, and what guarantees it makes.
+The shape is:
 
-Where descriptions do NOT help
-  • Restating the column name in English ("customer_id is the customer id"). If the description equals the name, delete it.
-  • Internal implementation notes that change every refactor. Those belong in commit messages, not descriptions.
-  • Anything time-sensitive ("temporarily filtered, will fix Tuesday"). It will rot.
+  models:
+    - name: stg_customers
+      description: One row per customer, cleaned from the raw signup feed.
+      columns:
+        - name: customer_id
+          description: Stable surrogate id used everywhere downstream.
 
-Mental shortcut: write the one sentence you'd want to read if a stakeholder Slacked you "what's this column?". When you've thought it through, mark the lesson complete.`,
-  hint: 'Picture explaining one of your real models to a new teammate in one sentence. That sentence is the description.',
+Open \`models/schema.yml\` and add a \`description:\` for stg_customers and for at least two of its columns. The model still needs to build and its tests still need to pass — descriptions live next to the same tests you wrote earlier.`,
+  hint: 'Add `description: <one sentence>` indented under stg_customers, and another under at least two columns. Keep the existing tests in place.',
   story: {
     messages: [
       {
         from: 'priya',
-        body: `quick read before monday — when a description earns its keep vs. when it's noise. this is the stuff i'd want the new analyst to internalize before they touch yaml. mark complete when done.`,
+        body: `we're hiring our first analyst — starts monday. i want them to read schema.yml without DMing me every five minutes. add a description on stg_customers and a couple of its columns. keep the tests as they are.`,
       },
     ],
   },
   initialFiles: {
+    'models/stg_customers.sql': `select
+    id         as customer_id,
+    name       as customer_name,
+    email,
+    created_at,
+    country
+from raw_customers`,
     'models/schema.yml': `version: 2
 
 models:
-  - name: dim_customers
-    description: One row per customer, with lifetime totals — the canonical customer dimension used by every dashboard.
+  - name: stg_customers
+    # TODO: add a description for the model on the next line
     columns:
       - name: customer_id
-        description: Stable surrogate id, foreign-keyed by every fact table.
+        # TODO: add a description for this column
         tests:
           - not_null
           - unique
-      - name: lifetime_value
-        description: Sum of completed-order amounts in USD, refreshed daily.
+      - name: email
+        # TODO: add a description for this column
+        tests:
+          - not_null
 `,
   },
-  seeds: {},
-  requiredSteps: [],
-  manualCompletion: true,
+  seeds: {
+    raw_customers: RAW_CUSTOMERS,
+  },
+  requiredSteps: ['files', 'run', 'test'],
   goal: {
-    description: 'Reflect on when descriptions earn their keep, then mark complete.',
+    description: 'Document stg_customers and at least two of its columns, then run dbt build.',
+    dagShape: {
+      nodes: [{ id: 'stg_customers', label: 'stg_customers', layer: 'staging' }],
+      edges: [],
+    },
   },
   validate: (state) => {
-    if (!manuallyMarked(state))
-      return { passed: false, reason: 'Mark the lesson complete when ready.' }
+    const yml = state.files['models/schema.yml'] ?? ''
+    if (countYamlDescriptions(yml) < 3)
+      return { passed: false, reason: 'Add a description: line on stg_customers and on at least two of its columns.' }
+    if (!modelRan(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt run (or dbt build) so stg_customers is built.' }
+    if (!allTestsPass(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt test (or dbt build) and make sure tests still pass.' }
     return { passed: true }
   },
-  badge: { id: 'doc-thinker', name: 'Doc Thinker', emoji: '📚' },
+  badge: { id: 'documenter', name: 'Documenter', emoji: '📝' },
   quiz: {
-    question: 'Which of these is the BEST candidate for a description?',
+    question: 'Where do model and column descriptions live in a dbt project?',
     options: [
-      'customer_id — "The customer id."',
-      'lifetime_value — "Sum of completed-order amounts in USD, refreshed daily."',
-      'customer_name — "TODO: ask product team about this column."',
-      'created_at — "Temporarily filtered to last 90 days for the spike investigation."',
+      'In a Markdown README in the project root',
+      'In the same YAML file as the tests, next to each model and column',
+      'Inside the .sql file as -- SQL comments',
+      'In a separate docs/ directory that dbt does not read',
     ],
     correctIndex: 1,
-    explanation: 'A useful description tells a reader what the value means and how it is computed — not just a paraphrase of the column name, not a TODO, and not a temporary note that will rot.',
+    explanation: 'Descriptions sit beside tests in YAML (commonly schema.yml). Keeping docs and tests in one place means a single source of truth for what the model is and what guarantees it makes.',
   },
   docs: [
-    { label: 'Documentation', url: 'https://docs.getdbt.com/docs/build/documentation' },
+    { label: 'Model properties', url: 'https://docs.getdbt.com/reference/resource-properties/description' },
   ],
 }
 

@@ -29,7 +29,11 @@ Your task: run \`dbt run --select +int_customer_orders+\` and confirm exactly th
     messages: [
       {
         from: 'priya',
-        body: `i'm changing int_customer_orders. want the full slice it touches rebuilt — fresh inputs above, marts below. the customers branch can stay put.`,
+        body: `i'm changing int_customer_orders for yuki's churn report. want the full slice it touches rebuilt — fresh inputs above, marts below. the customers branch can stay put.`,
+      },
+      {
+        from: 'yuki',
+        body: `🙏 just don't make me wait for stg_customers + dim_customers again, those are unrelated`,
       },
     ],
   },
@@ -56,11 +60,11 @@ Your task: run \`dbt run --select +int_customer_orders+\` and confirm exactly th
     options: [
       'Always — it is the safe default for daily runs',
       'When you have changed a model in the middle of the graph and want to rebuild every model that depends on its upstream OR depends on it',
-      'When you want to skip the model itself but rebuild its neighbours',
+      "When you've changed an upstream model and want to rebuild only its descendants",
       'When you only want to run the tests for that model',
     ],
     correctIndex: 1,
-    explanation: '`+model+` selects the model plus its full upstream chain plus its full downstream chain. It is overkill for daily production, but exactly right when you need to validate that a change in the middle of the graph still works end-to-end.',
+    explanation: '`+model+` selects the model plus its full upstream chain plus its full downstream chain. Option 3 describes `model+` (descendants only) — close, but missing the upstream half. Use `+model+` when a change in the middle of the graph needs an end-to-end validation.',
   },
   docs: [
     { label: 'Graph operators', url: 'https://docs.getdbt.com/reference/node-selection/graph-operators' },

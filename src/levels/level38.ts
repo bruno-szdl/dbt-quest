@@ -1,56 +1,52 @@
 import type { Level } from '../engine/types'
-import { manuallyMarked } from '../engine/validators'
+import { manuallyMarked, modelMaterialization, modelRan } from '../engine/validators'
+
+const RAW_CUSTOMERS = `id,name,email,updated_at,status
+1,Alice Martin,alice@example.com,2024-01-05,active
+2,Bob Chen,bob@example.com,2024-01-17,active
+3,Carol Silva,carol@example.com,2024-02-02,active
+4,Dave Kumar,dave@example.com,2024-02-11,inactive`
 
 const level38: Level = {
   id: 38,
-  chapter: 10,
-  title: 'Compare append vs merge',
-  description: `Choosing between append and merge is almost always about whether your rows can change.
+  chapter: 11,
+  title: 'Configure an incremental model as merge',
+  description: `Append works when rows are immutable. But often records change — a customer updates their email, an order status flips from pending to completed. For that, you need merge.
 
-append
-  • Inserts only new rows on top of what's stored.
-  • Fastest strategy, no row matching required.
-  • Right for immutable data: events, logs, page views, audit rows.
-  • Wrong for anything where rows can be updated — stale data will stay forever.
+The merge strategy tells dbt to match incoming rows to existing rows on a key, then:
+  • Update the row if the key already exists.
+  • Insert a new row otherwise.
 
-merge
-  • Matches each incoming row against the existing table by a unique_key.
-  • Updates existing rows, inserts new ones.
-  • Required for data where fields can change: customer dims, order status, any mutable entity.
-  • Slightly more work per run than append, because of the key matching.
+The configuration looks like:
 
-Rule of thumb:
-  • "Does this row ever change after it's written?" → Yes: merge. No: append.
+  {{ config(
+      materialized='incremental',
+      incremental_strategy='merge',
+      unique_key='customer_id'
+  ) }}
 
-Both example models are included in this lesson so you can inspect the two config blocks side by side. When you feel confident picking one over the other, mark complete.`,
-  hint: 'Open fct_events.sql and fct_customers.sql and compare their config() blocks.',
+  select * from {{ source('raw', 'customers') }}
+  {% if is_incremental() %}
+    where updated_at > (select max(updated_at) from {{ this }})
+  {% endif %}
+
+\`unique_key\` is the column dbt uses to match rows. Without it, merge has no way to tell updates apart from inserts.
+
+Your task: configure fct_customers as incremental with strategy='merge' and unique_key='customer_id'. Run dbt run and then mark complete.`,
+  hint: "Inside the config() call: materialized='incremental', incremental_strategy='merge', unique_key='customer_id'.",
   story: {
     messages: [
       {
         from: 'priya',
-        body: `read both configs side by side. mental model: "do these rows ever change?". if no → append. if yes → merge. mark complete.`,
+        body: `customers update — email, plan, status. append would leave stale dupes everywhere. for fct_customers use merge with \`unique_key='customer_id'\`.`,
       },
     ],
   },
   initialFiles: {
-    'models/fct_events.sql': `-- Append example: immutable events.
-{{ config(
-    materialized='incremental',
-    incremental_strategy='append'
-) }}
+    'models/fct_customers.sql': `-- Task: configure as incremental+merge on customer_id.
 
-select
-    id,
-    user_id,
-    event_type,
-    event_at
-from raw_events
-`,
-    'models/fct_customers.sql': `-- Merge example: mutable customer records.
 {{ config(
-    materialized='incremental',
-    incremental_strategy='merge',
-    unique_key='customer_id'
+    materialized='table'
 ) }}
 
 select
@@ -59,48 +55,53 @@ select
     email,
     status,
     updated_at
-from raw_customers
-`,
+from raw_customers`,
   },
   seeds: {
-    raw_events: `id,user_id,event_type,event_at
-1,1,login,2024-01-05
-2,2,login,2024-01-06`,
-    raw_customers: `id,name,email,updated_at,status
-1,Alice Martin,alice@example.com,2024-01-05,active
-2,Bob Chen,bob@example.com,2024-01-17,active`,
+    raw_customers: RAW_CUSTOMERS,
   },
-  requiredSteps: [],
+  requiredSteps: ['files', 'run'],
   manualCompletion: true,
   goal: {
-    description: 'Compare the two config blocks, then mark complete.',
+    description: 'Configure fct_customers as incremental+merge on customer_id, run it, then mark complete.',
     dagShape: {
-      nodes: [
-        { id: 'fct_events', label: 'fct_events', layer: 'mart' },
-        { id: 'fct_customers', label: 'fct_customers', layer: 'mart' },
-      ],
+      nodes: [{ id: 'fct_customers', label: 'fct_customers', layer: 'mart' }],
       edges: [],
     },
   },
   validate: (state) => {
+    if (!modelMaterialization(state, 'fct_customers', 'incremental'))
+      return { passed: false, reason: "Set materialized='incremental'." }
+    const sql = state.files['models/fct_customers.sql'] ?? ''
+    if (!/incremental_strategy\s*=\s*['"]merge['"]/.test(sql))
+      return { passed: false, reason: "Add incremental_strategy='merge'." }
+    if (!/unique_key\s*=\s*['"][^'"]+['"]/.test(sql))
+      return { passed: false, reason: "Add unique_key='customer_id'." }
+    if (!modelRan(state, 'fct_customers'))
+      return { passed: false, reason: 'Run dbt run to build fct_customers.' }
     if (!manuallyMarked(state))
-      return { passed: false, reason: 'Compare append vs merge, then mark complete.' }
+      return { passed: false, reason: 'Mark the lesson complete once you have run it.' }
     return { passed: true }
   },
-  badge: { id: 'strategist', name: 'Strategist', emoji: '🎯' },
+  badge: {
+    id: 'merge-master',
+    name: 'Merge Master',
+    emoji: '🔀',
+    caption: 'Customers can change — and we know',
+  },
   quiz: {
-    question: 'A team is loading a customer_orders table where each row represents an order and order rows never change after insertion. Which incremental strategy fits best?',
+    question: "Why does the merge strategy need a unique_key?",
     options: [
-      'merge — always safer to match keys',
-      'append — orders are immutable, so new rows just need to be added',
-      'delete+insert — always required for fact tables',
-      'snapshot — because we are tracking customers',
+      'Because merge only works on indexed columns',
+      'Because dbt uses it to decide whether an incoming row is an update or an insert',
+      "It's purely documentation — merge works without it",
+      'Because merge builds a separate audit log keyed by that column',
     ],
     correctIndex: 1,
-    explanation: 'If the rows are truly immutable after insertion, append is the right fit. Merge would pay the cost of key matching with no benefit. (If later you discover a row can change — a correction, a refund — that is the signal to switch to merge.)',
+    explanation: 'Without a unique_key, merge has no way to know which existing row corresponds to an incoming row. The key is what turns "update or insert" into a deterministic decision.',
   },
   docs: [
-    { label: 'Incremental strategies', url: 'https://docs.getdbt.com/docs/build/incremental-strategy' },
+    { label: 'Incremental strategies — merge', url: 'https://docs.getdbt.com/docs/build/incremental-strategy#merge-strategy' },
   ],
 }
 

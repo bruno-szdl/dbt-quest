@@ -1,68 +1,85 @@
 import type { Level } from '../engine/types'
-import { seedLoaded } from '../engine/validators'
+import { lineageHasSourceEdge, modelRan, sourceDefined } from '../engine/validators'
 
-const COUNTRY_CODES = `code,country_name,region
-US,United States,Americas
-CA,Canada,Americas
-BR,Brazil,Americas
-IN,India,Asia
-DE,Germany,Europe
-FR,France,Europe
-JP,Japan,Asia`
+const RAW_CUSTOMERS = `id,name,email,created_at,country
+1,Alice Martin,alice@example.com,2024-01-05,US
+2,Bob Chen,bob@example.com,2024-01-17,CA
+3,Carol Silva,carol@example.com,2024-02-02,BR
+4,Dave Kumar,dave@example.com,2024-02-11,IN
+5,Eve Müller,eve@example.com,2024-03-01,DE`
 
 const level20: Level = {
   id: 20,
   chapter: 6,
-  title: 'Add a seed',
-  description: `Sources are for raw data loaded into the warehouse by someone else. Seeds are different — they are small CSV files that live inside the dbt project and that dbt itself loads into the warehouse for you.
+  title: 'Use source() in a staging model',
+  description: `Once a source is declared, staging models reference it with \`{{ source('name', 'table') }}\` instead of the bare table name. The declaration is reused — you don't have to repeat the schema name in every model.
 
-Seeds are a good fit for tiny reference tables (country codes, mapping tables, thresholds, demo data) where the file being version-controlled next to the code is a feature, not a bug.
+The source \`raw.customers\` has already been declared in models/sources.yml.
 
-A seed file is just a CSV under \`seeds/\`. To load it, you run:
-
-  dbt seed
-
-A seed called \`country_codes\` is already in the project at \`seeds/country_codes.csv\`. Your task: run \`dbt seed\` and watch it get loaded into the warehouse. It will appear in the Database Explorer on the left once the command finishes.`,
-  hint: 'Run `dbt seed` in the terminal.',
+Your task: in stg_customers.sql replace \`from raw_customers\` with \`from {{ source('raw', 'customers') }}\`, then run dbt run. Once you do, the lineage tab will start showing raw.customers as an upstream node feeding into stg_customers.`,
+  hint: "Replace `from raw_customers` with `from {{ source('raw', 'customers') }}`. Then run `dbt run`.",
   story: {
     messages: [
       {
-        from: 'yuki',
-        body: `i need a region rollup for the Q2 deck — americas / europe / asia. country_codes.csv is already in the repo. just \`dbt seed\` it pls 🙏`,
+        from: 'priya',
+        body: `now wire stg_customers up to the source you just declared. same data — but the lineage tab will start showing where it came from. it's about being honest about inputs.`,
       },
     ],
   },
   initialFiles: {
-    'seeds/country_codes.csv': COUNTRY_CODES,
+    'models/sources.yml': `version: 2
+
+sources:
+  - name: raw
+    tables:
+      - name: customers
+`,
+    'models/stg_customers.sql': `select
+    id         as customer_id,
+    name       as customer_name,
+    email,
+    created_at,
+    country
+from raw_customers`,
   },
-  seeds: {},
-  requiredSteps: [],
+  seeds: {
+    'raw.customers': RAW_CUSTOMERS,
+  },
+  requiredSteps: ['files', 'run'],
   goal: {
-    description: 'Run `dbt seed` to load the country_codes CSV into the warehouse.',
+    description: "Use {{ source('raw', 'customers') }} in stg_customers.sql and run dbt run.",
     dagShape: {
-      nodes: [{ id: 'country_codes', label: 'country_codes', layer: 'source' }],
-      edges: [],
+      nodes: [
+        { id: 'raw.customers', label: 'raw.customers', layer: 'source' },
+        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
+      ],
+      edges: [{ source: 'raw.customers', target: 'stg_customers' }],
     },
   },
   validate: (state) => {
-    if (!seedLoaded(state, 'country_codes'))
-      return { passed: false, reason: 'Run `dbt seed` to load country_codes.' }
+    if (!sourceDefined(state, 'raw', 'customers'))
+      return { passed: false, reason: 'Keep the raw.customers declaration in sources.yml.' }
+    if (!lineageHasSourceEdge(state, 'raw', 'customers', 'stg_customers'))
+      return { passed: false, reason: "Replace the bare table name with {{ source('raw', 'customers') }}." }
+    if (!modelRan(state, 'stg_customers'))
+      return { passed: false, reason: 'Run dbt run to rebuild the model.' }
     return { passed: true }
   },
-  badge: { id: 'seed-sower', name: 'Seed Sower', emoji: '🌾' },
+  badge: { id: 'source-used', name: 'Source Plugged In', emoji: '🔌' },
   quiz: {
-    question: 'Which of the following is a good use case for a dbt seed?',
+    question: "What does {{ source('raw', 'customers') }} compile to?",
     options: [
-      'A 50 GB event log refreshed nightly',
-      'The production customers table, replicated from the app database',
-      'A small CSV of country codes used to enrich reports',
-      'A Python script that generates synthetic data',
+      'A bare Python import',
+      'A reference to a raw input declared in sources.yml, resolved to the correct schema and table',
+      "A dbt test on the 'customers' table",
+      "An empty string when raw is not set",
     ],
-    correctIndex: 2,
-    explanation: 'Seeds are designed for small, mostly-static reference data you want versioned next to your code. Big, frequently-changing data belongs in a real ingestion pipeline and should be a source, not a seed.',
+    correctIndex: 1,
+    explanation: 'source() looks up the declaration in sources.yml and resolves to the concrete schema.table for the current environment. It also registers the source as an upstream node in the lineage graph.',
   },
   docs: [
-    { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
+    { label: 'About `source` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/source' },
+    { label: 'About sources', url: 'https://docs.getdbt.com/docs/build/sources' },
   ],
 }
 

@@ -8,7 +8,7 @@ import {
 
 const level31: Level = {
   id: 31,
-  chapter: 8,
+  chapter: 9,
   title: 'Select models by tag',
   description: `Once a tag is declared, you can target every model that carries it with the \`tag:\` selector method:
 

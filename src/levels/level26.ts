@@ -23,8 +23,13 @@ Your task: open the lineage panel, get a feel for the six models in this project
   story: {
     messages: [
       {
+        from: 'yuki',
+        time: '06:14',
+        body: `the 6am refresh hit 18 minutes again 😩 sofie wants the dashboard live by 7. can we rebuild less stuff per run?`,
+      },
+      {
         from: 'priya',
-        body: `heads up — the full project still runs in 30s today, but as we grow you'll want to rebuild one model at a time. \`--select\` is the lever for that.`,
+        body: `yeah — marcus's "rebuild everything" habit is what's hurting us. \`--select\` lets you target one model at a time. start there; we'll build up to fancier selectors over the next few lessons.`,
       },
     ],
   },

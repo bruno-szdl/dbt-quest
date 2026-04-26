@@ -20,7 +20,7 @@ const RAW_CUSTOMERS = `id,name,email,created_at,country
 
 const level34: Level = {
   id: 34,
-  chapter: 9,
+  chapter: 10,
   title: 'Configure an intermediate model as ephemeral',
   description: `Sometimes you want a reusable chunk of SQL without creating a new object in the warehouse. That's what ephemeral models are for.
 

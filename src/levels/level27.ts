@@ -24,7 +24,7 @@ Your task: run \`dbt run --select +dim_customers\` and confirm both stg_customer
     messages: [
       {
         from: 'yuki',
-        body: `dim_customers feels stale on my dashboard. can you rebuild it AND its upstreams? not the whole project pls, just that branch 🙏`,
+        body: `ok so \`--select stg_customers\` was great, but now dim_customers is stale on my dashboard. can you rebuild it AND its upstreams? not the whole project pls, just that branch 🙏`,
       },
     ],
   },

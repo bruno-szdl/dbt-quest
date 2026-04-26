@@ -41,6 +41,8 @@ import level39 from './level39'
 import level40 from './level40'
 import level41 from './level41'
 import level42 from './level42'
+import level43 from './level43'
+import level44 from './level44'
 
 export const levels: Level[] = [
   level01,
@@ -85,6 +87,8 @@ export const levels: Level[] = [
   level40,
   level41,
   level42,
+  level43,
+  level44,
 ]
 
 export interface ModuleBadge {
@@ -128,21 +132,21 @@ export const modules: Module[] = [
     id: 4,
     title: 'Data quality and testing',
     description: 'Catch bad data early with tests and dbt build.',
-    levelIds: [11, 12, 13, 14, 15],
+    levelIds: [11, 12, 13, 14, 15, 16],
     badge: { id: 'mod-data-quality', name: 'Quality Assured', emoji: '✅' },
   },
   {
     id: 5,
     title: 'Documentation',
     description: 'Make models self-explanatory with descriptions on models and columns.',
-    levelIds: [16, 17],
+    levelIds: [17, 18],
     badge: { id: 'mod-documentation', name: 'Self-Documenting', emoji: '📝' },
   },
   {
     id: 6,
     title: 'Sources and seeds',
     description: 'Formalise raw inputs with sources and small CSVs with seeds.',
-    levelIds: [18, 19, 20, 21, 22],
+    levelIds: [19, 20, 21, 22],
     badge: { id: 'mod-sources-seeds', name: 'Roots Down', emoji: '🌱' },
   },
   {
@@ -154,37 +158,44 @@ export const modules: Module[] = [
   },
   {
     id: 8,
-    title: 'Selectors and tags',
-    description: 'Run subsets of the project with graph operators and tag selectors.',
-    levelIds: [26, 27, 28, 29, 30, 31, 32, 33],
-    badge: { id: 'mod-selectors', name: "Surgeon's Touch", emoji: '🎯' },
+    title: 'Selectors: graph operators',
+    description: 'Walk the lineage with +model, model+ and +model+.',
+    levelIds: [26, 27, 28, 29],
+    badge: { id: 'mod-graph-selectors', name: 'Trace Walker', emoji: '🛤️' },
   },
   {
     id: 9,
+    title: 'Selectors: tags and sets',
+    description: 'Pick subsets with tags, paths and set operations.',
+    levelIds: [30, 31, 32, 33],
+    badge: { id: 'mod-selectors', name: "Surgeon's Touch", emoji: '🎯' },
+  },
+  {
+    id: 10,
     title: 'Ephemeral models',
     description: 'Reusable SQL that never becomes a warehouse object.',
     levelIds: [34, 35],
     badge: { id: 'mod-ephemeral', name: 'Phantom', emoji: '👻' },
   },
   {
-    id: 10,
+    id: 11,
     title: 'Incremental models',
     description: 'Process only new rows instead of rebuilding from scratch.',
-    levelIds: [36, 37, 38],
+    levelIds: [36, 37, 38, 39],
     badge: { id: 'mod-incremental', name: 'Smart Refresh', emoji: '⚡' },
   },
   {
-    id: 11,
+    id: 12,
     title: 'Snapshots',
     description: 'Preserve historical versions of changing source data.',
-    levelIds: [39, 40, 41],
+    levelIds: [40, 41, 42, 43],
     badge: { id: 'mod-snapshots', name: 'Time Keeper', emoji: '⏳' },
   },
   {
-    id: 12,
+    id: 13,
     title: 'Final challenge',
     description: 'Debug a half-finished pipeline and ship it green.',
-    levelIds: [42],
+    levelIds: [44],
     badge: { id: 'mod-final', name: 'dbt Graduate', emoji: '🎓' },
   },
 ]

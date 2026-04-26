@@ -8,7 +8,7 @@ import {
 
 const level33: Level = {
   id: 33,
-  chapter: 8,
+  chapter: 9,
   title: 'Compare comma vs space',
   description: `One last selector subtlety, the one that trips most people up the first time.
 

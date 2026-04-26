@@ -1,12 +1,5 @@
 import type { Level } from '../engine/types'
-import { modelRan, modelRefs, outputColumnsInclude } from '../engine/validators'
-
-const RAW_CUSTOMERS = `id,name,email,created_at,country
-1,Alice Martin,alice@example.com,2024-01-05,US
-2,Bob Chen,bob@example.com,2024-01-17,CA
-3,Carol Silva,carol@example.com,2024-02-02,BR
-4,Dave Kumar,dave@example.com,2024-02-11,IN
-5,Eve Müller,eve@example.com,2024-03-01,DE`
+import { seedLoaded } from '../engine/validators'
 
 const COUNTRY_CODES = `code,country_name,region
 US,United States,Americas
@@ -20,79 +13,56 @@ JP,Japan,Asia`
 const level21: Level = {
   id: 21,
   chapter: 6,
-  title: 'Reference the seed',
-  description: `Once a seed is loaded, you reference it from a model exactly like any other dataset — with ref().
+  title: 'Add a seed',
+  description: `Sources are for raw data loaded into the warehouse by someone else. Seeds are different — they are small CSV files that live inside the dbt project and that dbt itself loads into the warehouse for you.
 
-That's a nice property: models don't need to care whether the upstream is a staging model, an intermediate model, or a seed. They are all just ref() calls.
+Seeds are a good fit for tiny reference tables (country codes, mapping tables, thresholds, demo data) where the file being version-controlled next to the code is a feature, not a bug.
 
-Your task: complete models/int_customer_enriched.sql so that it joins stg_customers with the country_codes seed on the country column. Add \`country_name\` and \`region\` to the SELECT list, then run dbt run.`,
-  hint: "Use `join {{ ref('country_codes') }} as cc on c.country = cc.code` and add cc.country_name, cc.region to the SELECT.",
+A seed file is just a CSV under \`seeds/\`. To load it, you run:
+
+  dbt seed
+
+A seed called \`country_codes\` is already in the project at \`seeds/country_codes.csv\`. Your task: run \`dbt seed\` and watch it get loaded into the warehouse. It will appear in the Database Explorer on the left once the command finishes.`,
+  hint: 'Run `dbt seed` in the terminal.',
   story: {
     messages: [
       {
         from: 'yuki',
-        body: `now stitch it in pls — int_customer_enriched should join to country_codes so i get country_name and region. then i can pivot the deck properly 🙏`,
+        body: `i need a region rollup for the Q2 deck — americas / europe / asia. country_codes.csv is already in the repo. just \`dbt seed\` it pls 🙏`,
       },
     ],
   },
   initialFiles: {
     'seeds/country_codes.csv': COUNTRY_CODES,
-    'models/stg_customers.sql': `select
-    id         as customer_id,
-    name       as customer_name,
-    email,
-    country
-from raw_customers`,
-    'models/int_customer_enriched.sql': `-- Task: join {{ ref('country_codes') }} to get country_name and region.
-
-select
-    c.customer_id,
-    c.customer_name,
-    c.country
-from {{ ref('stg_customers') }} as c`,
   },
-  seeds: {
-    raw_customers: RAW_CUSTOMERS,
-  },
-  requiredSteps: ['files', 'run'],
+  seeds: {},
+  requiredSteps: [],
   goal: {
-    description: "Join {{ ref('country_codes') }} into int_customer_enriched and include country_name and region.",
+    description: 'Run `dbt seed` to load the country_codes CSV into the warehouse.',
     dagShape: {
-      nodes: [
-        { id: 'stg_customers', label: 'stg_customers', layer: 'staging' },
-        { id: 'country_codes', label: 'country_codes', layer: 'source' },
-        { id: 'int_customer_enriched', label: 'int_customer_enriched', layer: 'intermediate' },
-      ],
-      edges: [
-        { source: 'stg_customers', target: 'int_customer_enriched' },
-        { source: 'country_codes', target: 'int_customer_enriched' },
-      ],
+      nodes: [{ id: 'country_codes', label: 'country_codes', layer: 'source' }],
+      edges: [],
     },
   },
   validate: (state) => {
-    if (!modelRefs(state, 'int_customer_enriched', 'country_codes'))
-      return { passed: false, reason: "Use {{ ref('country_codes') }} to join the seed into int_customer_enriched." }
-    if (!modelRan(state, 'int_customer_enriched'))
-      return { passed: false, reason: 'Run dbt run to build int_customer_enriched.' }
-    if (!outputColumnsInclude(state, 'int_customer_enriched', ['country_name', 'region']))
-      return { passed: false, reason: 'Include country_name and region from the seed in the SELECT.' }
+    if (!seedLoaded(state, 'country_codes'))
+      return { passed: false, reason: 'Run `dbt seed` to load country_codes.' }
     return { passed: true }
   },
-  badge: { id: 'seed-joined', name: 'Seed Joined', emoji: '🌍' },
+  badge: { id: 'seed-sower', name: 'Seed Sower', emoji: '🌾' },
   quiz: {
-    question: 'How do you reference a seed from a model?',
+    question: 'Which of the following is a good use case for a dbt seed?',
     options: [
-      "With {{ source('seeds', 'name') }}",
-      "With {{ ref('seed_name') }}",
-      "By writing the raw CSV path",
-      "With {{ seed('name') }}",
+      'A 50 GB event log refreshed nightly',
+      'The production customers table, replicated from the app database',
+      'A small CSV of country codes used to enrich reports',
+      'A Python script that generates synthetic data',
     ],
-    correctIndex: 1,
-    explanation: 'Seeds are addressed with ref(), same as any model. This keeps downstream SQL uniform regardless of whether the upstream is a model, a snapshot, or a seed.',
+    correctIndex: 2,
+    explanation: 'Seeds are designed for small, mostly-static reference data you want versioned next to your code. Big, frequently-changing data belongs in a real ingestion pipeline and should be a source, not a seed.',
   },
   docs: [
     { label: 'About seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
-    { label: 'About `ref` function', url: 'https://docs.getdbt.com/reference/dbt-jinja-functions/ref' },
   ],
 }
 
