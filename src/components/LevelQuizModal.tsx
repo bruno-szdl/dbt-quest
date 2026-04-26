@@ -9,7 +9,6 @@ export default function LevelQuizModal() {
   const completedLevels = useGameStore((s) => s.completedLevels)
   const dismissLevelQuiz = useGameStore((s) => s.dismissLevelQuiz)
   const loadLevel = useGameStore((s) => s.loadLevel)
-  const resetLevel = useGameStore((s) => s.resetLevel)
   const markQuizCorrect = useGameStore((s) => s.markQuizCorrect)
   const openLevelComplete = useGameStore((s) => s.openLevelComplete)
 
@@ -52,9 +51,7 @@ export default function LevelQuizModal() {
   function handleRetry() {
     setSelected(null)
     setRevealed(false)
-    if (isGate) return // Stay in modal — gate levels have no run state to reset.
-    dismissLevelQuiz()
-    void resetLevel()
+    // Stay in modal and try again — no explanation shown, no level reset.
   }
 
   if (!show || !quiz) return null
