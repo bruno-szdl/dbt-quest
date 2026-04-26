@@ -18,6 +18,14 @@ The schema.yml in this project already has the \`daily\` tag on stg_orders and i
 
 Your task: run \`dbt run --select tag:daily\` and confirm exactly those two models built — no staging customers, no marts.`,
   hint: 'Type `dbt run --select tag:daily`.',
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `ok pretend it's wednesday 6am and the campaign is live. just the daily-tagged stuff refreshed pls. one command 🙏`,
+      },
+    ],
+  },
   initialFiles: selectorsFilesWithTags(),
   seeds: selectorsSeeds,
   requiredSteps: ['run'],
@@ -35,7 +43,12 @@ Your task: run \`dbt run --select tag:daily\` and confirm exactly those two mode
       }
     return { passed: true }
   },
-  badge: { id: 'tag-picker', name: 'Tag Picker', emoji: '🔖' },
+  badge: {
+    id: 'tag-picker',
+    name: 'Tag Picker',
+    emoji: '🔖',
+    caption: 'Campaign refresh, on cue',
+  },
   quiz: {
     question: 'You schedule `dbt run --select tag:hourly` to run every hour. Six months later your team adds three new hourly models. What do you need to change?',
     options: [

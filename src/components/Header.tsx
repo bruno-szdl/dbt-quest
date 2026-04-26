@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '../store/gameStore'
-import { getLevelById, levels, modules } from '../levels'
+import {
+  MASTER_BADGE,
+  QUIZ_BADGE,
+  earnedModuleBadgeIds,
+  getLevelById,
+  masterBadgeEarned,
+  modules,
+  quizBadgeEarned,
+  totalQuizCount,
+} from '../levels'
+import type { ModuleBadge } from '../levels'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 export default function Header() {
@@ -51,8 +61,9 @@ export default function Header() {
 
       <div className="flex items-center gap-2 shrink-0">
         {!isMobile && <BadgeStrip />}
+        <ResetLevelButton compact={isMobile} />
         <ThemeToggleButton />
-        {!isMobile && <HelpButton />}
+        <SettingsMenu />
       </div>
     </header>
   )
@@ -268,12 +279,17 @@ function DbtLogo() {
   )
 }
 
+/** All 14 badges in display order: 12 module → Quiz Master → Möller Champion. */
+function allBadges(): ModuleBadge[] {
+  return [...modules.map((m) => m.badge), QUIZ_BADGE, MASTER_BADGE]
+}
+
 function BadgeStrip() {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const unlockedBadges = useGameStore((s) => s.unlockedBadges)
+  const completedLevels = useGameStore((s) => s.completedLevels)
+  const correctlyAnsweredQuizzes = useGameStore((s) => s.correctlyAnsweredQuizzes)
   const levelJustCompleted = useGameStore((s) => s.levelJustCompleted)
-  const total = levels.length
 
   useEffect(() => {
     if (!open) return
@@ -284,10 +300,16 @@ function BadgeStrip() {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  const earned = levels
-    .filter((l) => l.badge && unlockedBadges.has(l.badge.id))
-    .map((l) => ({ ...(l.badge as NonNullable<typeof l.badge>), levelId: l.id }))
+  const moduleEarned = earnedModuleBadgeIds(completedLevels)
+  const isEarned = (b: ModuleBadge): boolean => {
+    if (b.id === QUIZ_BADGE.id) return quizBadgeEarned(correctlyAnsweredQuizzes)
+    if (b.id === MASTER_BADGE.id) return masterBadgeEarned(completedLevels, correctlyAnsweredQuizzes)
+    return moduleEarned.has(b.id)
+  }
 
+  const all = allBadges()
+  const total = all.length
+  const earned = all.filter(isEarned)
   const count = earned.length
   const recent = earned.slice(-3)
   const overflow = Math.max(0, count - recent.length)
@@ -383,18 +405,44 @@ function BadgeStrip() {
   )
 }
 
-function BadgePopover({ onClose }: { onClose: () => void }) {
-  const unlockedBadges = useGameStore((s) => s.unlockedBadges)
-  const loadLevel = useGameStore((s) => s.loadLevel)
-  const resetAllProgress = useGameStore((s) => s.resetAllProgress)
-  const count = levels.filter((l) => l.badge && unlockedBadges.has(l.badge.id)).length
+function BadgePopover({ onClose: _onClose }: { onClose: () => void }) {
+  const completedLevels = useGameStore((s) => s.completedLevels)
+  const correctlyAnsweredQuizzes = useGameStore((s) => s.correctlyAnsweredQuizzes)
 
-  const handleReset = () => {
-    if (confirm('Reset all progress? You will lose every completed level and badge. This cannot be undone.')) {
-      onClose()
-      void resetAllProgress()
-    }
+  const moduleEarned = earnedModuleBadgeIds(completedLevels)
+  const quizDone = quizBadgeEarned(correctlyAnsweredQuizzes)
+  const masterDone = masterBadgeEarned(completedLevels, correctlyAnsweredQuizzes)
+  const totalQuizzes = totalQuizCount()
+  const total = modules.length + 2
+  const count =
+    moduleEarned.size + (quizDone ? 1 : 0) + (masterDone ? 1 : 0)
+
+  type Row = {
+    badge: ModuleBadge
+    earned: boolean
+    progress: string
   }
+
+  const rows: Row[] = [
+    ...modules.map<Row>((m) => {
+      const done = m.levelIds.filter((id) => completedLevels.has(id)).length
+      return {
+        badge: m.badge,
+        earned: moduleEarned.has(m.badge.id),
+        progress: `Module ${m.id} · ${done}/${m.levelIds.length} levels`,
+      }
+    }),
+    {
+      badge: QUIZ_BADGE,
+      earned: quizDone,
+      progress: `${correctlyAnsweredQuizzes.size}/${totalQuizzes} quizzes correct`,
+    },
+    {
+      badge: MASTER_BADGE,
+      earned: masterDone,
+      progress: `${count - (masterDone ? 1 : 0)}/${total - 1} other badges`,
+    },
+  ]
 
   return (
     <div
@@ -407,7 +455,7 @@ function BadgePopover({ onClose }: { onClose: () => void }) {
         borderRadius: '8px',
         padding: '12px',
         width: '300px',
-        maxHeight: '420px',
+        maxHeight: '480px',
         overflowY: 'auto',
         zIndex: 100,
         boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
@@ -431,104 +479,64 @@ function BadgePopover({ onClose }: { onClose: () => void }) {
             fontFamily: 'JetBrains Mono, monospace',
           }}
         >
-          {count} / {levels.length}
+          {count} / {total}
         </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
-        {levels.map((lvl) => {
-          const badge = lvl.badge
-          const earned = badge ? unlockedBadges.has(badge.id) : false
-          return (
-            <button
-              key={lvl.id}
-              onClick={() => { void loadLevel(lvl.id); onClose() }}
-              title={badge ? `L${lvl.id} — ${badge.name}${earned ? '' : ' (locked)'}` : `L${lvl.id} — ${lvl.title}`}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {rows.map((r) => (
+          <div
+            key={r.badge.id}
+            title={r.earned ? r.badge.name : `${r.badge.name} (locked)`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '6px 8px',
+              background: r.earned ? 'var(--color-success-bg)' : 'transparent',
+              border: `1px solid ${r.earned ? 'var(--color-success-border)' : 'var(--color-border-subtle)'}`,
+              borderRadius: '5px',
+            }}
+          >
+            <span
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '2px',
-                padding: '6px 2px',
-                background: earned ? 'var(--color-success-bg)' : 'transparent',
-                border: `1px solid ${earned ? 'var(--color-success-border)' : 'var(--color-border-subtle)'}`,
-                borderRadius: '5px',
-                cursor: 'pointer',
-                transition: 'background 0.12s, border-color 0.12s',
-              }}
-              onMouseEnter={(e) => {
-                if (!earned) {
-                  e.currentTarget.style.background = 'rgba(128,128,128,0.08)'
-                  e.currentTarget.style.borderColor = 'var(--color-border)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!earned) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.borderColor = 'var(--color-border-subtle)'
-                }
+                fontSize: '20px',
+                lineHeight: 1,
+                width: '22px',
+                textAlign: 'center',
+                filter: r.earned ? 'none' : 'grayscale(1)',
+                opacity: r.earned ? 1 : 0.4,
+                flexShrink: 0,
               }}
             >
+              {r.badge.emoji}
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
               <span
                 style={{
-                  fontSize: '18px',
-                  lineHeight: 1,
-                  filter: earned ? 'none' : 'grayscale(1)',
-                  opacity: earned ? 1 : 0.3,
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: r.earned ? 'var(--color-text)' : 'var(--color-text-muted)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {badge ? badge.emoji : '·'}
+                {r.badge.name}
               </span>
               <span
                 style={{
-                  fontSize: '9px',
                   fontFamily: 'JetBrains Mono, monospace',
-                  color: earned ? 'var(--color-success)' : 'var(--color-muted)',
+                  fontSize: '10px',
+                  color: r.earned ? 'var(--color-success)' : 'var(--color-muted)',
                 }}
               >
-                L{lvl.id}
+                {r.progress}
               </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div
-        style={{
-          marginTop: '12px',
-          paddingTop: '10px',
-          borderTop: '1px solid var(--color-border-subtle)',
-          display: 'flex',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <button
-          onClick={handleReset}
-          style={{
-            background: '#d23f3f',
-            border: '1px solid #b8302f',
-            borderRadius: '5px',
-            padding: '5px 12px',
-            color: '#ffffff',
-            fontSize: '11px',
-            fontFamily: 'IBM Plex Sans, sans-serif',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'background 0.12s, border-color 0.12s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#b8302f'
-            e.currentTarget.style.borderColor = '#9c2625'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#d23f3f'
-            e.currentTarget.style.borderColor = '#b8302f'
-          }}
-          title="Clear completed levels and badges stored in your browser"
-        >
-          Reset all progress
-        </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -539,6 +547,52 @@ function TrophyIcon() {
     <svg width="13" height="13" viewBox="0 0 16 16" fill="var(--color-muted)">
       <path d="M4 1a.5.5 0 0 0-.5.5V3h-1A1.5 1.5 0 0 0 1 4.5v1a2.5 2.5 0 0 0 2.5 2.5H4c.23 1.63 1.43 2.94 3 3.32V13H5a1 1 0 0 0-1 1v.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V14a1 1 0 0 0-1-1H9v-1.68c1.57-.38 2.77-1.69 3-3.32h.5A2.5 2.5 0 0 0 15 5.5v-1A1.5 1.5 0 0 0 13.5 3h-1V1.5a.5.5 0 0 0-.5-.5H4Zm-.5 6A1.5 1.5 0 0 1 2 5.5v-1a.5.5 0 0 1 .5-.5h1v3h-.5Zm10-1.5A1.5 1.5 0 0 1 12 7h-.5V4h1a.5.5 0 0 1 .5.5v1Z" />
     </svg>
+  )
+}
+
+function ResetLevelButton({ compact = false }: { compact?: boolean }) {
+  const resetLevel = useGameStore((s) => s.resetLevel)
+  const running = useGameStore((s) => s.running)
+  const currentLevelId = useGameStore((s) => s.currentLevelId)
+
+  const handleClick = () => {
+    if (running || !currentLevelId) return
+    if (confirm('Reset this level? All your edits will be discarded.')) void resetLevel()
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={running || !currentLevelId}
+      title="Reset this level — discard all edits"
+      className="flex items-center justify-center rounded transition-colors"
+      style={{
+        height: '28px',
+        padding: compact ? '0 8px' : '0 10px',
+        gap: '6px',
+        background: 'transparent',
+        border: '1px solid var(--color-border)',
+        color: 'var(--color-text-muted)',
+        fontSize: '12px',
+        fontFamily: 'IBM Plex Sans, sans-serif',
+        cursor: running || !currentLevelId ? 'not-allowed' : 'pointer',
+        opacity: running || !currentLevelId ? 0.5 : 1,
+      }}
+      onMouseEnter={(e) => {
+        if (running || !currentLevelId) return
+        e.currentTarget.style.borderColor = 'var(--color-muted)'
+        e.currentTarget.style.color = 'var(--color-text)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-border)'
+        e.currentTarget.style.color = 'var(--color-text-muted)'
+      }}
+    >
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 3a5 5 0 1 1-4.546 2.916.75.75 0 1 0-1.359-.632A6.5 6.5 0 1 0 8 1.5V.75a.25.25 0 0 0-.4-.2L5.9 1.825a.25.25 0 0 0 0 .4l1.7 1.275A.25.25 0 0 0 8 3.3V3Z" />
+      </svg>
+      {!compact && <span>Reset level</span>}
+    </button>
   )
 }
 
@@ -590,33 +644,144 @@ function MoonIcon() {
   )
 }
 
-function HelpButton() {
+function SettingsMenu() {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const replayWelcome = useGameStore((s) => s.replayWelcome)
+  const resetAllProgress = useGameStore((s) => s.resetAllProgress)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const handleReplay = () => {
+    setOpen(false)
+    replayWelcome()
+  }
+
+  const handleResetAll = () => {
+    if (confirm('Reset all progress? You will lose every completed level and badge. This cannot be undone.')) {
+      setOpen(false)
+      void resetAllProgress()
+    }
+  }
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-center rounded transition-colors"
+        style={{
+          width: '28px',
+          height: '28px',
+          background: 'transparent',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer',
+        }}
+        aria-label="Settings"
+        title="Settings"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)'
+          e.currentTarget.style.color = 'var(--color-text)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)'
+          e.currentTarget.style.color = 'var(--color-text-muted)'
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M9.405 1.05a1.5 1.5 0 0 0-2.81 0l-.21.51a1.5 1.5 0 0 1-2.103.871l-.5-.247a1.5 1.5 0 0 0-1.987 1.987l.247.5a1.5 1.5 0 0 1-.871 2.103l-.51.21a1.5 1.5 0 0 0 0 2.81l.51.21a1.5 1.5 0 0 1 .871 2.103l-.247.5a1.5 1.5 0 0 0 1.987 1.987l.5-.247a1.5 1.5 0 0 1 2.103.871l.21.51a1.5 1.5 0 0 0 2.81 0l.21-.51a1.5 1.5 0 0 1 2.103-.871l.5.247a1.5 1.5 0 0 0 1.987-1.987l-.247-.5a1.5 1.5 0 0 1 .871-2.103l.51-.21a1.5 1.5 0 0 0 0-2.81l-.51-.21a1.5 1.5 0 0 1-.871-2.103l.247-.5a1.5 1.5 0 0 0-1.987-1.987l-.5.247a1.5 1.5 0 0 1-2.103-.871l-.21-.51ZM8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '8px',
+            padding: '4px',
+            minWidth: '200px',
+            zIndex: 100,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          }}
+        >
+          <SettingsItem
+            label="Replay intro"
+            description="Re-open the welcome modal"
+            onClick={handleReplay}
+          />
+          <div style={{ height: '1px', background: 'var(--color-border-subtle)', margin: '4px 0' }} />
+          <SettingsItem
+            label="Reset all progress"
+            description="Discard every level and badge"
+            onClick={handleResetAll}
+            danger
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SettingsItem({
+  label,
+  description,
+  onClick,
+  danger = false,
+}: {
+  label: string
+  description: string
+  onClick: () => void
+  danger?: boolean
+}) {
   return (
     <button
-      className="flex items-center justify-center rounded transition-colors"
+      onClick={onClick}
       style={{
-        width: '28px',
-        height: '28px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: '2px',
+        width: '100%',
+        padding: '8px 10px',
         background: 'transparent',
-        border: '1px solid var(--color-border)',
-        color: 'var(--color-text-muted)',
+        border: 'none',
+        borderRadius: '5px',
         cursor: 'pointer',
+        textAlign: 'left',
       }}
-      aria-label="Help"
-      onMouseEnter={(e) => {
-        const t = e.currentTarget
-        t.style.borderColor = 'var(--color-muted)'
-        t.style.color = 'var(--color-text)'
-      }}
-      onMouseLeave={(e) => {
-        const t = e.currentTarget
-        t.style.borderColor = 'var(--color-border)'
-        t.style.color = 'var(--color-text-muted)'
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = danger ? 'rgba(210, 63, 63, 0.12)' : 'rgba(128,128,128,0.08)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm6.5-2.5a1.5 1.5 0 1 1 3 0c0 .607-.379 1.065-.892 1.456-.485.37-.858.75-.858 1.294V9a.75.75 0 0 1-1.5 0v-.75c0-1.002.666-1.607 1.177-1.987.47-.36.573-.617.573-.763a1.5 1.5 0 0 0-1.5-1.5ZM8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-      </svg>
+      <span
+        style={{
+          color: danger ? '#e25b5b' : 'var(--color-text)',
+          fontFamily: 'IBM Plex Sans, sans-serif',
+          fontSize: '12.5px',
+          fontWeight: 600,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          color: 'var(--color-text-muted)',
+          fontFamily: 'IBM Plex Sans, sans-serif',
+          fontSize: '10.5px',
+        }}
+      >
+        {description}
+      </span>
     </button>
   )
 }

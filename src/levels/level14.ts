@@ -24,6 +24,14 @@ The stg_customers model has tests declared in schema.yml (not_null + unique on c
 
 Run \`dbt run\` and \`dbt test\` first — confirm the failures for yourself. Then fix stg_customers.sql so that all tests pass. Two small changes are enough: filter out rows with NULL emails, and deduplicate.`,
   hint: 'Add `distinct` after SELECT to collapse the duplicate row, and add `WHERE email IS NOT NULL` to drop the bad row. Then rerun dbt run and dbt test.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `ok now fix it. two changes — DISTINCT for the dup eve row, WHERE email is not null for carol. rerun build. we'll patch the source file properly later, just unblock the dashboard for now.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `-- Make every test in schema.yml pass.
 -- Tip: DISTINCT and a WHERE clause are all you need.

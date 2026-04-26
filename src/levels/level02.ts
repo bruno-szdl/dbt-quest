@@ -19,6 +19,14 @@ The \`dbt show\` command previews rows from a model. Run it like this:
 
 dbt-quest opens the Results tab automatically so you can browse the rows as a table. Notice that stg_customers also shows up in the Database Explorer on the left — it's a real view you can query anytime.`,
   hint: 'Run `dbt show --select stg_customers` in the terminal. The Results tab will pop open.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `nice, it built. before we touch anything else — try \`dbt show --select stg_customers\`. i want to confirm those 5 rows are actually what's in there. marcus's last commit looked weird.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id,

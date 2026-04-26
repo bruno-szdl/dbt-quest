@@ -1,4 +1,5 @@
 import { useGameStore } from '../store/gameStore'
+import StoryThread from './StoryThread'
 
 export default function CourseCompleteModal() {
   const show = useGameStore((s) => s.showCourseComplete)
@@ -120,6 +121,34 @@ export default function CourseCompleteModal() {
             lineHeight: 1.65,
           }}
         >
+          {/* 3-months-later epilogue */}
+          <div
+            style={{
+              fontSize: '10px',
+              fontFamily: 'JetBrains Mono, monospace',
+              color: 'var(--color-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              marginBottom: '10px',
+            }}
+          >
+            3 months later
+          </div>
+          <div style={{ marginBottom: '20px' }}>
+            <StoryThread
+              messages={[
+                {
+                  from: 'sofie',
+                  body: `Quick one. Series B closed last week. Board specifically called out the data clarity. Whatever you did with that pipeline — keep doing it. ☕`,
+                },
+                {
+                  from: 'priya',
+                  body: `nice work. analysts #3 and #4 start monday. you're showing them the project.`,
+                },
+              ]}
+            />
+          </div>
+
           <p style={{ margin: '0 0 14px' }}>
             <strong style={{ color: 'var(--color-text)' }}>This is just the beginning.</strong>{' '}
             dbt-quest simulates the basics inside your browser. The real ecosystem is

@@ -29,6 +29,14 @@ Predictions:
 
 Try both in the terminal and watch the model counts change. When the union/intersection distinction clicks, mark the lesson complete.`,
   hint: 'Run both `dbt run --select tag:daily tag:finance` and `dbt run --select tag:daily,tag:finance` and compare the model counts. Reset between attempts if you want a clean count.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `one selector subtlety that traps everyone — space = OR, comma = AND. the schema is set up so you can see the difference. play with both, mark complete.`,
+      },
+    ],
+  },
   initialFiles: selectorsFiles({
     'models/schema.yml': `version: 2
 

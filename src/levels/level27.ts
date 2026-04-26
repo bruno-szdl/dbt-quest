@@ -20,6 +20,14 @@ That builds dim_customers along with every model dim_customers depends on, recur
 
 Your task: run \`dbt run --select +dim_customers\` and confirm both stg_customers and dim_customers built — but nothing else.`,
   hint: 'Type `dbt run --select +dim_customers`. The leading + means "include all ancestors".',
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `dim_customers feels stale on my dashboard. can you rebuild it AND its upstreams? not the whole project pls, just that branch 🙏`,
+      },
+    ],
+  },
   initialFiles: selectorsFiles(),
   seeds: selectorsSeeds,
   requiredSteps: ['run'],

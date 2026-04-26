@@ -23,6 +23,14 @@ You declare tags either inline in the SQL config, or in YAML next to the model:
 
 Your task: open \`models/schema.yml\` and add the tag \`daily\` to BOTH stg_orders and int_customer_orders. Selecting them in the next lesson will only work cleanly if both ends of the chain are tagged — int_customer_orders depends on stg_orders, so tagging just one would leave a broken ref.`,
   hint: "Under each model in models/schema.yml, replace the TODO with `config:\\n      tags: ['daily']`.",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `marketing's launching a campaign wednesday. yuki only needs orders-side stuff refreshed at 6am that day. tag stg_orders + int_customer_orders as \`daily\` so we can target them.`,
+      },
+    ],
+  },
   initialFiles: selectorsFiles({
     'models/schema.yml': `version: 2
 

@@ -18,6 +18,14 @@ For example, \`id\` is ambiguous — is it a customer id or a user id? Renaming 
 
 Your task: in stg_customers, rename \`id\` to \`customer_id\` using a SQL alias, then run dbt run.`,
   hint: 'Use a SQL alias: `id as customer_id`. Keep it on the same line as the column. Then run `dbt run`.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `small thing — marcus called the column \`id\` everywhere. rename it to \`customer_id\` so when \`order_id\` lands next week we don't collide.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id,

@@ -23,6 +23,14 @@ Step-by-step:
 
 The lesson is complete once the second snapshot run has captured at least two historical versions.`,
   hint: 'Run dbt seed + dbt snapshot. Edit seeds/raw_customers.csv (change Alice + Carol, bump updated_at). Run dbt seed + dbt snapshot again.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `i'll touch the seed file to simulate a real change — alice updates her email, carol churns. snapshot once, edit the csv, snapshot again. the old version stays alongside the new one — that's the whole point.`,
+      },
+    ],
+  },
   initialFiles: {
     'seeds/raw_customers.csv': RAW_CUSTOMERS_V1,
     'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
@@ -63,7 +71,12 @@ from raw_customers
       return { passed: false, reason: 'The second run did not close any rows. Make sure you edited the CSV (change a value AND bump updated_at) before rerunning seed + snapshot.' }
     return { passed: true }
   },
-  badge: { id: 'historian', name: 'Historian', emoji: '📜' },
+  badge: {
+    id: 'historian',
+    name: 'Historian',
+    emoji: '📜',
+    caption: 'Last year is now safe to ask about',
+  },
   quiz: {
     question: 'A snapshot row has `dbt_valid_to = NULL`. What does that tell you?',
     options: [

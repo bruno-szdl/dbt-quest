@@ -29,6 +29,14 @@ The shape is:
 
 Open \`models/schema.yml\` and add a \`description:\` for stg_customers and for at least two of its columns. The model still needs to build and its tests still need to pass — descriptions live next to the same tests you wrote earlier.`,
   hint: 'Add `description: <one sentence>` indented under stg_customers, and another under at least two columns. Keep the existing tests in place.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `we're hiring our first analyst — starts monday. i want them to read schema.yml without DMing me every five minutes. add a description on stg_customers and a couple of its columns. keep the tests as they are.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

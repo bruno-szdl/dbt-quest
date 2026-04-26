@@ -21,6 +21,14 @@ Tests are declared in YAML files that live next to your models. schema.yml for s
 
 Your task: run \`dbt run\` to build the model, then run \`dbt test\` to execute those checks. Watch the terminal — each test either passes or fails.`,
   hint: 'Run `dbt run` first, then `dbt test`.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `schema.yml already declares not_null + unique on customer_id and not_null on email. build the model, then \`dbt test\`. watch what fires red — that's how we'll catch the carol thing next time.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

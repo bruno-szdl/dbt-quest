@@ -33,6 +33,14 @@ Rule of thumb: if the data belongs in the warehouse regardless of dbt, it's a so
 
 Both files have been provided so you can open them side by side. When the distinction feels clear, mark the lesson complete.`,
   hint: 'Open sources.yml and seeds/country_codes.csv and note how each is used.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `concept check before we move on — source vs seed. you've used both this module. read, mark complete.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/sources.yml': `version: 2
 

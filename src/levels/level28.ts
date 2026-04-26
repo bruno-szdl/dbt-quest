@@ -20,6 +20,14 @@ In this project stg_orders has three descendants: int_customer_orders, fct_order
 
 Your task: run \`dbt run --select stg_orders+\` and confirm exactly four models built — stg_orders plus its three descendants.`,
   hint: 'Type `dbt run --select stg_orders+`. The trailing + means "include all descendants".',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `i fixed a small bug in stg_orders. need every downstream model to repick the change up so the dashboards aren't stale. \`stg_orders+\`.`,
+      },
+    ],
+  },
   initialFiles: selectorsFiles(),
   seeds: selectorsSeeds,
   requiredSteps: ['run'],

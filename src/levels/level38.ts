@@ -24,6 +24,14 @@ Rule of thumb:
 
 Both example models are included in this lesson so you can inspect the two config blocks side by side. When you feel confident picking one over the other, mark complete.`,
   hint: 'Open fct_events.sql and fct_customers.sql and compare their config() blocks.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `read both configs side by side. mental model: "do these rows ever change?". if no → append. if yes → merge. mark complete.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/fct_events.sql': `-- Append example: immutable events.
 {{ config(

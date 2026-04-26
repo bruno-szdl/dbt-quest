@@ -33,6 +33,14 @@ Why use it?
 
 Your task: change int_customer_orders to materialized='ephemeral', then run dbt run. Look at the Database Explorer afterwards — int_customer_orders should NOT appear there anymore, but dim_customers_lite should still build successfully.`,
   hint: "Add {{ config(materialized='ephemeral') }} as the first line of int_customer_orders.sql, then run dbt run.",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `int_customer_orders is only used by one mart. no real reason for it to live in the warehouse. make it ephemeral — less clutter, same result.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

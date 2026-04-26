@@ -24,6 +24,14 @@ A seed file is just a CSV under \`seeds/\`. To load it, you run:
 
 A seed called \`country_codes\` is already in the project at \`seeds/country_codes.csv\`. Your task: run \`dbt seed\` and watch it get loaded into the warehouse. It will appear in the Database Explorer on the left once the command finishes.`,
   hint: 'Run `dbt seed` in the terminal.',
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `i need a region rollup for the Q2 deck — americas / europe / asia. country_codes.csv is already in the repo. just \`dbt seed\` it pls 🙏`,
+      },
+    ],
+  },
   initialFiles: {
     'seeds/country_codes.csv': COUNTRY_CODES,
   },

@@ -7,6 +7,8 @@ export default function LevelQuizModal() {
   const currentLevelId = useGameStore((s) => s.currentLevelId)
   const dismissLevelQuiz = useGameStore((s) => s.dismissLevelQuiz)
   const loadLevel = useGameStore((s) => s.loadLevel)
+  const resetLevel = useGameStore((s) => s.resetLevel)
+  const markQuizCorrect = useGameStore((s) => s.markQuizCorrect)
 
   const [selected, setSelected] = useState<number | null>(null)
   const [revealed, setRevealed] = useState(false)
@@ -21,8 +23,9 @@ export default function LevelQuizModal() {
   }
 
   function handleCheck() {
-    if (selected === null) return
+    if (selected === null || !quiz) return
     setRevealed(true)
+    if (selected === quiz.correctIndex) markQuizCorrect(currentLevelId)
   }
 
   function handleContinue() {
@@ -30,6 +33,13 @@ export default function LevelQuizModal() {
     setRevealed(false)
     dismissLevelQuiz()
     if (!isLastLevel) loadLevel(currentLevelId + 1)
+  }
+
+  function handleRetry() {
+    setSelected(null)
+    setRevealed(false)
+    dismissLevelQuiz()
+    void resetLevel()
   }
 
   if (!show || !quiz) return null
@@ -253,32 +263,61 @@ export default function LevelQuizModal() {
               Check answer
             </button>
           ) : (
-            <button
-              onClick={handleContinue}
-              style={{
-                background: 'var(--color-success)',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#0d1117',
-                fontFamily: 'IBM Plex Sans, sans-serif',
-                fontSize: '13px',
-                fontWeight: 600,
-                padding: '8px 20px',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-            >
-              {isLastLevel ? 'Finish' : 'Continue to next level'}
-              {!isLastLevel && (
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
-                </svg>
+            <>
+              {!isCorrect && (
+                <button
+                  onClick={handleRetry}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: '6px',
+                    color: 'var(--color-text-muted)',
+                    fontFamily: 'IBM Plex Sans, sans-serif',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-muted)'
+                    e.currentTarget.style.color = 'var(--color-text)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--color-border)'
+                    e.currentTarget.style.color = 'var(--color-text-muted)'
+                  }}
+                  title="Reset the level so you can take the quiz again"
+                >
+                  Try again
+                </button>
               )}
-            </button>
+              <button
+                onClick={handleContinue}
+                style={{
+                  background: isCorrect ? 'var(--color-success)' : 'var(--color-accent-orange)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#0d1117',
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  padding: '8px 20px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+              >
+                {isLastLevel ? 'Finish' : isCorrect ? 'Continue to next level' : 'Continue anyway'}
+                {!isLastLevel && (
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
+                  </svg>
+                )}
+              </button>
+            </>
           )}
         </div>
       </div>

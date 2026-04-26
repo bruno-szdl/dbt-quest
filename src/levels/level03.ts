@@ -18,6 +18,14 @@ The starter stg_customers model is missing the email column. The analytics team 
 
 Your task: add email to the SELECT list and run dbt run again.`,
   hint: 'Add `email` to the select list, for example between `name` and `country`. Then run `dbt run`.',
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `heyyy welcome to möller 👋 can stg_customers include email? doing a re-engagement campaign and i'd rather not hand-join the raw table again 🙏`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `-- The analytics team wants email in this model.
 -- Add the email column to the SELECT list, then run dbt run.

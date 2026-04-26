@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { useGameStore } from '../store/gameStore'
-import { getLevelById, getLastLevelId } from '../levels'
+import { getLevelById, getLastLevelId, moduleEndingAt } from '../levels'
+import StoryThread from './StoryThread'
 
 export default function LevelPanel() {
   const currentLevelId = useGameStore((s) => s.currentLevelId)
@@ -8,6 +10,11 @@ export default function LevelPanel() {
   const revealHint = useGameStore((s) => s.revealHint)
   const dismissLevelComplete = useGameStore((s) => s.dismissLevelComplete)
   const openLevelComplete = useGameStore((s) => s.openLevelComplete)
+  const [storyExpanded, setStoryExpanded] = useState(false)
+
+  useEffect(() => {
+    setStoryExpanded(false)
+  }, [currentLevelId])
 
   const level = getLevelById(currentLevelId)
   if (!level) return null
@@ -28,50 +35,64 @@ export default function LevelPanel() {
             position: 'relative',
           }}
         >
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'var(--color-success-bg)',
-              border: '1px solid var(--color-success-border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '22px',
-              lineHeight: 1,
-              flexShrink: 0,
-            }}
-          >
-            {level.badge?.emoji ?? '🎉'}
-          </div>
+          {(() => {
+            const closingModule = moduleEndingAt(currentLevelId)
+            const emoji = closingModule
+              ? closingModule.badge.emoji
+              : level.badge?.emoji ?? '🎉'
+            const headline = closingModule ? 'Module complete!' : 'Level complete!'
+            const subline = closingModule
+              ? `${closingModule.badge.name} badge earned`
+              : level.badge?.name ?? 'Nicely done'
+            return (
+              <>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: 'var(--color-success-bg)',
+                    border: '1px solid var(--color-success-border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '22px',
+                    lineHeight: 1,
+                    flexShrink: 0,
+                  }}
+                >
+                  {emoji}
+                </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                color: 'var(--color-success)',
-                fontSize: '13px',
-                fontFamily: 'IBM Plex Sans, sans-serif',
-                fontWeight: 700,
-                lineHeight: 1.2,
-              }}
-            >
-              Level complete!
-            </div>
-            <div
-              style={{
-                color: 'var(--color-text-secondary)',
-                fontSize: '11px',
-                fontFamily: 'IBM Plex Sans, sans-serif',
-                lineHeight: 1.3,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {level.badge ? `${level.badge.name} badge unlocked` : 'Nicely done'}
-            </div>
-          </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      color: 'var(--color-success)',
+                      fontSize: '13px',
+                      fontFamily: 'IBM Plex Sans, sans-serif',
+                      fontWeight: 700,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {headline}
+                  </div>
+                  <div
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      fontSize: '11px',
+                      fontFamily: 'IBM Plex Sans, sans-serif',
+                      lineHeight: 1.3,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {subline}
+                  </div>
+                </div>
+              </>
+            )
+          })()}
 
           {isLastLevel ? (
             <span style={{ color: 'var(--color-success)', fontSize: '11px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600, flexShrink: 0 }}>
@@ -193,6 +214,58 @@ export default function LevelPanel() {
             {level.goal.description}
           </p>
         </div>
+
+        {/* Story (Slack-style intro thread, collapsible so it doesn't crowd the instructions) */}
+        {level.story && level.story.messages.length > 0 && (
+          <div style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <button
+              type="button"
+              onClick={() => setStoryExpanded((v) => !v)}
+              aria-expanded={storyExpanded}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                padding: '12px 16px',
+                cursor: 'pointer',
+                color: 'var(--color-text-muted)',
+                fontSize: '9px',
+                fontFamily: 'JetBrains Mono, monospace',
+                textTransform: 'uppercase' as const,
+                letterSpacing: '0.1em',
+                textAlign: 'left',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-text)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)' }}
+            >
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                style={{
+                  transform: storyExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s ease',
+                  flexShrink: 0,
+                }}
+              >
+                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
+              </svg>
+              <span>Slack</span>
+              <span style={{ marginLeft: 'auto', textTransform: 'none', letterSpacing: 0, fontSize: '10px' }}>
+                {level.story.messages.length} {level.story.messages.length === 1 ? 'message' : 'messages'}
+              </span>
+            </button>
+            {storyExpanded && (
+              <div style={{ padding: '0 16px 14px' }}>
+                <StoryThread messages={level.story.messages} compact />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Instructions */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border-subtle)' }}>

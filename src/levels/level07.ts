@@ -20,6 +20,14 @@ As projects grow, the lineage becomes the primary tool for answering questions l
 
 When you're done inspecting the Lineage tab, mark the lesson complete below.`,
   hint: 'Click "Lineage" in the bottom panel tabs. You should see the arrow from stg_customers to int_customer_summary.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `open the Lineage tab. this is the picture i wish existed before i joined — every box, every arrow. look at it for a minute, then mark complete.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

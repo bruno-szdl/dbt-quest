@@ -33,6 +33,18 @@ Key pieces:
 
 The starter snap_customers.sql is missing \`unique_key\` and \`updated_at\`. Fill them in, then run \`dbt snapshot\`. dbt-quest will create the snapshot table with SCD-2 columns (dbt_valid_from, dbt_valid_to, dbt_updated_at). Once it runs, use \`dbt show --select snap_customers\` to see the captured rows.`,
   hint: "Add `unique_key='customer_id'` and `updated_at='updated_at'` to the config block, then run `dbt snapshot`.",
+  story: {
+    messages: [
+      {
+        from: 'sofie',
+        body: `For the board deck I need active subscribers as of June 1 last year. raw_customers only shows the current state. Can we start capturing history? Anything we don't snapshot now, we lose.`,
+      },
+      {
+        from: 'priya',
+        body: `snap_customers is started in /snapshots — fill in \`unique_key\` + \`updated_at\`, then \`dbt snapshot\`.`,
+      },
+    ],
+  },
   initialFiles: {
     'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
 {{ config(

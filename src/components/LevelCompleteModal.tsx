@@ -1,15 +1,23 @@
 import { useGameStore } from '../store/gameStore'
-import { getLastLevelId, getLevelById } from '../levels'
+import { getLastLevelId, getLevelById, modules, moduleEndingAt } from '../levels'
 
 export default function LevelCompleteModal() {
   const show = useGameStore((s) => s.showLevelComplete)
   const currentLevelId = useGameStore((s) => s.currentLevelId)
+  const completedLevels = useGameStore((s) => s.completedLevels)
   const dismissLevelCompleteModal = useGameStore((s) => s.dismissLevelCompleteModal)
   const loadLevel = useGameStore((s) => s.loadLevel)
 
   const level = getLevelById(currentLevelId)
   const isLastLevel = currentLevelId === getLastLevelId()
   const hasQuiz = level?.quiz != null
+
+  // Module-completion celebration: this level is the last in its module → unlock the module badge.
+  const closingModule = moduleEndingAt(currentLevelId)
+  const ownerModule = modules.find((m) => m.levelIds.includes(currentLevelId))
+  const remainingInModule = ownerModule
+    ? ownerModule.levelIds.filter((id) => !completedLevels.has(id)).length
+    : 0
 
   function handleContinue() {
     if (hasQuiz) {
@@ -76,22 +84,20 @@ export default function LevelCompleteModal() {
           textAlign: 'center',
         }}
       >
-        {/* Badge */}
-        {level.badge && (
-          <div
-            style={{
-              fontSize: '56px',
-              lineHeight: 1,
-              marginBottom: '16px',
-              animation: 'badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both',
-              animationDelay: '0.1s',
-            }}
-          >
-            {level.badge.emoji}
-          </div>
-        )}
+        {/* Emoji — module badge if closing a module, else the per-level stamp */}
+        <div
+          style={{
+            fontSize: closingModule ? '64px' : '48px',
+            lineHeight: 1,
+            marginBottom: '16px',
+            animation: 'badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+            animationDelay: '0.1s',
+          }}
+        >
+          {closingModule ? closingModule.badge.emoji : level.badge?.emoji ?? '✨'}
+        </div>
 
-        {/* Level tag */}
+        {/* Level / Module tag */}
         <span
           style={{
             background: 'var(--color-success-bg)',
@@ -107,7 +113,9 @@ export default function LevelCompleteModal() {
             display: 'inline-block',
           }}
         >
-          Level {currentLevelId} complete
+          {closingModule
+            ? `Module ${closingModule.id} complete`
+            : `Level ${currentLevelId} complete`}
         </span>
 
         {/* Title */}
@@ -121,8 +129,25 @@ export default function LevelCompleteModal() {
             letterSpacing: '-0.01em',
           }}
         >
-          {level.badge ? `${level.badge.name} unlocked` : level.title}
+          {closingModule
+            ? `${closingModule.badge.name} badge earned`
+            : level.badge?.name ?? level.title}
         </h2>
+
+        {level.badge?.caption && (
+          <p
+            style={{
+              margin: '0 0 14px',
+              color: 'var(--color-text-secondary)',
+              fontFamily: 'IBM Plex Sans, sans-serif',
+              fontSize: '12.5px',
+              fontStyle: 'italic',
+              lineHeight: 1.5,
+            }}
+          >
+            {level.badge.caption}
+          </p>
+        )}
 
         {/* Subtitle */}
         <p
@@ -134,7 +159,15 @@ export default function LevelCompleteModal() {
             lineHeight: 1.6,
           }}
         >
-          {hasQuiz ? 'Answer a quick question before moving on.' : isLastLevel ? 'You\'ve completed all levels!' : 'Ready for the next challenge?'}
+          {hasQuiz
+            ? 'Answer a quick question before moving on.'
+            : isLastLevel
+              ? "You've completed all levels!"
+              : closingModule
+                ? `Module ${closingModule.id} of ${modules.length}. Ready for the next?`
+                : ownerModule && remainingInModule > 0
+                  ? `${remainingInModule} more level${remainingInModule === 1 ? '' : 's'} to earn the ${ownerModule.badge.name} badge.`
+                  : 'Ready for the next challenge?'}
         </p>
 
         {/* Button */}

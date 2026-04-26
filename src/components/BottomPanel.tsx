@@ -163,7 +163,6 @@ function ActionButtons({ onBeforeRun, onBeforeShow }: ActionButtonsProps) {
   const ranModels = useGameStore((s) => s.ranModels)
   const runCommand = useGameStore((s) => s.runCommand)
   const showModel = useGameStore((s) => s.showModel)
-  const resetLevel = useGameStore((s) => s.resetLevel)
 
   const model = activeModelName(activeFile)
   const canShow = !!model && ranModels.has(model)
@@ -195,14 +194,6 @@ function ActionButtons({ onBeforeRun, onBeforeShow }: ActionButtonsProps) {
         }
         onClick={() => { if (model) { onBeforeShow(); showModel(model) } }}
         icon={<TableIcon />}
-      />
-      <ActionButton
-        label="Reset"
-        disabled={running}
-        onClick={() => {
-          if (confirm('Reset this level? All your edits will be discarded.')) resetLevel()
-        }}
-        icon={<ResetIcon />}
       />
     </div>
   )
@@ -306,15 +297,6 @@ function TableIcon() {
       <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
       <line x1="1.5" y1="6" x2="14.5" y2="6" />
       <line x1="5" y1="2.5" x2="5" y2="13.5" />
-    </svg>
-  )
-}
-
-function ResetIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" />
-      <path d="M2.5 3v3h3" />
     </svg>
   )
 }

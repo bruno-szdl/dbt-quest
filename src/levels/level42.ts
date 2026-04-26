@@ -35,6 +35,20 @@ Everything you've learned in the course is in scope: sources, refs, tests, mater
   • One intermediate model has a typo in ref().
   • One intermediate model has a typo in a column name (read the DuckDB error closely).
   • dim_customers is configured wrong for what a mart should be.`,
+  story: {
+    messages: [
+      {
+        from: 'sofie',
+        time: '22:41',
+        body: `Board's at 9am tomorrow. Marcus's old dim_customers won't build. I tried to trace it and gave up. Whatever it takes — please make it green by morning. I'm in the office if you need me.`,
+      },
+      {
+        from: 'priya',
+        time: '22:53',
+        body: `five bugs by my count. dbt's errors are usually right — read top to bottom, fix one, rerun. you've seen all of these before. you've got this.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/sources.yml': `version: 2
 
@@ -143,7 +157,12 @@ left join {{ ref('int_customer_orders') }} as o
       }
     return { passed: true }
   },
-  badge: { id: 'dbt-graduate', name: 'dbt Graduate', emoji: '🎓' },
+  badge: {
+    id: 'dbt-graduate',
+    name: 'dbt Graduate',
+    emoji: '🎓',
+    caption: 'Board deck shipped at 6am',
+  },
   quiz: {
     question: 'When `dbt build` finishes green, does that mean your project is correct?',
     options: [

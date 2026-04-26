@@ -39,7 +39,8 @@ interface StoreState {
 
   currentLevelId: number
   completedLevels: Set<number>
-  unlockedBadges: Set<string>
+  /** Level ids whose quiz the learner answered correctly. Cleared on resetLevel. */
+  correctlyAnsweredQuizzes: Set<number>
   dismissedIntros: Set<number>
   hintRevealed: boolean
   levelJustCompleted: boolean
@@ -48,6 +49,7 @@ interface StoreState {
   showLevelQuiz: boolean
   showCourseComplete: boolean
   courseCompleteSeen: boolean
+  showWelcome: boolean
 
   bottomTab: BottomTab
   bottomCollapsed: boolean
@@ -64,6 +66,7 @@ interface StoreState {
   checkLevel: () => void
   revealHint: () => void
   markLessonComplete: () => void
+  markQuizCorrect: (levelId: number) => void
   dismissLevelComplete: () => void
   openLevelComplete: () => void
   dismissLevelCompleteModal: () => void
@@ -71,6 +74,8 @@ interface StoreState {
   dismissLevelQuiz: () => void
   openLevelIntro: () => void
   dismissCourseComplete: () => void
+  dismissWelcome: () => void
+  replayWelcome: () => void
 
   setBottomTab: (tab: BottomTab) => void
   setBottomCollapsed: (collapsed: boolean) => void
@@ -112,7 +117,7 @@ export const useGameStore = create<StoreState>()(
 
   currentLevelId: 0,
   completedLevels: new Set<number>(),
-  unlockedBadges: new Set<string>(),
+  correctlyAnsweredQuizzes: new Set<number>(),
   dismissedIntros: new Set<number>(),
   hintRevealed: false,
   levelJustCompleted: false,
@@ -121,6 +126,8 @@ export const useGameStore = create<StoreState>()(
   showLevelQuiz: false,
   showCourseComplete: false,
   courseCompleteSeen: false,
+  // Open the welcome modal on first load; dismissWelcome persists the flag in localStorage.
+  showWelcome: !localStorage.getItem('dbt-quest-welcome-seen-narrative'),
 
   bottomTab: 'commands',
   bottomCollapsed: false,
@@ -294,7 +301,15 @@ export const useGameStore = create<StoreState>()(
 
   resetLevel: async () => {
     const id = get().currentLevelId
-    if (id) await get().loadLevel(id)
+    if (!id) return
+    // Clear this level's quiz answer so the learner can retake it.
+    set((s) => {
+      if (!s.correctlyAnsweredQuizzes.has(id)) return {}
+      const next = new Set(s.correctlyAnsweredQuizzes)
+      next.delete(id)
+      return { correctlyAnsweredQuizzes: next }
+    })
+    await get().loadLevel(id)
   },
 
   loadLevel: async (id: number) => {
@@ -413,9 +428,6 @@ export const useGameStore = create<StoreState>()(
     if (result.passed) {
       set((current) => ({
         completedLevels: new Set([...current.completedLevels, current.currentLevelId]),
-        unlockedBadges: level.badge
-          ? new Set([...current.unlockedBadges, level.badge!.id])
-          : current.unlockedBadges,
         levelJustCompleted: true,
         terminalHistory: [
           ...current.terminalHistory,
@@ -440,6 +452,12 @@ export const useGameStore = create<StoreState>()(
       manuallyMarkedComplete: new Set([...s.manuallyMarkedComplete, s.currentLevelId]),
     })
     get().checkLevel()
+  },
+
+  markQuizCorrect: (levelId) => {
+    set((s) => ({
+      correctlyAnsweredQuizzes: new Set([...s.correctlyAnsweredQuizzes, levelId]),
+    }))
   },
 
   dismissLevelComplete: () => set({ levelJustCompleted: false }),
@@ -470,6 +488,17 @@ export const useGameStore = create<StoreState>()(
   dismissCourseComplete: () =>
     set({ showCourseComplete: false, courseCompleteSeen: true }),
 
+  dismissWelcome: () => {
+    try {
+      localStorage.setItem('dbt-quest-welcome-seen-narrative', '1')
+    } catch {
+      /* ignore — quota / privacy mode */
+    }
+    set({ showWelcome: false })
+  },
+
+  replayWelcome: () => set({ showWelcome: true }),
+
   dismissLevelIntro: () =>
     set((s) => ({
       showLevelIntro: false,
@@ -482,15 +511,20 @@ export const useGameStore = create<StoreState>()(
   resetAllProgress: async () => {
     set({
       completedLevels: new Set<number>(),
-      unlockedBadges: new Set<string>(),
+      correctlyAnsweredQuizzes: new Set<number>(),
       manuallyMarkedComplete: new Set<number>(),
       dismissedIntros: new Set<number>(),
       currentLevelId: 0,
       courseCompleteSeen: false,
       showCourseComplete: false,
+      // Re-open the welcome modal so the reset feels like a fresh start.
+      // loadLevel(1) below will set showLevelIntro to true; the welcome modal
+      // sits on top (higher z-index) and the user gets welcome → L1 intro on dismiss.
+      showWelcome: true,
     })
     try {
       localStorage.removeItem(PERSIST_KEY)
+      localStorage.removeItem('dbt-quest-welcome-seen-narrative')
     } catch {
       /* ignore — quota / privacy mode */
     }
@@ -503,7 +537,7 @@ export const useGameStore = create<StoreState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         completedLevels: [...s.completedLevels],
-        unlockedBadges: [...s.unlockedBadges],
+        correctlyAnsweredQuizzes: [...s.correctlyAnsweredQuizzes],
         manuallyMarkedComplete: [...s.manuallyMarkedComplete],
         dismissedIntros: [...s.dismissedIntros],
         currentLevelId: s.currentLevelId,
@@ -512,7 +546,7 @@ export const useGameStore = create<StoreState>()(
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as {
           completedLevels?: number[]
-          unlockedBadges?: string[]
+          correctlyAnsweredQuizzes?: number[]
           manuallyMarkedComplete?: number[]
           dismissedIntros?: number[]
           currentLevelId?: number
@@ -524,7 +558,7 @@ export const useGameStore = create<StoreState>()(
         return {
           ...current,
           completedLevels: new Set(completed),
-          unlockedBadges: new Set(p.unlockedBadges ?? []),
+          correctlyAnsweredQuizzes: new Set(p.correctlyAnsweredQuizzes ?? []),
           manuallyMarkedComplete: new Set(p.manuallyMarkedComplete ?? []),
           dismissedIntros: new Set(dismissed),
           currentLevelId: p.currentLevelId ?? 0,

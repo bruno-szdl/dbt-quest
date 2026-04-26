@@ -36,6 +36,14 @@ Rule of thumb: if a transformation is reused by more than one mart, pull it into
 
 Open each file in the explorer and trace a row of customer data from raw → stg_ → int_ → dim_. When it clicks, mark the lesson complete.`,
   hint: 'Open each .sql file and follow how one customer flows through the layers.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `we hire two more analysts next month. right now nobody knows where to put a new model. read this, then trace one row from raw → stg_ → int_ → dim_ so the layering clicks.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

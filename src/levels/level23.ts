@@ -22,12 +22,21 @@ const level23: Level = {
   id: 23,
   chapter: 7,
   title: 'Build a final mart',
-  description: `Staging cleans the raw data. Marts are the final, business-facing models that dashboards and stakeholders actually read. A good mart is shaped for analysis, not for storage: descriptive names, one row per entity, and only the columns people need.
+  description: `Staging cleans raw data. Marts are the final, business-facing models that dashboards read. A good mart is shaped for analysis: descriptive names, one row per entity, only the columns people need.
 
-The analytics team wants a customer dimension with totals per customer. That's a textbook mart.
-
-Your task: create models/dim_customers.sql that joins stg_customers and stg_orders to produce one row per customer, with their total number of orders and total spend. Produce columns customer_id, customer_name, country, orders_count, lifetime_value. Then run dbt run.`,
+Create models/dim_customers.sql that joins stg_customers and stg_orders into one row per customer with columns customer_id, customer_name, country, orders_count, lifetime_value. Then run dbt run.`,
   hint: "Use `count(o.order_id) as orders_count` and `coalesce(sum(o.amount), 0) as lifetime_value`. Left join stg_orders so customers with no orders still appear. Group by customer_id, customer_name, country.",
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        time: '11:02',
+        body: `heyyy i'm building Sofie's Q2 retention deck and i keep joining stg_customers + stg_orders by hand in like three different notebooks 😩 can we make a real customer table i can just point at?
+
+one row per customer. name, country, total orders, total spend. that's it. flat whites for life 🙏`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

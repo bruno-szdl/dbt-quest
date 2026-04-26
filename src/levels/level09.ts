@@ -30,6 +30,18 @@ You change the materialization with a config() block at the top of the model fil
 
 The customer_orders mart is read frequently by the analytics team. Your task: add the config() line to customer_orders.sql and run dbt run. Then look at the Database Explorer — the model should now appear under Tables instead of Views.`,
   hint: "Add this as the first line of customer_orders.sql:\n\n{{ config(materialized='table') }}",
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `customer_orders is taking like 4s to refresh on the dashboard 🐢 fix pls? 🙏`,
+      },
+      {
+        from: 'priya',
+        body: `try \`materialized='table'\` on it. marcus made everything a view — fine when we had 50 rows, less fine now.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

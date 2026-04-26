@@ -18,6 +18,18 @@ In production this is usually what you want. A failing test on a staging model s
 
 Your task: run \`dbt build\`. You will see the models build, then the tests execute, as one combined workflow.`,
   hint: 'Type `dbt build` in the terminal.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `heads up — i'm switching our nightly cron to \`dbt build\` instead of run+test separately. if a staging test fails, downstream skips automatically. exactly what we needed last week with the revenue thing. try it once locally.`,
+      },
+      {
+        from: 'sofie',
+        body: `Numbers agreed across both dashboards this morning. Thank you both. Onwards.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
@@ -56,7 +68,12 @@ models:
       return { passed: false, reason: 'Run `dbt build` and make sure it finishes without failures.' }
     return { passed: true }
   },
-  badge: { id: 'build-boss', name: 'Build Boss', emoji: '🏗️' },
+  badge: {
+    id: 'build-boss',
+    name: 'Build Boss',
+    emoji: '🏗️',
+    caption: 'Stakeholder review: green',
+  },
   quiz: {
     question: 'How does `dbt build` differ from running `dbt run` then `dbt test`?',
     options: [

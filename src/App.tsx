@@ -9,6 +9,7 @@ import LevelIntroModal from './components/LevelIntroModal'
 import LevelCompleteModal from './components/LevelCompleteModal'
 import LevelQuizModal from './components/LevelQuizModal'
 import CourseCompleteModal from './components/CourseCompleteModal'
+import WelcomeModal from './components/WelcomeModal'
 import { useGameStore } from './store/gameStore'
 import { useIsMobile } from './hooks/useIsMobile'
 import MobileLayout from './components/MobileLayout'
@@ -86,6 +87,7 @@ export default function App() {
         <LevelCompleteModal />
         <LevelQuizModal />
         <CourseCompleteModal />
+        <WelcomeModal />
       </div>
     )
   }
@@ -151,6 +153,7 @@ export default function App() {
       <LevelCompleteModal />
       <LevelQuizModal />
       <CourseCompleteModal />
+      <WelcomeModal />
     </div>
   )
 }

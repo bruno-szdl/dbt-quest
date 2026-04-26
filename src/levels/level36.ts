@@ -34,6 +34,14 @@ On the first run dbt builds the full table. On subsequent runs it only inserts r
 
 Your task: open fct_events.sql and set it to materialized='incremental' with incremental_strategy='append'. Then run dbt run. (dbt-quest runs the model as a full rebuild, but the configuration is the real thing.) When done, mark the lesson complete.`,
   hint: "Replace the TODO config block with materialized='incremental' and incremental_strategy='append'.",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `the events table just crossed 5M rows. yuki's overnight refresh is now 18 minutes and growing. fct_events is append-only — perfect candidate for incremental + append.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/fct_events.sql': `-- Task: configure this model as incremental with an append strategy.
 

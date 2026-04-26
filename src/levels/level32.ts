@@ -20,6 +20,14 @@ In this project the \`daily\` tag is on stg_orders and int_customer_orders. Thei
 
 Your task: run \`dbt run --select tag:daily+\` and confirm exactly those four models built.`,
   hint: 'Type `dbt run --select tag:daily+`. The trailing + extends the tag set with all downstream models.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `\`tag:daily\` picks the staging models but the marts won't refresh. yuki's dashboard reads marts. use \`tag:daily+\` so the chain follows.`,
+      },
+    ],
+  },
   initialFiles: selectorsFilesWithTags(),
   seeds: selectorsSeeds,
   requiredSteps: ['run'],

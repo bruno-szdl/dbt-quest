@@ -20,6 +20,14 @@ Where descriptions do NOT help
 
 Mental shortcut: write the one sentence you'd want to read if a stakeholder Slacked you "what's this column?". When you've thought it through, mark the lesson complete.`,
   hint: 'Picture explaining one of your real models to a new teammate in one sentence. That sentence is the description.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `quick read before monday — when a description earns its keep vs. when it's noise. this is the stuff i'd want the new analyst to internalize before they touch yaml. mark complete when done.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/schema.yml': `version: 2
 

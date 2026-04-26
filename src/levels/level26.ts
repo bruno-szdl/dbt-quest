@@ -20,6 +20,14 @@ That builds stg_customers and nothing else.
 
 Your task: open the lineage panel, get a feel for the six models in this project, then run \`dbt run --select stg_customers\`. The terminal should report exactly one model built.`,
   hint: 'Type `dbt run --select stg_customers` (or `dbt run -s stg_customers`).',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `heads up — the full project still runs in 30s today, but as we grow you'll want to rebuild one model at a time. \`--select\` is the lever for that.`,
+      },
+    ],
+  },
   initialFiles: selectorsFiles(),
   seeds: selectorsSeeds,
   requiredSteps: ['run'],

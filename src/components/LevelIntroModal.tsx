@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLevelById, getModuleForLevel } from '../levels'
+import StoryThread from './StoryThread'
 
 export default function LevelIntroModal() {
   const show = useGameStore((s) => s.showLevelIntro)
@@ -152,6 +153,12 @@ export default function LevelIntroModal() {
             flex: 1,
           }}
         >
+          {level.story && level.story.messages.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <StoryThread messages={level.story.messages} />
+            </div>
+          )}
+
           <p
             style={{
               margin: 0,
@@ -223,7 +230,9 @@ export default function LevelIntroModal() {
               marginRight: 'auto',
             }}
           >
-            esc · click outside to close
+            {level.story && level.story.messages.length > 0
+              ? 'esc · skip story'
+              : 'esc · click outside to close'}
           </span>
           <button
             onClick={dismiss}
@@ -254,3 +263,4 @@ export default function LevelIntroModal() {
     </div>
   )
 }
+

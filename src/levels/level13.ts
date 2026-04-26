@@ -29,6 +29,14 @@ The shape is always the same:
 
 Your task: open models/stg_orders.yml and add \`not_null\` and \`unique\` tests on \`order_id\`. Then run dbt run and dbt test and confirm both tests pass.`,
   hint: 'In stg_orders.yml, replace the TODO with:\n        tests:\n          - not_null\n          - unique',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `orders next. same protection — add not_null + unique on order_id in stg_orders.yml. once the test exists we never have to chase a duplicate order down by hand.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_orders.sql': `select
     id         as order_id,

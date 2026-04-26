@@ -31,6 +31,18 @@ Your task: create models/int_customer_orders.sql. It should ref() stg_orders, gr
 
 Then run dbt run and confirm the mart in dim_customers_lite joins cleanly to it.`,
   hint: "select customer_id, count(*) as orders_count, coalesce(sum(amount), 0) as lifetime_value from {{ ref('stg_orders') }} group by customer_id",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `a churn report is coming next month and it'll need the same per-customer rollup dim_customers already does. pull it into int_customer_orders so both marts share it. don't repeat yourself.`,
+      },
+      {
+        from: 'sofie',
+        body: `Pinned dim_customers in the data channel. Thanks.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
@@ -88,7 +100,12 @@ left join {{ ref('int_customer_orders') }} as o
       return { passed: false, reason: 'dim_customers_lite did not build — check the intermediate model.' }
     return { passed: true }
   },
-  badge: { id: 'middle-layer', name: 'Middle Layer', emoji: '🧩' },
+  badge: {
+    id: 'middle-layer',
+    name: 'Middle Layer',
+    emoji: '🧩',
+    caption: 'Pinned by the CFO',
+  },
   quiz: {
     question: 'When should you reach for an intermediate model instead of inlining the logic in a mart?',
     options: [

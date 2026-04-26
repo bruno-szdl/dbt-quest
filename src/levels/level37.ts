@@ -34,6 +34,14 @@ The configuration looks like:
 
 Your task: configure fct_customers as incremental with strategy='merge' and unique_key='customer_id'. Run dbt run and then mark complete.`,
   hint: "Inside the config() call: materialized='incremental', incremental_strategy='merge', unique_key='customer_id'.",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `customers update — email, plan, status. append would leave stale dupes everywhere. for fct_customers use merge with \`unique_key='customer_id'\`.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/fct_customers.sql': `-- Task: configure as incremental+merge on customer_id.
 
@@ -75,7 +83,12 @@ from raw_customers`,
       return { passed: false, reason: 'Mark the lesson complete once you have run it.' }
     return { passed: true }
   },
-  badge: { id: 'merge-master', name: 'Merge Master', emoji: '🔀' },
+  badge: {
+    id: 'merge-master',
+    name: 'Merge Master',
+    emoji: '🔀',
+    caption: 'Customers can change — and we know',
+  },
   quiz: {
     question: "Why does the merge strategy need a unique_key?",
     options: [

@@ -20,6 +20,14 @@ Mental shortcut: "Would the business ever ask me 'what did this look like three 
 
 Your task: think of a table in a project you've worked on (or can imagine). Decide whether it should be a snapshot or not, and why. Then mark the lesson complete.`,
   hint: 'Pick a real-or-imagined table and decide: snapshot or not? Why?',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `think of a real table you've worked with. snapshot or not? events: no. customers: yes. audit log: no. read, decide, mark complete.`,
+      },
+    ],
+  },
   initialFiles: {
     'snapshots/snap_customers.sql': `{% snapshot snap_customers %}
 {{ config(

@@ -18,6 +18,14 @@ The source \`raw.customers\` has already been declared in models/sources.yml.
 
 Your task: in stg_customers.sql replace \`from raw_customers\` with \`from {{ source('raw', 'customers') }}\`, then run dbt run. Once you do, the lineage tab will start showing raw.customers as an upstream node feeding into stg_customers.`,
   hint: "Replace `from raw_customers` with `from {{ source('raw', 'customers') }}`. Then run `dbt run`.",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `now wire stg_customers up to the source you just declared. same data — but the lineage tab will start showing where it came from. it's about being honest about inputs.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/sources.yml': `version: 2
 

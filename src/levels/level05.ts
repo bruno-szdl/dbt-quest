@@ -28,6 +28,14 @@ Besides customers, the business also has orders. The raw orders live in raw_orde
 
 Your task: create a new file at models/stg_orders.sql that selects from raw_orders, then run dbt run. Use the "+" button in the file explorer to add the file.`,
   hint: "Click the + in the file explorer, enter `models/stg_orders.sql`, and paste:\n\nselect\n    id as order_id,\n    customer_id,\n    amount,\n    status,\n    created_at\nfrom raw_orders",
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `ok so… ORDERS too? please? same shape as customers, same place. one source of truth — that's the dream 🥹`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

@@ -28,6 +28,14 @@ It's almost always better to join transformed models (via ref()) than to join ra
 
 The customer_orders model already refs stg_customers. Your task: add a JOIN to \`{{ ref('stg_orders') }}\` matching on customer_id, and include order_id and amount in the SELECT. Then run dbt run.`,
   hint: "After the FROM clause, add:\n  join {{ ref('stg_orders') }} as o\n    on c.customer_id = o.customer_id\nand add o.order_id, o.amount to the SELECT list.",
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `omg can we have customer + their orders in one place? i'm about to do the join manually in a notebook and i'll cry 😭`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

@@ -28,6 +28,14 @@ Before you can reference a source in SQL, you declare it in a YAML file. Declara
 
 Your task: complete models/sources.yml so that a source called \`raw\` exposes a table called \`customers\`.`,
   hint: "Add this block below `version: 2`:\nsources:\n  - name: raw\n    tables:\n      - name: customers",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `marcus pointed every model at \`raw_customers\` directly — like the warehouse name was magic. that's how stuff breaks when we promote to prod. let's declare it properly: a source called \`raw\` with a table called \`customers\`.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/sources.yml': `version: 2
 

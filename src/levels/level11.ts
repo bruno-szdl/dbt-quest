@@ -14,14 +14,28 @@ const level11: Level = {
   id: 11,
   chapter: 4,
   title: 'Find a data issue',
-  description: `A model can run successfully and still produce bad data. "It ran" only tells you the SQL was syntactically valid — not that the rows are correct.
+  description: `A model can run and still produce bad data. "It ran" only tells you the SQL was syntactically valid — not that the rows are correct.
 
-The two most common data quality issues you will hunt for in analytics are:
-  • NULLs where a value should always exist (like an id or an email).
-  • Duplicates on a column that should be unique (like a customer id).
+The two most common data quality issues:
+  • NULLs where a value should always exist (an id, an email).
+  • Duplicates on a column that should be unique (a customer id).
 
-Your task here is pure inspection — no code to write. Run \`dbt show --select stg_customers\` and look at the rows carefully. You should see both problems hiding in the result. Once you have spotted them, mark the lesson complete below.`,
+Run \`dbt show --select stg_customers\` and look at the rows. Both problems are hiding in the result. Once you have spotted them, mark the lesson complete below.`,
   hint: 'Run `dbt show --select stg_customers` and scan the customer_id and email columns.',
+  story: {
+    messages: [
+      {
+        from: 'sofie',
+        time: '16:52',
+        body: `Quick one — last week's revenue shows 124k in Yuki's dashboard and 119k in mine. Same source. Series B prep is starting; I need to know which is wrong by EOD.`,
+      },
+      {
+        from: 'priya',
+        time: '16:58',
+        body: `my bet's stg_customers — marcus dumped raw friday and there's a dirty row in there somewhere. preview it (\`dbt show --select stg_customers\`) and tell me what you see. don't fix anything yet, we'll write a test next.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
@@ -49,7 +63,12 @@ from raw_customers`,
       return { passed: false, reason: 'Preview the model, spot the issues, then mark complete.' }
     return { passed: true }
   },
-  badge: { id: 'data-detective', name: 'Data Detective', emoji: '🕵️' },
+  badge: {
+    id: 'data-detective',
+    name: 'Data Detective',
+    emoji: '🕵️',
+    caption: "Sofie's first Slack — survived",
+  },
   quiz: {
     question: 'Which of the following does NOT indicate a data quality problem?',
     options: [

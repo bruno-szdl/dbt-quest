@@ -25,6 +25,14 @@ Three models in total. Notice the OTHER branch (stg_customers → dim_customers)
 
 Your task: run \`dbt run --select +int_customer_orders+\` and confirm exactly those three models built.`,
   hint: 'Type `dbt run --select +int_customer_orders+`. Both + signs together mean "ancestors and descendants".',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `i'm changing int_customer_orders. want the full slice it touches rebuilt — fresh inputs above, marts below. the customers branch can stay put.`,
+      },
+    ],
+  },
   initialFiles: selectorsFiles(),
   seeds: selectorsSeeds,
   requiredSteps: ['run'],

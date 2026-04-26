@@ -118,7 +118,6 @@ function MobileActionBar({
   const ranModels = useGameStore((s) => s.ranModels)
   const runCommand = useGameStore((s) => s.runCommand)
   const showModel = useGameStore((s) => s.showModel)
-  const resetLevel = useGameStore((s) => s.resetLevel)
 
   const model =
     activeFile && activeFile.startsWith('models/') && activeFile.endsWith('.sql')
@@ -150,13 +149,6 @@ function MobileActionBar({
         label="Show"
         disabled={running || !canShow}
         onClick={() => { if (model) { onAfterShow(); showModel(model) } }}
-      />
-      <ActBtn
-        label="Reset"
-        disabled={running}
-        onClick={() => {
-          if (confirm('Reset this level? All your edits will be discarded.')) resetLevel()
-        }}
       />
     </div>
   )

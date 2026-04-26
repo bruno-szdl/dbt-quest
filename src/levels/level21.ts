@@ -27,6 +27,14 @@ That's a nice property: models don't need to care whether the upstream is a stag
 
 Your task: complete models/int_customer_enriched.sql so that it joins stg_customers with the country_codes seed on the country column. Add \`country_name\` and \`region\` to the SELECT list, then run dbt run.`,
   hint: "Use `join {{ ref('country_codes') }} as cc on c.country = cc.code` and add cc.country_name, cc.region to the SELECT.",
+  story: {
+    messages: [
+      {
+        from: 'yuki',
+        body: `now stitch it in pls — int_customer_enriched should join to country_codes so i get country_name and region. then i can pivot the deck properly 🙏`,
+      },
+    ],
+  },
   initialFiles: {
     'seeds/country_codes.csv': COUNTRY_CODES,
     'models/stg_customers.sql': `select

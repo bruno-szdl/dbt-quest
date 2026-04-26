@@ -25,6 +25,14 @@ Answer: it gets pasted into every downstream model, as a CTE at the top. You can
 
 Your task: run \`dbt compile --select dim_customers_lite\` and read the compiled output in the terminal. You should see a CTE named "int_customer_orders" right before the SELECT — that's the ephemeral model, inlined. When it clicks, mark the lesson complete.`,
   hint: 'Run `dbt compile --select dim_customers_lite` and scroll the terminal output.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `wanna show you what's actually running. \`dbt compile --select dim_customers_lite\` — you'll see the int model pasted in as a CTE. that's the trade-off of ephemeral.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,

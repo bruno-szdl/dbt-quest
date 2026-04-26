@@ -28,6 +28,14 @@ Rule of thumb: start with views. Promote frequently-read or expensive models to 
 
 In this lesson there is nothing to change — two versions of stg_customers are provided so you can inspect how each looks in the Database Explorer. One shows up under Views, the other under Tables. When you have seen the difference, mark the lesson complete below.`,
   hint: 'Run `dbt run` once, open the Database Explorer on the left, and look at where each model appears.',
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `i left both versions in the project — view and table. open the Database Explorer, see where each one lands. useful muscle memory before we move on.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers_view.sql': `-- Built as a view (default): a saved query re-executed on every read.
 select

@@ -35,12 +35,25 @@ export interface GoalDagShape {
  */
 export type Seeds = Record<string, string>
 
+/** A character who can send a story message in the level intro. */
+export type StorySender = 'priya' | 'yuki' | 'sofie' | 'marcus'
+
+export interface StoryMessage {
+  from: StorySender
+  /** Optional clock label like "09:14". Purely cosmetic. */
+  time?: string
+  /** Message body. Keep to 1–3 sentences; no markdown. */
+  body: string
+}
+
 export interface Level {
   id: number
   chapter: number
   title: string
   description: string
   hint?: string
+  /** Optional Slack-style intro thread shown above the description in the level modal. */
+  story?: { messages: StoryMessage[] }
   initialFiles: Record<string, string>
   seeds?: Seeds
   /** Models to silently materialize when the level loads, so the player can start from an already-run state. */
@@ -54,7 +67,7 @@ export interface Level {
   /** If true, the learner must press a "Mark complete" button to finish the lesson. */
   manualCompletion?: boolean
   validate: (state: GameState) => { passed: boolean; reason?: string }
-  badge?: { id: string; name: string; emoji: string }
+  badge?: { id: string; name: string; emoji: string; caption?: string }
   quiz?: {
     question: string
     options: [string, string, string, string]

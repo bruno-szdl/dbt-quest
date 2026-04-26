@@ -87,11 +87,19 @@ export const levels: Level[] = [
   level42,
 ]
 
+export interface ModuleBadge {
+  id: string
+  name: string
+  emoji: string
+}
+
 export interface Module {
   id: number
   title: string
   description: string
   levelIds: number[]
+  /** Badge unlocked when every level in this module is complete. */
+  badge: ModuleBadge
 }
 
 export const modules: Module[] = [
@@ -100,74 +108,138 @@ export const modules: Module[] = [
     title: 'First contact with dbt',
     description: 'A model is a SQL transformation you run, inspect and edit.',
     levelIds: [1, 2, 3, 4],
+    badge: { id: 'mod-first-contact', name: 'First Steps', emoji: '🚀' },
   },
   {
     id: 2,
     title: 'Multiple models and dependencies',
     description: 'Wire models together with ref() and read the lineage.',
     levelIds: [5, 6, 7, 8],
+    badge: { id: 'mod-dependencies', name: 'Wired Up', emoji: '🔗' },
   },
   {
     id: 3,
     title: 'Materializations',
     description: 'Choose how a model is built — view or table.',
     levelIds: [9, 10],
+    badge: { id: 'mod-materializations', name: 'Solid Form', emoji: '🗄️' },
   },
   {
     id: 4,
     title: 'Data quality and testing',
     description: 'Catch bad data early with tests and dbt build.',
     levelIds: [11, 12, 13, 14, 15],
+    badge: { id: 'mod-data-quality', name: 'Quality Assured', emoji: '✅' },
   },
   {
     id: 5,
     title: 'Documentation',
     description: 'Make models self-explanatory with descriptions on models and columns.',
     levelIds: [16, 17],
+    badge: { id: 'mod-documentation', name: 'Self-Documenting', emoji: '📝' },
   },
   {
     id: 6,
     title: 'Sources and seeds',
     description: 'Formalise raw inputs with sources and small CSVs with seeds.',
     levelIds: [18, 19, 20, 21, 22],
+    badge: { id: 'mod-sources-seeds', name: 'Roots Down', emoji: '🌱' },
   },
   {
     id: 7,
     title: 'Project structure',
     description: 'Organise models into staging, intermediate and marts.',
     levelIds: [23, 24, 25],
+    badge: { id: 'mod-structure', name: 'Architect', emoji: '🏛️' },
   },
   {
     id: 8,
     title: 'Selectors and tags',
     description: 'Run subsets of the project with graph operators and tag selectors.',
     levelIds: [26, 27, 28, 29, 30, 31, 32, 33],
+    badge: { id: 'mod-selectors', name: "Surgeon's Touch", emoji: '🎯' },
   },
   {
     id: 9,
     title: 'Ephemeral models',
     description: 'Reusable SQL that never becomes a warehouse object.',
     levelIds: [34, 35],
+    badge: { id: 'mod-ephemeral', name: 'Phantom', emoji: '👻' },
   },
   {
     id: 10,
     title: 'Incremental models',
     description: 'Process only new rows instead of rebuilding from scratch.',
     levelIds: [36, 37, 38],
+    badge: { id: 'mod-incremental', name: 'Smart Refresh', emoji: '⚡' },
   },
   {
     id: 11,
     title: 'Snapshots',
     description: 'Preserve historical versions of changing source data.',
     levelIds: [39, 40, 41],
+    badge: { id: 'mod-snapshots', name: 'Time Keeper', emoji: '⏳' },
   },
   {
     id: 12,
     title: 'Final challenge',
     description: 'Debug a half-finished pipeline and ship it green.',
     levelIds: [42],
+    badge: { id: 'mod-final', name: 'dbt Graduate', emoji: '🎓' },
   },
 ]
+
+/** Badge for answering every level's quiz correctly. */
+export const QUIZ_BADGE: ModuleBadge = {
+  id: 'quiz-master',
+  name: 'Quiz Master',
+  emoji: '🧠',
+}
+
+/** Badge for earning every other badge. */
+export const MASTER_BADGE: ModuleBadge = {
+  id: 'master',
+  name: 'Möller Champion',
+  emoji: '🏆',
+}
+
+/**
+ * Module ids whose every level appears in `completedLevels` — i.e. the module
+ * badge has been earned.
+ */
+export function earnedModuleBadgeIds(completedLevels: Set<number>): Set<string> {
+  const earned = new Set<string>()
+  for (const mod of modules) {
+    if (mod.levelIds.every((id) => completedLevels.has(id))) earned.add(mod.badge.id)
+  }
+  return earned
+}
+
+/** Total number of levels that have a quiz attached. */
+export function totalQuizCount(): number {
+  return levels.filter((l) => l.quiz != null).length
+}
+
+/** True when every level with a quiz has been answered correctly. */
+export function quizBadgeEarned(correctlyAnsweredQuizzes: Set<number>): boolean {
+  return correctlyAnsweredQuizzes.size >= totalQuizCount()
+}
+
+/** True when every module badge AND the quiz badge have been earned. */
+export function masterBadgeEarned(
+  completedLevels: Set<number>,
+  correctlyAnsweredQuizzes: Set<number>,
+): boolean {
+  return (
+    earnedModuleBadgeIds(completedLevels).size === modules.length &&
+    quizBadgeEarned(correctlyAnsweredQuizzes)
+  )
+}
+
+/** The module that ends with this level id, if any (used to celebrate module completion). */
+export function moduleEndingAt(levelId: number): Module | undefined {
+  return modules.find((m) => m.levelIds[m.levelIds.length - 1] === levelId)
+}
 
 export function getLevelById(id: number): Level | undefined {
   return levels.find((l) => l.id === id)

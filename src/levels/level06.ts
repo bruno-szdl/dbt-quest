@@ -20,6 +20,14 @@ Using ref() buys you two things:
 
 Your task: open models/int_customer_summary.sql and replace \`from stg_customers\` with \`from {{ ref('stg_customers') }}\`. Then run dbt run.`,
   hint: "Change `from stg_customers` to `from {{ ref('stg_customers') }}`. The double curly braces are dbt's Jinja template syntax.",
+  story: {
+    messages: [
+      {
+        from: 'priya',
+        body: `there's an int_customer_summary marcus started. he hardcoded the table name. switch it to \`ref()\` so dbt actually knows it depends on stg_customers.`,
+      },
+    ],
+  },
   initialFiles: {
     'models/stg_customers.sql': `select
     id         as customer_id,
