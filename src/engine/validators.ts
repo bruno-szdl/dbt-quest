@@ -1,12 +1,10 @@
 import type { GameState } from './types'
-import { parseTests } from './tests'
+import { parseTests, type TestKind } from './tests'
+import { getModelName } from './compiler'
 
 function findModelPath(files: Record<string, string>, name: string): string | undefined {
   return Object.keys(files).find(
-    (p) =>
-      p.startsWith('models/') &&
-      p.endsWith('.sql') &&
-      p.split('/').pop()!.replace(/\.sql$/, '') === name,
+    (p) => p.startsWith('models/') && p.endsWith('.sql') && getModelName(p) === name,
   )
 }
 
@@ -26,6 +24,11 @@ export function modelRefs(state: GameState, modelName: string, refName: string):
 
 export function modelRan(state: GameState, name: string): boolean {
   return state.ranModels.has(name)
+}
+
+/** True if the learner ran `dbt show --select <name>` for this model in the current level. */
+export function modelShown(state: GameState, name: string): boolean {
+  return state.shownModels.has(name)
 }
 
 export function testPassed(
@@ -102,7 +105,7 @@ export function lineageHasSourceEdge(
 export function testDefinitionsInclude(
   state: GameState,
   model: string,
-  expectedKinds: Array<'not_null' | 'unique'>,
+  expectedKinds: TestKind[],
 ): boolean {
   const defs = parseTests(state.files, new Set([model]))
   const have = new Set(defs.filter((d) => d.model === model).map((d) => d.kind))
@@ -127,6 +130,11 @@ export function seedLoaded(state: GameState, seedName: string): boolean {
 
 export function manuallyMarked(state: GameState): boolean {
   return state.manuallyMarkedComplete.has(state.currentLevelId)
+}
+
+/** True if the current level's quiz has been answered correctly. */
+export function quizCorrect(state: GameState): boolean {
+  return state.correctlyAnsweredQuizzes.has(state.currentLevelId)
 }
 
 /** True if the named snapshot has been run at least N times in the current level. */

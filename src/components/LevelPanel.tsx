@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLevelById, getLastLevelId, moduleEndingAt } from '../levels'
 import StoryThread from './StoryThread'
@@ -11,10 +11,12 @@ export default function LevelPanel() {
   const dismissLevelComplete = useGameStore((s) => s.dismissLevelComplete)
   const openLevelComplete = useGameStore((s) => s.openLevelComplete)
   const [storyExpanded, setStoryExpanded] = useState(false)
+  const [prevLevelId, setPrevLevelId] = useState(currentLevelId)
 
-  useEffect(() => {
+  if (prevLevelId !== currentLevelId) {
+    setPrevLevelId(currentLevelId)
     setStoryExpanded(false)
-  }, [currentLevelId])
+  }
 
   const level = getLevelById(currentLevelId)
   if (!level) return null
@@ -56,7 +58,7 @@ export default function LevelPanel() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '22px',
+                    fontSize: '1.375rem',
                     lineHeight: 1,
                     flexShrink: 0,
                   }}
@@ -68,7 +70,7 @@ export default function LevelPanel() {
                   <div
                     style={{
                       color: 'var(--color-success)',
-                      fontSize: '13px',
+                      fontSize: '0.8125rem',
                       fontFamily: 'IBM Plex Sans, sans-serif',
                       fontWeight: 700,
                       lineHeight: 1.2,
@@ -79,7 +81,7 @@ export default function LevelPanel() {
                   <div
                     style={{
                       color: 'var(--color-text-secondary)',
-                      fontSize: '11px',
+                      fontSize: '0.6875rem',
                       fontFamily: 'IBM Plex Sans, sans-serif',
                       lineHeight: 1.3,
                       overflow: 'hidden',
@@ -95,7 +97,7 @@ export default function LevelPanel() {
           })()}
 
           {isLastLevel ? (
-            <span style={{ color: 'var(--color-success)', fontSize: '11px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600, flexShrink: 0 }}>
+            <span style={{ color: 'var(--color-success)', fontSize: '0.6875rem', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 600, flexShrink: 0 }}>
               All levels done! 🎉
             </span>
           ) : (
@@ -107,7 +109,7 @@ export default function LevelPanel() {
                 border: 'none',
                 borderRadius: '6px',
                 color: '#0d1117',
-                fontSize: '12px',
+                fontSize: '0.75rem',
                 fontFamily: 'IBM Plex Sans, sans-serif',
                 fontWeight: 600,
                 padding: '8px 14px',
@@ -137,7 +139,7 @@ export default function LevelPanel() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '16px',
+              fontSize: '1rem',
               lineHeight: 1,
               padding: '2px 4px',
             }}
@@ -158,7 +160,7 @@ export default function LevelPanel() {
               background: 'var(--color-accent-bg)',
               border: '1px solid var(--color-accent-orange-dim)',
               color: 'var(--color-accent-orange)',
-              fontSize: '9px',
+              fontSize: '0.5625rem',
               fontFamily: 'JetBrains Mono, monospace',
               padding: '1px 5px',
               borderRadius: '3px',
@@ -168,7 +170,7 @@ export default function LevelPanel() {
           >
             Ch {level.chapter}
           </span>
-          <span style={{ color: 'var(--color-text-muted)', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace' }}>
+          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.625rem', fontFamily: 'JetBrains Mono, monospace' }}>
             Level {level.id}
           </span>
         </div>
@@ -176,7 +178,7 @@ export default function LevelPanel() {
           style={{
             margin: 0,
             color: 'var(--color-text)',
-            fontSize: '14px',
+            fontSize: '0.875rem',
             fontFamily: 'IBM Plex Sans, sans-serif',
             fontWeight: 700,
             lineHeight: 1.3,
@@ -193,7 +195,7 @@ export default function LevelPanel() {
           <div
             style={{
               color: 'var(--color-success)',
-              fontSize: '9px',
+              fontSize: '0.5625rem',
               fontFamily: 'JetBrains Mono, monospace',
               textTransform: 'uppercase' as const,
               letterSpacing: '0.1em',
@@ -206,7 +208,7 @@ export default function LevelPanel() {
             style={{
               margin: 0,
               color: 'var(--color-text-secondary)',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               fontFamily: 'IBM Plex Sans, sans-serif',
               lineHeight: 1.6,
             }}
@@ -232,7 +234,7 @@ export default function LevelPanel() {
                 padding: '12px 16px',
                 cursor: 'pointer',
                 color: 'var(--color-text-muted)',
-                fontSize: '9px',
+                fontSize: '0.5625rem',
                 fontFamily: 'JetBrains Mono, monospace',
                 textTransform: 'uppercase' as const,
                 letterSpacing: '0.1em',
@@ -255,7 +257,7 @@ export default function LevelPanel() {
                 <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
               </svg>
               <span>Slack</span>
-              <span style={{ marginLeft: 'auto', textTransform: 'none', letterSpacing: 0, fontSize: '10px' }}>
+              <span style={{ marginLeft: 'auto', textTransform: 'none', letterSpacing: 0, fontSize: '0.625rem' }}>
                 {level.story.messages.length} {level.story.messages.length === 1 ? 'message' : 'messages'}
               </span>
             </button>
@@ -272,7 +274,7 @@ export default function LevelPanel() {
           <div
             style={{
               color: 'var(--color-text-muted)',
-              fontSize: '9px',
+              fontSize: '0.5625rem',
               fontFamily: 'JetBrains Mono, monospace',
               textTransform: 'uppercase' as const,
               letterSpacing: '0.1em',
@@ -285,7 +287,7 @@ export default function LevelPanel() {
             style={{
               margin: 0,
               color: 'var(--color-text-secondary)',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               fontFamily: 'IBM Plex Sans, sans-serif',
               lineHeight: 1.7,
               whiteSpace: 'pre-wrap',
@@ -310,7 +312,7 @@ export default function LevelPanel() {
                 <div
                   style={{
                     color: 'var(--color-warning)',
-                    fontSize: '9px',
+                    fontSize: '0.5625rem',
                     fontFamily: 'JetBrains Mono, monospace',
                     textTransform: 'uppercase' as const,
                     letterSpacing: '0.1em',
@@ -322,7 +324,7 @@ export default function LevelPanel() {
                 <div
                   style={{
                     color: 'var(--color-text-secondary)',
-                    fontSize: '11px',
+                    fontSize: '0.6875rem',
                     fontFamily: 'JetBrains Mono, monospace',
                     whiteSpace: 'pre-wrap',
                     lineHeight: '1.55',
@@ -339,7 +341,7 @@ export default function LevelPanel() {
                   border: '1px solid var(--color-border)',
                   borderRadius: '4px',
                   color: 'var(--color-text-muted)',
-                  fontSize: '11px',
+                  fontSize: '0.6875rem',
                   fontFamily: 'JetBrains Mono, monospace',
                   padding: '5px 10px',
                   cursor: 'pointer',
@@ -376,7 +378,9 @@ function ProgressChecklist() {
   const currentLevelId = useGameStore((s) => s.currentLevelId)
   const completedLevels = useGameStore((s) => s.completedLevels)
   const manuallyMarkedComplete = useGameStore((s) => s.manuallyMarkedComplete)
+  const correctlyAnsweredQuizzes = useGameStore((s) => s.correctlyAnsweredQuizzes)
   const markLessonComplete = useGameStore((s) => s.markLessonComplete)
+  const openLevelQuiz = useGameStore((s) => s.openLevelQuiz)
   const level = getLevelById(currentLevelId)
   if (!level) return null
 
@@ -407,7 +411,7 @@ function ProgressChecklist() {
       <div
         style={{
           color: 'var(--color-muted)',
-          fontSize: '9px',
+          fontSize: '0.5625rem',
           fontFamily: 'JetBrains Mono, monospace',
           textTransform: 'uppercase',
           letterSpacing: '0.12em',
@@ -427,7 +431,7 @@ function ProgressChecklist() {
               color: it.done
                 ? ('highlight' in it && it.highlight ? 'var(--color-success)' : 'var(--color-text-secondary)')
                 : 'var(--color-text-muted)',
-              fontSize: '12px',
+              fontSize: '0.75rem',
               fontFamily: 'IBM Plex Sans, sans-serif',
             }}
           >
@@ -449,7 +453,7 @@ function ProgressChecklist() {
             border: '1px solid var(--color-success)',
             borderRadius: '4px',
             color: 'var(--color-success)',
-            fontSize: '11px',
+            fontSize: '0.6875rem',
             fontFamily: 'IBM Plex Sans, sans-serif',
             fontWeight: 600,
             padding: '6px 10px',
@@ -464,6 +468,29 @@ function ProgressChecklist() {
         </button>
       )}
 
+      {level.quizGates && !passed && level.quiz && !correctlyAnsweredQuizzes.has(currentLevelId) && (
+        <button
+          onClick={openLevelQuiz}
+          style={{
+            marginTop: '12px',
+            background: 'transparent',
+            border: '1px solid var(--color-success)',
+            borderRadius: '4px',
+            color: 'var(--color-success)',
+            fontSize: '0.6875rem',
+            fontFamily: 'IBM Plex Sans, sans-serif',
+            fontWeight: 600,
+            padding: '6px 10px',
+            cursor: 'pointer',
+            width: '100%',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-success-bg)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        >
+          Take quiz to complete →
+        </button>
+      )}
+
       {level.docs && level.docs.length > 0 && (
         <div
           style={{
@@ -475,7 +502,7 @@ function ProgressChecklist() {
           <div
             style={{
               color: 'var(--color-muted)',
-              fontSize: '9px',
+              fontSize: '0.5625rem',
               fontFamily: 'JetBrains Mono, monospace',
               textTransform: 'uppercase',
               letterSpacing: '0.12em',
@@ -493,7 +520,7 @@ function ProgressChecklist() {
                   rel="noopener noreferrer"
                   style={{
                     color: 'var(--color-text-secondary)',
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontFamily: 'IBM Plex Sans, sans-serif',
                     textDecoration: 'none',
                     borderBottom: '1px dashed var(--color-border)',

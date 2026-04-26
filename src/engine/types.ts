@@ -17,6 +17,8 @@ export interface GameState {
   snapshotClosedRows: Record<string, number>
   /** Level ids the learner has intentionally marked as complete. */
   manuallyMarkedComplete: Set<number>
+  /** Level ids whose quiz the learner has answered correctly. */
+  correctlyAnsweredQuizzes: Set<number>
   /** The current level id, used by manual-completion validators. */
   currentLevelId: number
 }
@@ -58,6 +60,8 @@ export interface Level {
   seeds?: Seeds
   /** Models to silently materialize when the level loads, so the player can start from an already-run state. */
   preRanModels?: string[]
+  /** Snapshots to silently capture when the level loads, so downstream models can already ref() them. */
+  preRanSnapshots?: string[]
   goal: {
     description: string
     dagShape?: GoalDagShape
@@ -66,6 +70,8 @@ export interface Level {
   requiredSteps?: ('files' | 'run' | 'test')[]
   /** If true, the learner must press a "Mark complete" button to finish the lesson. */
   manualCompletion?: boolean
+  /** If true, the level's quiz is the gate — answering correctly is what completes the level. */
+  quizGates?: boolean
   validate: (state: GameState) => { passed: boolean; reason?: string }
   badge?: { id: string; name: string; emoji: string; caption?: string }
   quiz?: {

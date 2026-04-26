@@ -3,10 +3,13 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { parseCommand } from '../engine/commandParser'
 import { execute } from '../engine/runner'
 import { previewModel, plan, materializeModels } from '../engine/executor'
+import { collectSnapshots, runSnapshot } from '../engine/snapshots'
 import { getLastLevelId, getLevelById } from '../levels'
 import type { TerminalLine } from '../engine/runner'
 import { registerCsv, resetDb } from '../engine/duckdb'
-import { sourceViewName } from '../engine/compiler'
+import { sourceViewName, getFileStem } from '../engine/compiler'
+import { errorMessage } from '../engine/errors'
+import { safeStorage } from './safeStorage'
 
 export type BottomTab = 'commands' | 'results' | 'lineage'
 
@@ -72,6 +75,7 @@ interface StoreState {
   dismissLevelCompleteModal: () => void
   dismissLevelIntro: () => void
   dismissLevelQuiz: () => void
+  openLevelQuiz: () => void
   openLevelIntro: () => void
   dismissCourseComplete: () => void
   dismissWelcome: () => void
@@ -127,17 +131,17 @@ export const useGameStore = create<StoreState>()(
   showCourseComplete: false,
   courseCompleteSeen: false,
   // Open the welcome modal on first load; dismissWelcome persists the flag in localStorage.
-  showWelcome: !localStorage.getItem('dbt-quest-welcome-seen-narrative'),
+  showWelcome: !safeStorage.getItem('dbt-quest-welcome-seen-narrative'),
 
   bottomTab: 'commands',
   bottomCollapsed: false,
 
-  theme: (localStorage.getItem('dbt-quest-theme') as 'dark' | 'light') ?? 'dark',
+  theme: (safeStorage.getItem('dbt-quest-theme') as 'dark' | 'light') ?? 'dark',
 
   toggleTheme: () => {
     const next = get().theme === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = next === 'light' ? 'light' : ''
-    localStorage.setItem('dbt-quest-theme', next)
+    safeStorage.setItem('dbt-quest-theme', next)
     set({ theme: next })
   },
 
@@ -243,7 +247,7 @@ export const useGameStore = create<StoreState>()(
       set((current) => ({
         terminalHistory: [
           ...current.terminalHistory,
-          { text: `Unexpected error: ${e instanceof Error ? e.message : String(e)}`, color: 'red' },
+          { text: `Unexpected error: ${errorMessage(e)}`, color: 'red' },
           { text: '' },
         ],
       }))
@@ -286,7 +290,7 @@ export const useGameStore = create<StoreState>()(
       set((s) => ({
         terminalHistory: [
           ...s.terminalHistory,
-          { text: e instanceof Error ? e.message : String(e), color: 'red' },
+          { text: errorMessage(e), color: 'red' },
           { text: '' },
         ],
       }))
@@ -361,7 +365,7 @@ export const useGameStore = create<StoreState>()(
       // as user-loaded for validation.
       for (const [path, csv] of Object.entries(level.initialFiles)) {
         if (path.startsWith('seeds/') && path.endsWith('.csv')) {
-          const name = path.split('/').pop()!.replace(/\.csv$/, '')
+          const name = getFileStem(path, '.csv')
           await registerCsv(name, csv.trim())
         }
       }
@@ -378,6 +382,15 @@ export const useGameStore = create<StoreState>()(
           }
         }
       }
+      const preRanSnapCounts: Record<string, number> = {}
+      if (level.preRanSnapshots?.length) {
+        const snaps = collectSnapshots(level.initialFiles)
+        for (const snap of snaps) {
+          if (!level.preRanSnapshots.includes(snap.name)) continue
+          const outcome = await runSnapshot(snap)
+          if (outcome.passed) preRanSnapCounts[snap.name] = 1
+        }
+      }
       const seedNames = Object.keys(seeds)
       set((s) => ({
         terminalHistory: [
@@ -391,12 +404,13 @@ export const useGameStore = create<StoreState>()(
           { text: '' },
         ],
         ...(preRanSet.size ? { ranModels: preRanSet, modelColumns: preRanColumns } : {}),
+        ...(Object.keys(preRanSnapCounts).length ? { snapshotRunCounts: preRanSnapCounts } : {}),
       }))
     } catch (e) {
       set((s) => ({
         terminalHistory: [
           ...s.terminalHistory,
-          { text: `Failed to initialise DuckDB: ${e instanceof Error ? e.message : String(e)}`, color: 'red' },
+          { text: `Failed to initialise DuckDB: ${errorMessage(e)}`, color: 'red' },
           { text: '' },
         ],
       }))
@@ -422,6 +436,7 @@ export const useGameStore = create<StoreState>()(
       snapshotRunCounts: s.snapshotRunCounts,
       snapshotClosedRows: s.snapshotClosedRows,
       manuallyMarkedComplete: s.manuallyMarkedComplete,
+      correctlyAnsweredQuizzes: s.correctlyAnsweredQuizzes,
       currentLevelId: s.currentLevelId,
     })
 
@@ -458,6 +473,9 @@ export const useGameStore = create<StoreState>()(
     set((s) => ({
       correctlyAnsweredQuizzes: new Set([...s.correctlyAnsweredQuizzes, levelId]),
     }))
+    // For quiz-gated levels, the correct answer is what completes the level.
+    // For other levels, this is a no-op (level is already in completedLevels).
+    get().checkLevel()
   },
 
   dismissLevelComplete: () => set({ levelJustCompleted: false }),
@@ -467,12 +485,15 @@ export const useGameStore = create<StoreState>()(
     const s = get()
     const level = getLevelById(s.currentLevelId)
     const hasQuiz = level?.quiz != null
+    // If the quiz was the gate (already answered correctly), don't show it again.
+    const alreadyAnswered = s.correctlyAnsweredQuizzes.has(s.currentLevelId)
+    const showQuiz = hasQuiz && !alreadyAnswered
     const isLast = s.currentLevelId === getLastLevelId()
     set({
       showLevelComplete: false,
-      showLevelQuiz: hasQuiz,
-      // No quiz on the last level → trigger the course-complete modal directly.
-      showCourseComplete: !hasQuiz && isLast && !s.courseCompleteSeen,
+      showLevelQuiz: showQuiz,
+      // Trigger course-complete directly when no follow-up quiz will fire.
+      showCourseComplete: !showQuiz && isLast && !s.courseCompleteSeen,
     })
   },
 
@@ -485,15 +506,13 @@ export const useGameStore = create<StoreState>()(
     })
   },
 
+  openLevelQuiz: () => set({ showLevelQuiz: true }),
+
   dismissCourseComplete: () =>
     set({ showCourseComplete: false, courseCompleteSeen: true }),
 
   dismissWelcome: () => {
-    try {
-      localStorage.setItem('dbt-quest-welcome-seen-narrative', '1')
-    } catch {
-      /* ignore — quota / privacy mode */
-    }
+    safeStorage.setItem('dbt-quest-welcome-seen-narrative', '1')
     set({ showWelcome: false })
   },
 
@@ -522,12 +541,8 @@ export const useGameStore = create<StoreState>()(
       // sits on top (higher z-index) and the user gets welcome → L1 intro on dismiss.
       showWelcome: true,
     })
-    try {
-      localStorage.removeItem(PERSIST_KEY)
-      localStorage.removeItem('dbt-quest-welcome-seen-narrative')
-    } catch {
-      /* ignore — quota / privacy mode */
-    }
+    safeStorage.removeItem(PERSIST_KEY)
+    safeStorage.removeItem('dbt-quest-welcome-seen-narrative')
     await get().loadLevel(1)
   },
     }),
@@ -544,25 +559,29 @@ export const useGameStore = create<StoreState>()(
         courseCompleteSeen: s.courseCompleteSeen,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as {
-          completedLevels?: number[]
-          correctlyAnsweredQuizzes?: number[]
-          manuallyMarkedComplete?: number[]
-          dismissedIntros?: number[]
-          currentLevelId?: number
-          courseCompleteSeen?: boolean
-        }
-        const completed = p.completedLevels ?? []
-        const dismissed =
-          p.dismissedIntros ?? (completed.length > 0 ? completed : [])
+        // Defensive hydration: localStorage can be edited by hand or corrupted
+        // by a botched migration. Reject anything that isn't the expected
+        // shape so a bad value doesn't crash the app or silently poison state.
+        const numberArray = (v: unknown): number[] =>
+          Array.isArray(v) ? v.filter((x): x is number => typeof x === 'number' && Number.isFinite(x)) : []
+        const obj = (persisted && typeof persisted === 'object' ? persisted : {}) as Record<string, unknown>
+
+        const completed = numberArray(obj.completedLevels)
+        const dismissed = Array.isArray(obj.dismissedIntros)
+          ? numberArray(obj.dismissedIntros)
+          : completed
+        const currentLevelId = typeof obj.currentLevelId === 'number' && Number.isFinite(obj.currentLevelId)
+          ? obj.currentLevelId
+          : 0
+
         return {
           ...current,
           completedLevels: new Set(completed),
-          correctlyAnsweredQuizzes: new Set(p.correctlyAnsweredQuizzes ?? []),
-          manuallyMarkedComplete: new Set(p.manuallyMarkedComplete ?? []),
+          correctlyAnsweredQuizzes: new Set(numberArray(obj.correctlyAnsweredQuizzes)),
+          manuallyMarkedComplete: new Set(numberArray(obj.manuallyMarkedComplete)),
           dismissedIntros: new Set(dismissed),
-          currentLevelId: p.currentLevelId ?? 0,
-          courseCompleteSeen: p.courseCompleteSeen ?? false,
+          currentLevelId,
+          courseCompleteSeen: obj.courseCompleteSeen === true,
         }
       },
     },

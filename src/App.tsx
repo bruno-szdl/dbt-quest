@@ -23,8 +23,10 @@ export default function App() {
     if (initializedRef.current) return
     initializedRef.current = true
     const resumeId = useGameStore.getState().currentLevelId || 1
-    loadLevel(resumeId)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    loadLevel(resumeId).catch((err) => {
+      console.error('Failed to initialise level on startup:', err)
+    })
+  }, [loadLevel])
 
   const [sidebarWidth, setSidebarWidth] = useState(220)
   const [rightPanelWidth, setRightPanelWidth] = useState(300)
@@ -113,8 +115,20 @@ export default function App() {
         {/* Sidebar ↔ main handle */}
         <div
           className="shrink-0 cursor-col-resize"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize file explorer"
+          aria-valuenow={sidebarWidth}
+          aria-valuemin={160}
+          aria-valuemax={380}
+          tabIndex={0}
           style={{ width: '4px', background: 'var(--color-border)' }}
           onMouseDown={onSidebarHandleDown}
+          onKeyDown={(e) => {
+            const step = e.shiftKey ? 32 : 8
+            if (e.key === 'ArrowLeft') { e.preventDefault(); setSidebarWidth((w) => Math.max(160, w - step)) }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); setSidebarWidth((w) => Math.min(380, w + step)) }
+          }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-muted)' }}
           onMouseLeave={(e) => { if (!draggingSidebar.current) e.currentTarget.style.background = 'var(--color-border)' }}
         />
@@ -134,8 +148,20 @@ export default function App() {
         {/* Main ↔ right panel handle */}
         <div
           className="shrink-0 cursor-col-resize"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize lesson panel"
+          aria-valuenow={rightPanelWidth}
+          aria-valuemin={220}
+          aria-valuemax={520}
+          tabIndex={0}
           style={{ width: '4px', background: 'var(--color-border)' }}
           onMouseDown={onRightHandleDown}
+          onKeyDown={(e) => {
+            const step = e.shiftKey ? 32 : 8
+            if (e.key === 'ArrowLeft') { e.preventDefault(); setRightPanelWidth((w) => Math.min(520, w + step)) }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); setRightPanelWidth((w) => Math.max(220, w - step)) }
+          }}
           onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-muted)' }}
           onMouseLeave={(e) => { if (!draggingRight.current) e.currentTarget.style.background = 'var(--color-border)' }}
         />

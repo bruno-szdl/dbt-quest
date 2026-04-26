@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useGameStore } from '../store/gameStore'
 import { getLastLevelId, getLevelById } from '../levels'
+import { useModalA11y } from '../hooks/useModalA11y'
 
 export default function LevelQuizModal() {
   const show = useGameStore((s) => s.showLevelQuiz)
   const currentLevelId = useGameStore((s) => s.currentLevelId)
+  const completedLevels = useGameStore((s) => s.completedLevels)
   const dismissLevelQuiz = useGameStore((s) => s.dismissLevelQuiz)
   const loadLevel = useGameStore((s) => s.loadLevel)
   const resetLevel = useGameStore((s) => s.resetLevel)
   const markQuizCorrect = useGameStore((s) => s.markQuizCorrect)
+  const openLevelComplete = useGameStore((s) => s.openLevelComplete)
 
   const [selected, setSelected] = useState<number | null>(null)
   const [revealed, setRevealed] = useState(false)
@@ -16,6 +19,11 @@ export default function LevelQuizModal() {
   const level = getLevelById(currentLevelId)
   const quiz = level?.quiz
   const isLastLevel = currentLevelId === getLastLevelId()
+  const dialogRef = useModalA11y(show && !!quiz)
+  // Pre-gate mode: the quiz IS the level's pass condition. Detected via the
+  // level flag, not completion state, so the right buttons render even after
+  // the correct answer flips the level into completedLevels.
+  const isGate = level?.quizGates === true
 
   function handleOptionClick(index: number) {
     if (revealed) return
@@ -32,12 +40,19 @@ export default function LevelQuizModal() {
     setSelected(null)
     setRevealed(false)
     dismissLevelQuiz()
+    if (isGate) {
+      // Quiz was the gate — show the level-complete celebration with the badge.
+      // (The correct answer already triggered checkLevel via markQuizCorrect.)
+      if (completedLevels.has(currentLevelId)) openLevelComplete()
+      return
+    }
     if (!isLastLevel) loadLevel(currentLevelId + 1)
   }
 
   function handleRetry() {
     setSelected(null)
     setRevealed(false)
+    if (isGate) return // Stay in modal — gate levels have no run state to reset.
     dismissLevelQuiz()
     void resetLevel()
   }
@@ -68,6 +83,11 @@ export default function LevelQuizModal() {
         }
       `}</style>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="level-quiz-question"
+        tabIndex={-1}
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
@@ -78,6 +98,7 @@ export default function LevelQuizModal() {
           flexDirection: 'column',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
           animation: 'slideUp 0.22s ease-out',
+          outline: 'none',
         }}
       >
         {/* Header */}
@@ -93,7 +114,7 @@ export default function LevelQuizModal() {
                 background: 'var(--color-accent-bg)',
                 border: '1px solid var(--color-accent-orange-dim)',
                 color: 'var(--color-accent-orange)',
-                fontSize: '10px',
+                fontSize: '0.625rem',
                 fontFamily: 'JetBrains Mono, monospace',
                 padding: '2px 7px',
                 borderRadius: '4px',
@@ -105,11 +126,12 @@ export default function LevelQuizModal() {
             </span>
           </div>
           <p
+            id="level-quiz-question"
             style={{
               margin: 0,
               color: 'var(--color-text)',
               fontFamily: 'IBM Plex Sans, sans-serif',
-              fontSize: '15px',
+              fontSize: '0.9375rem',
               fontWeight: 600,
               lineHeight: 1.5,
             }}
@@ -179,7 +201,7 @@ export default function LevelQuizModal() {
                     border: `1px solid ${labelColor}`,
                     color: labelColor,
                     fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: '10px',
+                    fontSize: '0.625rem',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
@@ -193,7 +215,7 @@ export default function LevelQuizModal() {
                   style={{
                     color: textColor,
                     fontFamily: 'IBM Plex Sans, sans-serif',
-                    fontSize: '13px',
+                    fontSize: '0.8125rem',
                     lineHeight: 1.5,
                   }}
                 >
@@ -220,7 +242,7 @@ export default function LevelQuizModal() {
                 margin: 0,
                 color: 'var(--color-text-secondary)',
                 fontFamily: 'IBM Plex Sans, sans-serif',
-                fontSize: '13px',
+                fontSize: '0.8125rem',
                 lineHeight: 1.6,
               }}
             >
@@ -252,7 +274,7 @@ export default function LevelQuizModal() {
                 borderRadius: '6px',
                 color: selected === null ? 'var(--color-text-muted)' : '#0d1117',
                 fontFamily: 'IBM Plex Sans, sans-serif',
-                fontSize: '13px',
+                fontSize: '0.8125rem',
                 fontWeight: 600,
                 padding: '8px 20px',
                 cursor: selected === null ? 'not-allowed' : 'pointer',
@@ -273,7 +295,7 @@ export default function LevelQuizModal() {
                     borderRadius: '6px',
                     color: 'var(--color-text-muted)',
                     fontFamily: 'IBM Plex Sans, sans-serif',
-                    fontSize: '13px',
+                    fontSize: '0.8125rem',
                     fontWeight: 600,
                     padding: '8px 16px',
                     cursor: 'pointer',
@@ -299,7 +321,7 @@ export default function LevelQuizModal() {
                   borderRadius: '6px',
                   color: '#0d1117',
                   fontFamily: 'IBM Plex Sans, sans-serif',
-                  fontSize: '13px',
+                  fontSize: '0.8125rem',
                   fontWeight: 600,
                   padding: '8px 20px',
                   cursor: 'pointer',
@@ -310,8 +332,12 @@ export default function LevelQuizModal() {
                 onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.88' }}
                 onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
               >
-                {isLastLevel ? 'Finish' : isCorrect ? 'Continue to next level' : 'Continue anyway'}
-                {!isLastLevel && (
+                {isGate
+                  ? (isCorrect ? 'Complete level' : 'Close')
+                  : isLastLevel
+                    ? 'Finish'
+                    : isCorrect ? 'Continue to next level' : 'Continue anyway'}
+                {!isLastLevel && !isGate && (
                   <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
                   </svg>
