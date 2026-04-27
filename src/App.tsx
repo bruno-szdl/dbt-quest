@@ -9,7 +9,7 @@ import LevelIntroModal from './components/LevelIntroModal'
 import LevelCompleteModal from './components/LevelCompleteModal'
 import LevelQuizModal from './components/LevelQuizModal'
 import CourseCompleteModal from './components/CourseCompleteModal'
-import WelcomeModal from './components/WelcomeModal'
+import OnboardingTour from './components/OnboardingTour'
 import { useGameStore } from './store/gameStore'
 import { useIsMobile } from './hooks/useIsMobile'
 import MobileLayout from './components/MobileLayout'
@@ -89,7 +89,7 @@ export default function App() {
         <LevelCompleteModal />
         <LevelQuizModal />
         <CourseCompleteModal />
-        <WelcomeModal />
+        <OnboardingTour />
       </div>
     )
   }
@@ -101,6 +101,7 @@ export default function App() {
       <div ref={workspaceRef} className="flex-1 flex overflow-hidden">
         {/* ── Left sidebar: file explorer + database explorer ──────────────── */}
         <aside
+          data-tour="files"
           className="flex flex-col shrink-0 overflow-hidden"
           style={{ width: sidebarWidth, minWidth: '160px', background: 'var(--color-base)', borderRight: '1px solid var(--color-border)' }}
         >
@@ -139,10 +140,12 @@ export default function App() {
           className="flex-1 flex flex-col overflow-hidden"
           style={{ minWidth: 0 }}
         >
-          <div className="flex-1 overflow-hidden">
+          <div data-tour="editor" className="flex-1 overflow-hidden">
             <Editor />
           </div>
-          <BottomPanel containerRef={mainColumnRef} />
+          <div data-tour="bottom" className="flex flex-col shrink-0">
+            <BottomPanel containerRef={mainColumnRef} />
+          </div>
         </div>
 
         {/* Main ↔ right panel handle */}
@@ -168,6 +171,7 @@ export default function App() {
 
         {/* ── Right panel: level description + progress ─────────────────────── */}
         <aside
+          data-tour="level"
           className="flex flex-col shrink-0 overflow-hidden"
           style={{ width: rightPanelWidth, minWidth: '220px', background: 'var(--color-surface)', borderLeft: '1px solid var(--color-border)' }}
         >
@@ -179,7 +183,7 @@ export default function App() {
       <LevelCompleteModal />
       <LevelQuizModal />
       <CourseCompleteModal />
-      <WelcomeModal />
+      <OnboardingTour />
     </div>
   )
 }

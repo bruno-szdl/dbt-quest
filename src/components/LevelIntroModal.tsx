@@ -6,23 +6,25 @@ import { useModalA11y } from '../hooks/useModalA11y'
 
 export default function LevelIntroModal() {
   const show = useGameStore((s) => s.showLevelIntro)
+  const tourActive = useGameStore((s) => s.showWelcome)
   const currentLevelId = useGameStore((s) => s.currentLevelId)
   const dismiss = useGameStore((s) => s.dismissLevelIntro)
 
   const level = getLevelById(currentLevelId)
   const mod = getModuleForLevel(currentLevelId)
-  const dialogRef = useModalA11y(show && !!level)
+  const visible = show && !!level && !tourActive
+  const dialogRef = useModalA11y(visible)
 
   useEffect(() => {
-    if (!show) return
+    if (!visible) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') dismiss()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [show, dismiss])
+  }, [visible, dismiss])
 
-  if (!show || !level) return null
+  if (!visible) return null
 
   return (
     <div

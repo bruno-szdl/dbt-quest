@@ -17,6 +17,7 @@ export default function Header() {
   const isMobile = useIsMobile()
   return (
     <header
+      data-tour="header"
       className="flex items-center justify-between shrink-0"
       style={{
         height: '52px',
@@ -61,9 +62,9 @@ export default function Header() {
 
       <div className="flex items-center gap-2 shrink-0">
         {!isMobile && <BadgeStrip />}
-        <ResetLevelButton compact={isMobile} />
+        <ResetMenu compact={isMobile} />
         <ThemeToggleButton />
-        <SettingsMenu />
+        <HelpButton />
       </div>
     </header>
   )
@@ -560,49 +561,113 @@ function TrophyIcon() {
   )
 }
 
-function ResetLevelButton({ compact = false }: { compact?: boolean }) {
+function ResetMenu({ compact = false }: { compact?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const resetLevel = useGameStore((s) => s.resetLevel)
+  const resetAllProgress = useGameStore((s) => s.resetAllProgress)
   const running = useGameStore((s) => s.running)
   const currentLevelId = useGameStore((s) => s.currentLevelId)
 
-  const handleClick = () => {
-    if (running || !currentLevelId) return
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const levelDisabled = running || !currentLevelId
+
+  const handleResetLevel = () => {
+    if (levelDisabled) return
+    setOpen(false)
     if (confirm('Reset this level? All your edits will be discarded.')) void resetLevel()
   }
 
+  const handleResetAll = () => {
+    if (confirm('Reset all progress? You will lose every completed level and badge. This cannot be undone.')) {
+      setOpen(false)
+      void resetAllProgress()
+    }
+  }
+
   return (
-    <button
-      onClick={handleClick}
-      disabled={running || !currentLevelId}
-      title="Reset this level — discard all edits"
-      className="flex items-center justify-center rounded transition-colors"
-      style={{
-        height: '28px',
-        padding: compact ? '0 8px' : '0 10px',
-        gap: '6px',
-        background: 'transparent',
-        border: '1px solid var(--color-border)',
-        color: 'var(--color-text-muted)',
-        fontSize: '0.75rem',
-        fontFamily: 'IBM Plex Sans, sans-serif',
-        cursor: running || !currentLevelId ? 'not-allowed' : 'pointer',
-        opacity: running || !currentLevelId ? 0.5 : 1,
-      }}
-      onMouseEnter={(e) => {
-        if (running || !currentLevelId) return
-        e.currentTarget.style.borderColor = 'var(--color-muted)'
-        e.currentTarget.style.color = 'var(--color-text)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--color-border)'
-        e.currentTarget.style.color = 'var(--color-text-muted)'
-      }}
-    >
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M8 3a5 5 0 1 1-4.546 2.916.75.75 0 1 0-1.359-.632A6.5 6.5 0 1 0 8 1.5V.75a.25.25 0 0 0-.4-.2L5.9 1.825a.25.25 0 0 0 0 .4l1.7 1.275A.25.25 0 0 0 8 3.3V3Z" />
-      </svg>
-      {!compact && <span>Reset level</span>}
-    </button>
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Reset"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center justify-center rounded transition-colors"
+        style={{
+          height: '28px',
+          padding: compact ? '0 8px' : '0 10px',
+          gap: '6px',
+          background: 'transparent',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text-muted)',
+          fontSize: '0.75rem',
+          fontFamily: 'IBM Plex Sans, sans-serif',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-muted)'
+          e.currentTarget.style.color = 'var(--color-text)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'var(--color-border)'
+          e.currentTarget.style.color = 'var(--color-text-muted)'
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 3a5 5 0 1 1-4.546 2.916.75.75 0 1 0-1.359-.632A6.5 6.5 0 1 0 8 1.5V.75a.25.25 0 0 0-.4-.2L5.9 1.825a.25.25 0 0 0 0 .4l1.7 1.275A.25.25 0 0 0 8 3.3V3Z" />
+        </svg>
+        {!compact && <span>Reset</span>}
+        <svg
+          width="9"
+          height="9"
+          viewBox="0 0 16 16"
+          fill="none"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '8px',
+            padding: '4px',
+            minWidth: '220px',
+            zIndex: 100,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          }}
+        >
+          <SettingsItem
+            label="Reset level"
+            description={levelDisabled ? 'No level loaded' : 'Discard your edits on this level'}
+            onClick={handleResetLevel}
+            disabled={levelDisabled}
+          />
+          <div style={{ height: '1px', background: 'var(--color-border-subtle)', margin: '4px 0' }} />
+          <SettingsItem
+            label="Reset all progress"
+            description="Discard every level and badge"
+            onClick={handleResetAll}
+            danger
+          />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -654,92 +719,38 @@ function MoonIcon() {
   )
 }
 
-function SettingsMenu() {
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+function HelpButton() {
   const replayWelcome = useGameStore((s) => s.replayWelcome)
-  const resetAllProgress = useGameStore((s) => s.resetAllProgress)
-
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
-
-  const handleReplay = () => {
-    setOpen(false)
-    replayWelcome()
-  }
-
-  const handleResetAll = () => {
-    if (confirm('Reset all progress? You will lose every completed level and badge. This cannot be undone.')) {
-      setOpen(false)
-      void resetAllProgress()
-    }
-  }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-center rounded transition-colors"
-        style={{
-          width: '28px',
-          height: '28px',
-          background: 'transparent',
-          border: '1px solid var(--color-border)',
-          color: 'var(--color-text-muted)',
-          cursor: 'pointer',
-        }}
-        aria-label="Settings"
-        title="Settings"
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-muted)'
-          e.currentTarget.style.color = 'var(--color-text)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-border)'
-          e.currentTarget.style.color = 'var(--color-text-muted)'
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M9.405 1.05a1.5 1.5 0 0 0-2.81 0l-.21.51a1.5 1.5 0 0 1-2.103.871l-.5-.247a1.5 1.5 0 0 0-1.987 1.987l.247.5a1.5 1.5 0 0 1-.871 2.103l-.51.21a1.5 1.5 0 0 0 0 2.81l.51.21a1.5 1.5 0 0 1 .871 2.103l-.247.5a1.5 1.5 0 0 0 1.987 1.987l.5-.247a1.5 1.5 0 0 1 2.103.871l.21.51a1.5 1.5 0 0 0 2.81 0l.21-.51a1.5 1.5 0 0 1 2.103-.871l.5.247a1.5 1.5 0 0 0 1.987-1.987l-.247-.5a1.5 1.5 0 0 1 .871-2.103l.51-.21a1.5 1.5 0 0 0 0-2.81l-.51-.21a1.5 1.5 0 0 1-.871-2.103l.247-.5a1.5 1.5 0 0 0-1.987-1.987l-.5.247a1.5 1.5 0 0 1-2.103-.871l-.21-.51ZM8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 6px)',
-            right: 0,
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '8px',
-            padding: '4px',
-            minWidth: '200px',
-            zIndex: 100,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-          }}
-        >
-          <SettingsItem
-            label="Replay intro"
-            description="Re-open the welcome modal"
-            onClick={handleReplay}
-          />
-          <div style={{ height: '1px', background: 'var(--color-border-subtle)', margin: '4px 0' }} />
-          <SettingsItem
-            label="Reset all progress"
-            description="Discard every level and badge"
-            onClick={handleResetAll}
-            danger
-          />
-        </div>
-      )}
-    </div>
+    <button
+      onClick={replayWelcome}
+      className="flex items-center justify-center rounded transition-colors"
+      style={{
+        width: '28px',
+        height: '28px',
+        background: 'transparent',
+        border: '1px solid var(--color-border)',
+        color: 'var(--color-text-muted)',
+        cursor: 'pointer',
+      }}
+      aria-label="Replay intro tour"
+      title="Replay intro tour"
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-muted)'
+        e.currentTarget.style.color = 'var(--color-text)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-border)'
+        e.currentTarget.style.color = 'var(--color-text-muted)'
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8" cy="8" r="6.25" />
+        <path d="M6.2 6.1c.15-.83.95-1.45 1.85-1.45 1.05 0 1.9.78 1.9 1.75 0 .8-.55 1.3-1.2 1.65-.55.3-.8.6-.8 1.2" />
+        <circle cx="8" cy="11.5" r="0.6" fill="currentColor" stroke="none" />
+      </svg>
+    </button>
   )
 }
 
@@ -748,15 +759,18 @@ function SettingsItem({
   description,
   onClick,
   danger = false,
+  disabled = false,
 }: {
   label: string
   description: string
   onClick: () => void
   danger?: boolean
+  disabled?: boolean
 }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -767,10 +781,14 @@ function SettingsItem({
         background: 'transparent',
         border: 'none',
         borderRadius: '5px',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         textAlign: 'left',
+        opacity: disabled ? 0.5 : 1,
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = danger ? 'rgba(210, 63, 63, 0.12)' : 'rgba(128,128,128,0.08)' }}
+      onMouseEnter={(e) => {
+        if (disabled) return
+        e.currentTarget.style.background = danger ? 'rgba(210, 63, 63, 0.12)' : 'rgba(128,128,128,0.08)'
+      }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
       <span
