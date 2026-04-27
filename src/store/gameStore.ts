@@ -54,6 +54,7 @@ interface StoreState {
   courseCompleteSeen: boolean
   showWelcome: boolean
   tourStep: number
+  showLanding: boolean
 
   bottomTab: BottomTab
   bottomCollapsed: boolean
@@ -82,6 +83,8 @@ interface StoreState {
   dismissWelcome: () => void
   replayWelcome: () => void
   setTourStep: (step: number) => void
+  dismissLanding: () => void
+  openLanding: () => void
 
   setBottomTab: (tab: BottomTab) => void
   setBottomCollapsed: (collapsed: boolean) => void
@@ -135,6 +138,7 @@ export const useGameStore = create<StoreState>()(
   // Open the onboarding tour on first load; dismissWelcome persists the flag in localStorage.
   showWelcome: !safeStorage.getItem('dbt-quest-welcome-seen-narrative'),
   tourStep: 0,
+  showLanding: true,
 
   bottomTab: 'commands',
   bottomCollapsed: false,
@@ -522,6 +526,9 @@ export const useGameStore = create<StoreState>()(
   replayWelcome: () => set({ showWelcome: true, tourStep: 0 }),
 
   setTourStep: (step) => set({ tourStep: step }),
+
+  dismissLanding: () => set({ showLanding: false }),
+  openLanding: () => set({ showLanding: true }),
 
   dismissLevelIntro: () =>
     set((s) => ({

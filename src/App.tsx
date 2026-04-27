@@ -10,12 +10,14 @@ import LevelCompleteModal from './components/LevelCompleteModal'
 import LevelQuizModal from './components/LevelQuizModal'
 import CourseCompleteModal from './components/CourseCompleteModal'
 import OnboardingTour from './components/OnboardingTour'
+import LandingPage from './components/LandingPage'
 import { useGameStore } from './store/gameStore'
 import { useIsMobile } from './hooks/useIsMobile'
 import MobileLayout from './components/MobileLayout'
 
 export default function App() {
   const loadLevel = useGameStore((s) => s.loadLevel)
+  const showLanding = useGameStore((s) => s.showLanding)
   const initializedRef = useRef(false)
   const isMobile = useIsMobile()
 
@@ -89,7 +91,8 @@ export default function App() {
         <LevelCompleteModal />
         <LevelQuizModal />
         <CourseCompleteModal />
-        <OnboardingTour />
+        {!showLanding && <OnboardingTour />}
+        <LandingPage />
       </div>
     )
   }
@@ -183,7 +186,8 @@ export default function App() {
       <LevelCompleteModal />
       <LevelQuizModal />
       <CourseCompleteModal />
-      <OnboardingTour />
+      {!showLanding && <OnboardingTour />}
+      <LandingPage />
     </div>
   )
 }

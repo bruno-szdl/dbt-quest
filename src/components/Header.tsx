@@ -65,6 +65,7 @@ export default function Header() {
         <ResetMenu compact={isMobile} />
         <ThemeToggleButton />
         <HelpButton />
+        <AboutButton />
       </div>
     </header>
   )
@@ -716,6 +717,41 @@ function MoonIcon() {
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
       <path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Z" />
     </svg>
+  )
+}
+
+function AboutButton() {
+  const openLanding = useGameStore((s) => s.openLanding)
+
+  return (
+    <button
+      onClick={openLanding}
+      className="flex items-center justify-center rounded transition-colors"
+      style={{
+        width: '28px',
+        height: '28px',
+        background: 'transparent',
+        border: '1px solid var(--color-border)',
+        color: 'var(--color-text-muted)',
+        cursor: 'pointer',
+      }}
+      aria-label="About dbt-quest"
+      title="About dbt-quest"
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-muted)'
+        e.currentTarget.style.color = 'var(--color-text)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--color-border)'
+        e.currentTarget.style.color = 'var(--color-text-muted)'
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8" cy="8" r="6.25" />
+        <path d="M8 7v4" />
+        <circle cx="8" cy="4.8" r="0.6" fill="currentColor" stroke="none" />
+      </svg>
+    </button>
   )
 }
 
