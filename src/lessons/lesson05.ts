@@ -3,7 +3,6 @@ import {
   modelSqlMatches,
   onlyModelsRan,
   lastRunSelected,
-  modelRan,
   buildSucceeded,
 } from '../engine/validators'
 import {
@@ -81,8 +80,9 @@ In this lesson the project is already built. You'll make a small change to one m
       hint: "When you genuinely want every model rebuilt, drop the flag entirely: `dbt run`.",
       validate: (s) =>
         buildSucceeded(s) &&
-        modelRan(s, 'stg_customers') &&
-        modelRan(s, 'fct_revenue_by_customer'),
+        s.lastRun !== null &&
+        s.lastRun.command === 'run' &&
+        !s.lastRun.usedSelect,
     },
   ],
   quiz: {
