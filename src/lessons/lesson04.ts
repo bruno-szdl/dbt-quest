@@ -47,7 +47,7 @@ Our project's marts get hit often by downstream consumers. Convert \`dim_custome
     },
     {
       id: 'table-fct',
-      prompt: "Do the same for `fct_revenue_by_customer` — it's a mart, so it should be a table too.",
+      prompt: "Do the same for `fct_revenue_by_customer` -it's a mart, so it should be a table too.",
       hint: "Same config block at the top of `models/fct_revenue_by_customer.sql`: `{{ config(materialized='table') }}`.",
       validate: (s) => modelMaterialization(s, 'fct_revenue_by_customer', 'table'),
     },

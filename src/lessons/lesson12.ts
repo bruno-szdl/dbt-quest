@@ -24,7 +24,7 @@ const lesson12: Lesson = {
   id: 12,
   title: 'Selecting subsets: unions & graph operators',
   panels: ['lineage', 'files', 'warehouse'],
-  concept: `In lesson 5 you selected a single model. Now that the project is organized into staging, intermediate, and marts, you'll often want to select a *subset* — and dbt's selector syntax makes that precise.
+  concept: `In lesson 5 you selected a single model. Now that the project is organized into staging, intermediate, and marts, you'll often want to select a *subset* -and dbt's selector syntax makes that precise.
 
 **Unions.** List several models, separated by spaces, to run all of them:
 
@@ -34,18 +34,18 @@ dbt run --select stg_customers stg_orders
 
 **Graph operators.** A \`+\` pulls in everything connected through the DAG:
 
-- \`+model\` — the model **and everything upstream** of it (its ancestors)
-- \`model+\` — the model **and everything downstream** of it (its descendants)
+- \`+model\` -the model **and everything upstream** of it (its ancestors)
+- \`model+\` -the model **and everything downstream** of it (its descendants)
 
 So \`+fct_revenue_by_customer\` rebuilds that mart *and* every model it depends on, in dependency order.
 
-**Why \`model+\` matters.** Suppose you fix a bug in \`stg_customers\`. Rebuilding *only* \`stg_customers\` isn't enough — the marts built on top of it still hold the old, wrong data. The right move is:
+**Why \`model+\` matters.** Suppose you fix a bug in \`stg_customers\`. Rebuilding *only* \`stg_customers\` isn't enough -the marts built on top of it still hold the old, wrong data. The right move is:
 
 \`\`\`bash
 dbt build --select stg_customers+
 \`\`\`
 
-\`dbt build\` runs **and tests** each model. Combined with \`stg_customers+\`, it rebuilds the fixed model plus everything downstream *and* re-runs their tests — so bad data can't quietly flow through to a dashboard.
+\`dbt build\` runs **and tests** each model. Combined with \`stg_customers+\`, it rebuilds the fixed model plus everything downstream *and* re-runs their tests -so bad data can't quietly flow through to a dashboard.
 
 Watch the lineage graph as you type each selector below: it lights up exactly the models the command will touch.`,
   initialFiles: {
@@ -77,13 +77,13 @@ Watch the lineage graph as you type each selector below: it lights up exactly th
     {
       id: 'union',
       prompt: 'Rebuild both staging models in one command: run `dbt run --select stg_customers stg_orders`.',
-      hint: 'Separate the two model names with a space — that selects the union of both.',
+      hint: 'Separate the two model names with a space -that selects the union of both.',
       validate: (s) => lastRunSelected(s, ['stg_customers', 'stg_orders']),
     },
     {
       id: 'fix-and-downstream',
       prompt: "Pretend you found a data issue. Add `where email is not null` to `models/staging/stg_customers.sql`, then run `dbt build --select stg_customers+` to rebuild and re-test that model plus everything downstream.",
-      hint: "Add `where email is not null` as the last line of `stg_customers.sql`. Then run `dbt build --select stg_customers+` — the trailing `+` pulls in every downstream model.",
+      hint: "Add `where email is not null` as the last line of `stg_customers.sql`. Then run `dbt build --select stg_customers+` -the trailing `+` pulls in every downstream model.",
       validate: (s) =>
         modelSqlMatches(s, 'stg_customers', /where\s+email\s+is\s+not\s+null/i) &&
         usedDownstreamOperator(s, 'stg_customers'),
@@ -97,7 +97,7 @@ Watch the lineage graph as you type each selector below: it lights up exactly th
     {
       id: 'build-all',
       prompt: 'Finally, run a plain `dbt build` to build and test the entire project in one go.',
-      hint: 'No selector this time — `dbt build` walks the whole DAG.',
+      hint: 'No selector this time -`dbt build` walks the whole DAG.',
       validate: (s) => buildSucceeded(s),
     },
   ],
@@ -110,7 +110,7 @@ Watch the lineage graph as you type each selector below: it lights up exactly th
       'dbt test --select stg_customers',
     ],
     correctIndex: 2,
-    explanation: '`stg_customers+` selects the model and everything downstream; `dbt build` runs and tests each one — so the fix propagates and bad data is caught.',
+    explanation: '`stg_customers+` selects the model and everything downstream; `dbt build` runs and tests each one -so the fix propagates and bad data is caught.',
   },
   furtherReading: [
     { label: 'Graph operators', url: 'https://docs.getdbt.com/reference/node-selection/graph-operators' },

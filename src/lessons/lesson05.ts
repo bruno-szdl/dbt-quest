@@ -20,7 +20,7 @@ const lesson05: Lesson = {
   id: 5,
   title: 'Selecting models',
   panels: ['lineage', 'files', 'warehouse'],
-  concept: `So far every command you've run has touched the **whole project**. \`dbt run\` rebuilds every model, every time. On a real project with hundreds of models that's slow — and usually unnecessary. While you're iterating on a single model, you only want to rebuild *that* model.
+  concept: `So far every command you've run has touched the **whole project**. \`dbt run\` rebuilds every model, every time. On a real project with hundreds of models that's slow -and usually unnecessary. While you're iterating on a single model, you only want to rebuild *that* model.
 
 That's what the \`--select\` flag is for:
 
@@ -28,7 +28,7 @@ That's what the \`--select\` flag is for:
 dbt run --select stg_customers
 \`\`\`
 
-This builds only \`stg_customers\` and nothing else. There's a shorthand too — \`-s\` means exactly the same thing:
+This builds only \`stg_customers\` and nothing else. There's a shorthand too -\`-s\` means exactly the same thing:
 
 \`\`\`bash
 dbt run -s stg_customers
@@ -59,7 +59,7 @@ In this lesson the project is already built. You'll make a small change to one m
   tasks: [
     {
       id: 'edit-stg',
-      prompt: "In `models/stg_customers.sql`, remove the `country` column from the SELECT list — nothing downstream uses it.",
+      prompt: "In `models/stg_customers.sql`, remove the `country` column from the SELECT list -nothing downstream uses it.",
       hint: "Delete the `country,` line (and the trailing comma on the line above it if needed) so the model selects only `id`, `name`, and `email`.",
       validate: (s) => !modelSqlMatches(s, 'stg_customers', /\bcountry\b/),
     },

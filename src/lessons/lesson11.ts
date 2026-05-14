@@ -63,7 +63,7 @@ Right-click a file (or hover and click the rename icon) to move it. dbt identifi
     {
       id: 'move-marts',
       prompt: 'Move `dim_customers.sql`, `dim_countries.sql`, and `fct_revenue_by_customer.sql` into `models/marts/`.',
-      hint: 'Three renames. dbt resolves models by name, not path — refs and tests keep working unchanged.',
+      hint: 'Three renames. dbt resolves models by name, not path -refs and tests keep working unchanged.',
       validate: (s) =>
         Boolean(s.files['models/marts/dim_customers.sql']) &&
         Boolean(s.files['models/marts/dim_countries.sql']) &&
@@ -75,7 +75,7 @@ Right-click a file (or hover and click the rename icon) to move it. dbt identifi
     {
       id: 'run',
       prompt: 'Run `dbt run` and verify every model still builds after the reorg.',
-      hint: 'Nothing about the SQL needs to change — only the file paths moved.',
+      hint: 'Nothing about the SQL needs to change -only the file paths moved.',
       validate: (s) =>
         modelRan(s, 'stg_customers') &&
         modelRan(s, 'stg_orders') &&

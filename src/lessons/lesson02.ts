@@ -46,7 +46,7 @@ In our project, \`stg_customers\` is in place from the previous lesson. Now you'
     },
     {
       id: 'lineage',
-      prompt: 'Look at the lineage graph — `stg_customers` should now fan out to both models you just wrote.',
+      prompt: 'Look at the lineage graph -`stg_customers` should now fan out to both models you just wrote.',
       hint: "The DAG updates as soon as the ref() is in your file. Look at the lineage tab.",
       validate: (s) =>
         lineageHasEdge(s, 'stg_customers', 'dim_customers') &&
@@ -54,7 +54,7 @@ In our project, \`stg_customers\` is in place from the previous lesson. Now you'
     },
     {
       id: 'compile',
-      prompt: 'Run `dbt compile` and read the output — see how `{{ ref(\'stg_customers\') }}` is replaced by the real table name.',
+      prompt: 'Run `dbt compile` and read the output -see how `{{ ref(\'stg_customers\') }}` is replaced by the real table name.',
       hint: '`dbt compile` turns the Jinja into plain SQL without building anything. Type `dbt compile` at the prompt.',
       validate: (s) => modelCompiled(s, 'dim_customers') && modelCompiled(s, 'customer_emails'),
     },

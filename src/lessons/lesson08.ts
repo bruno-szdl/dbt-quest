@@ -105,8 +105,8 @@ models:
     },
     {
       id: 'email-test',
-      prompt: 'Add a new column block for `email` under the `stg_customers` model with a `not_null` test, then run `dbt test` again. This time it FAILS — that\'s expected. The raw data has a customer with no email.',
-      hint: "Add this under the existing `id` block (same indentation as `- name: id`):\n```\n      - name: email\n        data_tests:\n          - not_null\n```\nThen run `dbt test`. You should see a red `FAIL` line — read it.",
+      prompt: 'Add a new column block for `email` under the `stg_customers` model with a `not_null` test, then run `dbt test` again. This time it FAILS -that\'s expected. The raw data has a customer with no email.',
+      hint: "Add this under the existing `id` block (same indentation as `- name: id`):\n```\n      - name: email\n        data_tests:\n          - not_null\n```\nThen run `dbt test`. You should see a red `FAIL` line -read it.",
       validate: (s) =>
         fileMatches(s, 'models/schema.yml', /- name:\s*email[\s\S]*?data_tests:\s*[\s\S]*?-\s*not_null/) &&
         s.testResults['stg_customers'] === 'fail',
@@ -114,7 +114,7 @@ models:
     {
       id: 'inspect',
       prompt: 'Run `dbt show --select stg_customers` to inspect the data. Find the row that\'s causing the failure.',
-      hint: 'Look for a row where the `email` column is NULL — that\'s the record failing the `not_null` test.',
+      hint: 'Look for a row where the `email` column is NULL -that\'s the record failing the `not_null` test.',
       validate: (s) => modelShown(s, 'stg_customers'),
     },
     {

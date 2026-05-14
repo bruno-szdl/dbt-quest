@@ -555,7 +555,7 @@ function Markdownish({ text }: { text: string }) {
 
 function renderInline(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = []
-  const re = /(\*\*[^*]+\*\*|`[^`]+`)/g
+  const re = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g
   let last = 0
   let m
   let i = 0
@@ -564,6 +564,8 @@ function renderInline(text: string): React.ReactNode[] {
     const tok = m[0]
     if (tok.startsWith('**')) {
       parts.push(<strong key={i++} style={{ color: 'var(--color-text)' }}>{tok.slice(2, -2)}</strong>)
+    } else if (tok.startsWith('*')) {
+      parts.push(<em key={i++}>{tok.slice(1, -1)}</em>)
     } else {
       parts.push(
         <code key={i++} style={{

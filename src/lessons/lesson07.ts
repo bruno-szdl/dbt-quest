@@ -42,14 +42,14 @@ In this lesson the team has dropped a \`seeds/countries.csv\` lookup into the pr
   tasks: [
     {
       id: 'inspect',
-      prompt: 'Skim `seeds/countries.csv` — it lives under `seeds/`, not `models/`. Notice the header row and five data rows.',
-      hint: 'Click the file in the file tree on the left. CSVs render as plain text — you should see one header row and five data rows.',
+      prompt: 'Skim `seeds/countries.csv` -it lives under `seeds/`, not `models/`. Notice the header row and five data rows.',
+      hint: 'Click the file in the file tree on the left. CSVs render as plain text -you should see one header row and five data rows.',
       validate: (s) => s.openedFiles.has('seeds/countries.csv') || s.loadedSeeds.has('countries'),
     },
     {
       id: 'seed',
       prompt: 'Run `dbt seed` in the terminal to load `countries.csv` into the warehouse.',
-      hint: 'Type `dbt seed` at the prompt and press Enter. Only `dbt seed` loads CSVs — `dbt run` will not.',
+      hint: 'Type `dbt seed` at the prompt and press Enter. Only `dbt seed` loads CSVs -`dbt run` will not.',
       validate: (s) => seedLoaded(s, 'countries'),
     },
     {
@@ -66,7 +66,7 @@ In this lesson the team has dropped a \`seeds/countries.csv\` lookup into the pr
     {
       id: 'show',
       prompt: 'Preview the result with `dbt show --select dim_countries`.',
-      hint: 'You should see five rows — one per country in the CSV.',
+      hint: 'You should see five rows -one per country in the CSV.',
       validate: (s) => s.shownModels.has('dim_countries'),
     },
   ],
@@ -79,7 +79,7 @@ In this lesson the team has dropped a \`seeds/countries.csv\` lookup into the pr
       'Real-time streaming data',
     ],
     correctIndex: 1,
-    explanation: 'Seeds are CSVs in your repo — they go through code review and are tiny. Anything large or fast-changing belongs in your warehouse, not in a CSV.',
+    explanation: 'Seeds are CSVs in your repo -they go through code review and are tiny. Anything large or fast-changing belongs in your warehouse, not in a CSV.',
   },
   furtherReading: [
     { label: 'Seeds', url: 'https://docs.getdbt.com/docs/build/seeds' },
