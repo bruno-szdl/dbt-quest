@@ -1,5 +1,5 @@
 import type { Lesson } from '../engine/types'
-import { buildSucceeded, modelRan, allTestsPass } from '../engine/validators'
+import { buildSucceeded, modelRan, allTestsPass, testFailed } from '../engine/validators'
 import {
   RAW_CUSTOMERS_CSV,
   RAW_ORDERS_CSV,
@@ -74,6 +74,13 @@ Run \`dbt build\` and watch the whole project go.`,
       prompt: 'Verify every model has passing tests.',
       validate: (s) =>
         allTestsPass(s, 'stg_customers') && allTestsPass(s, 'stg_orders'),
+    },
+    {
+      id: 'skip',
+      prompt:
+        "See the safety net in action. In `models/staging/_schema.yml`, remove `'pending'` from the `accepted_values` list on `stg_orders.status`, then run `dbt build` again. Order 106 is `pending`, so the test on `stg_orders` now fails — watch `int_paid_orders` and `fct_revenue_by_customer` get **skipped** instead of built on bad data.",
+      hint: "The list should become `values: ['paid', 'refunded']`. Save the file, then run `dbt build`.",
+      validate: (s) => testFailed(s, 'stg_orders'),
     },
   ],
   quiz: {

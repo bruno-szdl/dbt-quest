@@ -17,7 +17,7 @@ There are no automated tests — task completion is validated via `validate()` f
 
 **dbt-quest** is a browser-based interactive tool for learning dbt, inspired by SQLBolt. It runs entirely in-browser with no backend: SQL executes in DuckDB WASM, the editor is Monaco, and the DAG is rendered with React Flow.
 
-It is a course of **12 short lessons** (plus an intro page, lesson 0). Each lesson teaches one concept, then gives the learner 3–5 hands-on **tasks** that share a single workspace, plus an optional end-of-lesson quiz.
+It is a course of **15 lessons** (lesson 0 is the intro page, lessons 1–14 teach core dbt concepts). Each lesson teaches one concept, then gives the learner 3–5 hands-on **tasks** that share a single workspace, plus an optional end-of-lesson quiz.
 
 ### Stack
 
@@ -33,7 +33,7 @@ It is a course of **12 short lessons** (plus an intro page, lesson 0). Each less
 ```
 src/
 ├── engine/          # dbt simulation: parse SQL, build DAG, execute against DuckDB, run CLI commands
-├── lessons/         # Lesson definitions (lesson00.ts–lesson12.ts), the shared _canonical.ts snapshot, index.ts
+├── lessons/         # Lesson definitions (lesson00.ts–lesson14.ts), the shared _canonical.ts snapshot, index.ts
 ├── components/      # React UI panels (Editor, TerminalPanel, DagPanel, LessonPanel, IntroPage, etc.)
 ├── store/
 │   └── gameStore.ts # Zustand store: files, ranModels, testResults, compiledModels, completedTasks, theme

@@ -136,6 +136,11 @@ export function buildSucceeded(state: GameState): boolean {
   return state.buildSucceeded
 }
 
+/** True if the model has a test that has been run and failed. */
+export function testFailed(state: GameState, model: string): boolean {
+  return state.testResults[model] === 'fail'
+}
+
 export function seedLoaded(state: GameState, seedName: string): boolean {
   return state.loadedSeeds.has(seedName)
 }

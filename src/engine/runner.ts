@@ -224,6 +224,12 @@ function formatModelLine(i: number, total: number, o: ModelOutcome): TerminalLin
   }
 }
 
+function formatSkipLine(i: number, total: number, name: string): TerminalLine {
+  const prefix = `${i + 1} of ${total} SKIP ${name} `
+  const suffix = `[SKIP]`
+  return { text: `${prefix}${dots(prefix, suffix)} ${suffix}`, color: 'yellow' }
+}
+
 function formatTestLine(i: number, total: number, t: TestOutcome): TerminalLine {
   const label = `${t.kind}_${t.model}_${t.column}`
   const prefix = `${i + 1} of ${total} ${t.passed ? 'PASS' : 'FAIL'} ${label} `
@@ -426,6 +432,8 @@ export async function execute(
 
   const wantRun = command.type === 'run'
   let runFailed = false
+  let skippedCount = 0
+  let failedTestCount = 0
 
   if (command.type === 'build') {
     // For dbt build, interleave model execution and test execution in DAG order:
@@ -460,14 +468,33 @@ export async function execute(
       let totalModels = 0
       let totalTests = 0
       let passedTests = 0
+      // Models that failed a test, or were skipped because an upstream did.
+      // `dbt build` never builds a model on top of bad data.
+      const tainted = new Set<string>()
+      let nodeIndex = 0
 
       for (const model of selected) {
+        // Skip this model if any model it ref()s failed a test or was itself skipped.
+        const taintedUpstream = model.refs.filter((r) => tainted.has(r))
+        if (taintedUpstream.length > 0) {
+          tainted.add(model.name)
+          skippedCount++
+          lines.push(formatSkipLine(nodeIndex, selected.length, model.name))
+          lines.push({
+            text: `  → skipped: upstream ${taintedUpstream.join(', ')} failed a test.`,
+            color: 'yellow',
+          })
+          nodeIndex++
+          continue
+        }
+
         // Run the model
         const modelOutcome = await materializeModels([model])
         const modelResult = modelOutcome[0]
         totalModels++
 
-        lines.push(formatModelLine(totalModels, selected.length, modelResult))
+        lines.push(formatModelLine(nodeIndex, selected.length, modelResult))
+        nodeIndex++
 
         if (modelResult.passed && modelResult.materialization === 'incremental' && modelResult.incrementalAppendedRows !== undefined) {
           const n = modelResult.incrementalAppendedRows
@@ -508,13 +535,18 @@ export async function execute(
             if (t.error) lines.push({ text: `  Error: ${t.error}`, color: 'red' })
           })
 
+          let modelHadFailingTest = false
           for (const t of testOutcomes) {
             totalTests++
             if (t.passed) passedTests++
+            else modelHadFailingTest = true
             const prev = newTestResults[t.model]
             if (prev === 'fail') continue
             newTestResults[t.model] = t.passed ? 'pass' : 'fail'
           }
+          // A failing test taints the model: downstream models that ref() it
+          // will be skipped rather than built on bad data.
+          if (modelHadFailingTest) tainted.add(model.name)
         }
       }
 
@@ -525,14 +557,18 @@ export async function execute(
           color: 'red',
         })
       } else {
+        const skipNote = skippedCount > 0 ? `, ${skippedCount} skipped` : ''
         lines.push({
-          text: `Finished running ${totalModels} model${totalModels !== 1 ? 's' : ''} in ${totalModelTime.toFixed(2)}s and ${totalTests} test${totalTests !== 1 ? 's' : ''}.`,
+          text: `Finished running ${totalModels} model${totalModels !== 1 ? 's' : ''}${skipNote} in ${totalModelTime.toFixed(2)}s and ${totalTests} test${totalTests !== 1 ? 's' : ''}.`,
           color: 'gray',
         })
-        const failedTests = totalTests - passedTests
+        failedTestCount = totalTests - passedTests
+        const ok = failedTestCount === 0 && skippedCount === 0
         lines.push({
-          text: failedTests === 0 ? 'Completed successfully.' : `Done. PASS=${passedTests} FAIL=${failedTests}`,
-          color: failedTests === 0 ? 'green' : 'red',
+          text: ok
+            ? 'Completed successfully.'
+            : `Done. PASS=${passedTests} FAIL=${failedTestCount} SKIP=${skippedCount}`,
+          color: ok ? 'green' : 'red',
         })
       }
       lines.push({ text: '' })
@@ -657,8 +693,12 @@ export async function execute(
     modelColumns: newColumns,
     lastRun,
   }
-  if ((command.type === 'run' || command.type === 'build') && !runFailed) {
+  if (command.type === 'run' && !runFailed) {
     updatedState.buildSucceeded = true
+  }
+  if (command.type === 'build') {
+    updatedState.buildSucceeded =
+      !runFailed && skippedCount === 0 && failedTestCount === 0
   }
   return { lines, updatedState }
 }
