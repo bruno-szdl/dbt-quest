@@ -126,21 +126,45 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
         className="flex-1 overflow-y-auto px-4 py-3"
         style={{ scrollBehavior: 'smooth' }}
       >
-        {terminalHistory.map((line, i) => (
+        {terminalHistory.length === 0 ? (
           <div
-            key={i}
             style={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              color: 'var(--color-text-muted)',
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '0.75rem',
-              lineHeight: '1.65',
-              color: lineColor(line),
-              whiteSpace: 'pre',
-              minHeight: '1.65em',
+              fontSize: '0.6875rem',
+              opacity: 0.5,
+              userSelect: 'none',
             }}
           >
-            {line.text || ' '}
+            <span>type your commands below</span>
+            <svg width="16" height="20" viewBox="0 0 16 20" fill="none" aria-hidden="true">
+              <line x1="8" y1="0" x2="8" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <polyline points="3,10 8,16 13,10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-        ))}
+        ) : (
+          terminalHistory.map((line, i) => (
+            <div
+              key={i}
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '0.75rem',
+                lineHeight: '1.65',
+                color: lineColor(line),
+                whiteSpace: 'pre',
+                minHeight: '1.65em',
+              }}
+            >
+              {line.text || ' '}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Input row */}

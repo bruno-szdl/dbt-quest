@@ -1,9 +1,19 @@
 import { useGameStore } from '../store/gameStore'
+import { getLastLessonId } from '../lessons'
 
 /**
  * Lesson 0: pure-prose introduction. Rendered as a full-width article
  * instead of the four-panel IDE. Mirrors SQLBolt's first-page pattern.
  */
+const codeStyle = {
+  fontFamily: 'JetBrains Mono, monospace',
+  fontSize: '0.85em',
+  background: 'var(--color-base)',
+  padding: '1px 4px',
+  borderRadius: '3px',
+  border: '1px solid var(--color-border-subtle)',
+}
+
 export default function IntroPage() {
   const loadLesson = useGameStore((s) => s.loadLesson)
 
@@ -57,18 +67,27 @@ export default function IntroPage() {
         </p>
 
         <Aside title="Did you know?">
-          dbt projects are just folders of <code>.sql</code> and <code>.yml</code> files. No proprietary syntax. If you can write SQL, you can write dbt. But dbt turns those files into something bigger: a managed, tested, documented, version-controlled transformation framework with full lineage.
+          dbt projects are just folders of <code style={codeStyle}>.sql</code> and <code style={codeStyle}>.yml</code> files. No proprietary syntax. If you can write SQL, you can write dbt. But dbt turns those files into something bigger: a managed, tested, documented, version-controlled transformation framework with full lineage.
         </Aside>
 
         <p style={{ margin: '0 0 12px' }}>
-          A dbt project is a folder full of <code>.sql</code> files. Each file is a{' '}
-          <code>SELECT</code> statement (what dbt calls a <strong style={{ color: 'var(--color-text)' }}>model</strong>).
-          You run <code>dbt run</code> and dbt:
+          A dbt project is a folder full of <code style={codeStyle}>.sql</code> files. Each file is a{' '}
+          <code style={codeStyle}>SELECT</code> statement (what dbt calls a <strong style={{ color: 'var(--color-text)' }}>model</strong>).
+          When you run <code style={codeStyle}>dbt run</code>, dbt:
         </p>
-        <ol style={{ margin: '0 0 16px', paddingLeft: '24px' }}>
-          <li>Reads every model in the folder</li>
-          <li>Parses each model's <code>ref()</code> calls to figure out which model depends on which (the <strong style={{ color: 'var(--color-text)' }}>DAG</strong>)</li>
-          <li>Materializes each one as a view or table in the warehouse, in dependency order</li>
+        <ol style={{ margin: '0 0 16px', paddingLeft: '0', listStyle: 'none' }}>
+          <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
+            <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
+            <span>Reads all your SQL models</span>
+          </li>
+          <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
+            <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
+            <span>Figures out which models depend on others (the <strong style={{ color: 'var(--color-text)' }}>DAG</strong>)</span>
+          </li>
+          <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
+            <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
+            <span>Runs them in the right order and builds the results in your database</span>
+          </li>
         </ol>
         <p style={{ margin: '0 0 16px' }}>
           That's the core idea. Everything else (tests, docs, sources, materializations, snapshots)
@@ -81,13 +100,13 @@ export default function IntroPage() {
         </p>
         <DagDiagram />
         <p style={{ margin: '16px 0' }}>
-          The arrows are <code>ref()</code> calls in SQL. dbt reads them, builds the graph above,
+          The arrows are <code style={codeStyle}>ref()</code> calls in SQL. dbt reads them, builds the graph above,
           and runs the models left-to-right.
         </p>
 
         <SectionHeader>About the lessons</SectionHeader>
         <p style={{ margin: '0 0 16px' }}>
-          There are 12 short lessons. Each one introduces a single concept, then gives you 3–5
+          There are {getLastLessonId()} short lessons. Each one introduces a single concept, then gives you 3–5
           small tasks to apply it.
         </p>
         <p style={{ margin: '0 0 16px' }}>
@@ -102,7 +121,7 @@ export default function IntroPage() {
         <SectionHeader>Before you start</SectionHeader>
         <p style={{ margin: '0 0 16px' }}>
           You only need to know basic SQL —{' '}
-          <code>SELECT</code>, <code>WHERE</code>, <code>GROUP BY</code>. That's it.
+          <code style={codeStyle}>SELECT</code>, <code style={codeStyle}>WHERE</code>, <code style={codeStyle}>GROUP BY</code>. That's it.
           You don't need a database, a dbt installation, or command-line experience.
           Everything runs in your browser.
         </p>

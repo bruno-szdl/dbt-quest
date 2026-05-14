@@ -404,7 +404,6 @@ export const useGameStore = create<StoreState>()(
           seenPanels: nextSeen,
           newlyRevealedPanels: newlyRevealed,
           terminalHistory: [
-            { text: `Lesson ${id} — ${lesson.title}`, color: 'gray' },
             { text: 'Preparing DuckDB…', color: 'gray' },
           ],
         })
@@ -430,16 +429,8 @@ export const useGameStore = create<StoreState>()(
               }
             }
           }
-          const seedNames = Object.keys(seeds)
           set((s) => ({
-            terminalHistory: [
-              ...s.terminalHistory.slice(0, 1),
-              seedNames.length
-                ? { text: `Seeded: ${seedNames.join(', ')}`, color: 'gray' }
-                : { text: 'No seeds for this lesson.', color: 'gray' },
-              { text: `Try: dbt run${seedNames.length ? ' · dbt show --select <model>' : ''}`, color: 'gray' },
-              { text: '' },
-            ],
+            terminalHistory: [],
             ...(preRanSet.size ? { ranModels: preRanSet, modelColumns: preRanColumns } : {}),
           }))
         } catch (e) {
