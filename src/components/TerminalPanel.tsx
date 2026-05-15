@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { resolveSelection } from '../engine/runner'
 import type { TerminalLine } from '../store/gameStore'
@@ -19,6 +20,7 @@ interface TerminalPanelProps {
 }
 
 export default function TerminalPanel({ embedded = false }: TerminalPanelProps) {
+  const { t } = useTranslation()
   const terminalHistory = useGameStore((s) => s.terminalHistory)
   const runCommand = useGameStore((s) => s.runCommand)
   const setDagSelection = useGameStore((s) => s.setDagSelection)
@@ -110,7 +112,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
               letterSpacing: '0.1em',
             }}
           >
-            terminal
+            {t('terminal.header')}
           </span>
           <div className="ml-auto flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-fail)', opacity: 0.4 }} />
@@ -144,7 +146,10 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
               userSelect: 'none',
             }}
           >
-            <span>type a dbt command below - try <span style={{ color: 'var(--color-accent-orange)' }}>dbt run</span></span>
+            <span>
+              {t('terminal.emptyHintLead')}
+              <span style={{ color: 'var(--color-accent-orange)' }}>{t('terminal.emptyHintCmd')}</span>
+            </span>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M8 2v10M4 9l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -198,7 +203,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
-          aria-label="dbt-quest terminal input"
+          aria-label={t('terminal.inputAria')}
           style={{
             flex: 1,
             background: 'transparent',

@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -77,6 +78,7 @@ const IDLE_DOT_LIGHT = '#8c959f'
 // ── custom node ───────────────────────────────────────────────────────────────
 
 function ModelNode({ data }: { data: ModelNodeData }) {
+  const { t } = useTranslation()
   const color = layerColor(data.layer, data.isDark)
   const bg = layerBg(data.layer, data.isDark)
   const failColor = data.isDark ? FAIL_COLOR_DARK : FAIL_COLOR_LIGHT
@@ -102,10 +104,10 @@ function ModelNode({ data }: { data: ModelNodeData }) {
         : ''
   const statusLabel =
     data.hasCycle || data.status === 'error' || data.status === 'fail'
-      ? 'Failed'
+      ? t('dag.status.failed')
       : data.status === 'ok'
-        ? 'Passed'
-        : 'Not run'
+        ? t('dag.status.passed')
+        : t('dag.status.notRun')
 
   return (
     <div
@@ -335,6 +337,7 @@ function DagCanvas({ rfNodes, rfEdges, isDark }: DagCanvasProps) {
 // ── empty state ───────────────────────────────────────────────────────────────
 
 function EmptyState() {
+  const { t } = useTranslation()
   return (
     <div
       className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none"
@@ -350,12 +353,12 @@ function EmptyState() {
           letterSpacing: '0.15em',
         }}
       >
-        DAG Viewer
+        {t('dag.empty')}
       </span>
       <span
         style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.625rem' }}
       >
-        add a model to see the graph
+        {t('dag.emptyHint')}
       </span>
     </div>
   )
@@ -370,6 +373,7 @@ interface DagPanelProps {
 }
 
 export default function DagPanel({ embedded = false, orientation = 'horizontal' }: DagPanelProps) {
+  const { t } = useTranslation()
   const files = useGameStore((s) => s.files)
   const ranModels = useGameStore((s) => s.ranModels)
   const testResults = useGameStore((s) => s.testResults)
@@ -408,7 +412,7 @@ export default function DagPanel({ embedded = false, orientation = 'horizontal' 
               letterSpacing: '0.1em',
             }}
           >
-            dag
+            {t('dag.header')}
           </span>
         </div>
 

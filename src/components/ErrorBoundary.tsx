@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import i18n from '../i18n'
 import { safeStorage } from '../store/safeStorage'
 
 interface Props {
@@ -34,6 +35,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.error) return this.props.children
 
+    const t = i18n.t.bind(i18n)
+
     return (
       <div
         style={{
@@ -57,14 +60,13 @@ export default class ErrorBoundary extends Component<Props, State> {
               marginBottom: '12px',
             }}
           >
-            Something broke
+            {t('errorBoundary.eyebrow')}
           </div>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 12px' }}>
-            dbt-quest hit an unexpected error
+            {t('errorBoundary.title')}
           </h1>
           <p style={{ color: 'var(--color-text-muted, #7d8590)', margin: '0 0 16px', lineHeight: 1.5 }}>
-            Try reloading the page. If the problem persists, you can reset your saved progress —
-            this will clear completed levels and unlocked badges, but should recover the app.
+            {t('errorBoundary.body')}
           </p>
           <pre
             style={{
@@ -95,7 +97,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 cursor: 'pointer',
               }}
             >
-              Reload page
+              {t('errorBoundary.reload')}
             </button>
             <button
               onClick={this.handleReset}
@@ -109,7 +111,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 cursor: 'pointer',
               }}
             >
-              Reset progress &amp; reload
+              {t('errorBoundary.reset')}
             </button>
           </div>
         </div>

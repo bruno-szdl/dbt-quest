@@ -1,1 +1,183 @@
-{}
+{
+  "header": {
+    "tagline": "Aprenda dbt no seu navegador",
+    "lesson": "Lição",
+    "githubLabel": "Ver código no GitHub",
+    "linkedinLabel": "Autor no LinkedIn",
+    "lightMode": "Mudar para o tema claro",
+    "darkMode": "Mudar para o tema escuro",
+    "changeLanguage": "Mudar idioma",
+    "lessonsAria": "Lições"
+  },
+  "lessonPanel": {
+    "badge": "Lição {{current}} / {{total}}",
+    "tasks": "Tarefas",
+    "showHint": "Ver dica",
+    "furtherReading": "Para se aprofundar",
+    "quiz": "Teste seu entendimento",
+    "nextLesson": "Próxima lição →",
+    "courseComplete": "Você terminou o curso. Vá construir algo com dbt."
+  },
+  "workspace": {
+    "lineage": "Lineage",
+    "commands": "Comandos",
+    "results": "Resultados"
+  },
+  "mobile": {
+    "sectionsAria": "Seções no mobile",
+    "tabs": {
+      "lesson": "Lição",
+      "files": "Arquivos",
+      "editor": "Editor",
+      "console": "Console",
+      "lineage": "Lineage"
+    }
+  },
+  "intro": {
+    "tagline": "Aprenda dbt no seu navegador.",
+    "subTagline": "{{count}} lições interativas e curtas. SQL de verdade, um warehouse de verdade, um DAG de verdade. Tudo rodando nesta página. Sem instalação, sem cadastro.",
+    "ctaBegin": "Começar pela Lição 1 ›",
+    "ctaContinue": "Continuar de onde parei ›",
+    "ctaBeginFull": "Começar pela Lição 1: seu primeiro model dbt ›",
+    "restart": "Recomeçar o curso",
+    "restartConfirm": "Recomeçar o curso do zero, a partir da Lição 1? Seu progresso será apagado.",
+    "welcomeLead": "Bem-vindo ao ",
+    "welcomeProduct": "dbt-quest",
+    "welcomeMid": ", uma série de lições curtas e interativas pensadas para te ajudar a aprender ",
+    "welcomeDbt": "dbt",
+    "welcomeTail": " direto no navegador, inspirada no ",
+    "welcomeSqlBoltAfter": ".",
+    "whatIsDbt": {
+      "heading": "O que é dbt?",
+      "body": "dbt é a ferramenta open-source que times de dados usam para transformar tabelas brutas do warehouse em models confiáveis, documentados e testados. Ele roda sobre qualquer warehouse SQL (Snowflake, Databricks, BigQuery, Postgres, DuckDB, …) e te dá uma forma de gerenciar seu SQL de transformação *como código*: versionado, modular e testável."
+    },
+    "didYouKnow": {
+      "title": "Você sabia?",
+      "body": "Projetos dbt são apenas pastas com arquivos `.sql` e `.yml`. Sem sintaxe proprietária. Se você sabe SQL, você sabe escrever dbt. Mas o dbt transforma esses arquivos em algo maior: um framework de transformação versionado, testado, documentado e com lineage completo."
+    },
+    "dbtRun": {
+      "intro": "Um projeto dbt é uma pasta cheia de arquivos `.sql`. Cada arquivo é um `SELECT` (o que o dbt chama de **model**). Quando você roda `dbt run`, o dbt:",
+      "step1": "Lê todos os seus models SQL",
+      "step2": "Descobre quais models dependem de quais (o **DAG**)",
+      "step3": "Roda eles na ordem certa e materializa os resultados no seu banco",
+      "outro": "É essa a ideia central. Todo o resto (tests, docs, sources, materializations, snapshots) é construído em cima dessas primitivas."
+    },
+    "exampleDag": {
+      "heading": "Um exemplo de DAG",
+      "intro": "Pipelines reais têm várias camadas. Um padrão comum é assim:",
+      "caption": "As setas são chamadas a `ref()` no SQL. O dbt lê elas, monta o grafo acima e executa os models da esquerda para a direita.",
+      "legend": {
+        "source": "source",
+        "staging": "staging",
+        "intermediate": "intermediate",
+        "mart": "mart"
+      }
+    },
+    "aboutLessons": {
+      "heading": "Sobre as lições",
+      "p1": "São {{count}} lições curtas. Cada uma introduz um conceito e depois te dá 3 a 5 tarefas para aplicá-lo. Seu progresso é salvo automaticamente — pode fechar a aba e voltar depois.",
+      "p2": "Vá no seu ritmo, edite o SQL à vontade e não se preocupe em quebrar algo. Toda lição tem um botão \"Reset lesson\" no topo, e toda tarefa tem um botão \"Ver dica\" se você travar.",
+      "p3": "Ao final, você vai conseguir abrir qualquer projeto dbt real e contribuir desde o primeiro dia."
+    },
+    "beforeYouStart": {
+      "heading": "Antes de começar",
+      "body": "Você só precisa saber SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Só isso. Você não precisa de banco de dados, instalação do dbt nem experiência com linha de comando. Tudo roda no navegador."
+    },
+    "footer": {
+      "builtBy": "Feito por Bruno Lima",
+      "tag": "Open-source · Issues e PRs são bem-vindos"
+    }
+  },
+  "workspaceTour": {
+    "files": {
+      "title": "Arquivos",
+      "body": "A pasta do projeto dbt. Models ficam em models/, tests em tests/, e CSVs brutos em seeds/. Clique em um arquivo para abrir no editor."
+    },
+    "editor": {
+      "title": "Editor",
+      "body": "Onde você escreve SQL e YAML. As edições salvam na hora — não tem etapa de \"salvar\" separada."
+    },
+    "terminal": {
+      "title": "Terminal / Resultados / Lineage",
+      "body": "Rode comandos dbt (dbt run, dbt test, dbt build), inspecione resultados de queries e veja o DAG se atualizar conforme você adiciona ref() entre os models."
+    },
+    "lesson": {
+      "title": "Painel da lição",
+      "body": "Você está aqui. Cada lição começa com um conceito curto e depois uma lista de tarefas. O botão 'Ver dica' é seu amigo."
+    }
+  },
+  "courseComplete": {
+    "eyebrow": "Curso concluído",
+    "title": "Você terminou o dbt-quest 🎉",
+    "body": "Agora você consegue ler qualquer projeto dbt real: sources, models, refs, materializations, seeds, tests, docs, seletores, `dbt build`. Esse é o kit de ferramentas.",
+    "whatNext": "O que fazer agora",
+    "step1Lead": "Instale o dbt localmente: ",
+    "step1Link": "guia de instalação do dbt Core",
+    "step2Lead": "Abra um projeto real no GitHub (experimente o ",
+    "step2Link": "jaffle-shop",
+    "step2Tail": ") e percorra o DAG de ponta a ponta.",
+    "step3Lead": "Leia rapidamente a documentação oficial que você ainda não viu aqui: ",
+    "step3Macros": "macros",
+    "step3Incremental": "incremental models",
+    "step3Snapshots": "snapshots",
+    "step3Packages": "packages",
+    "step3Sep": ", ",
+    "step3End": ".",
+    "shareLinkedIn": "Compartilhar no LinkedIn →",
+    "backToIntro": "Voltar à introdução"
+  },
+  "terminal": {
+    "header": "terminal",
+    "emptyHintLead": "digite um comando dbt abaixo - experimente ",
+    "emptyHintCmd": "dbt run",
+    "inputAria": "entrada do terminal dbt-quest"
+  },
+  "results": {
+    "header": "prévia",
+    "rowsOne": "{{shown}} de {{total}} linha",
+    "rowsMany": "{{shown}} de {{total}} linhas",
+    "noRows": "(sem linhas)",
+    "empty": "Ainda sem resultados",
+    "emptyHintLead": "Rode um model e clique em ",
+    "emptyHintShow": "Show Results",
+    "emptyHintOr": "(ou rode ",
+    "emptyHintCmd": "dbt show --select <model>",
+    "emptyHintEnd": ")"
+  },
+  "dag": {
+    "header": "dag",
+    "empty": "Visualização do DAG",
+    "emptyHint": "adicione um model para ver o grafo",
+    "status": {
+      "passed": "Passou",
+      "failed": "Falhou",
+      "notRun": "Não rodou"
+    }
+  },
+  "files": {
+    "header": "Arquivos",
+    "newFile": "Novo arquivo (digite o caminho completo)",
+    "createHint": "↵ criar · esc cancelar",
+    "rename": "Renomear (F2)",
+    "delete": "Excluir arquivo",
+    "emptyLine1": "Nenhum arquivo ainda.",
+    "emptyLine2": "Clique em + para criar um.",
+    "closeTab": "Fechar aba",
+    "noFileOpen": "Nenhum arquivo aberto"
+  },
+  "database": {
+    "header": "Banco de dados",
+    "empty": "Nenhuma tabela ainda"
+  },
+  "panel": {
+    "unlocked": "Liberado",
+    "newPanelAria": "Novo painel: {{panel}}. Clique para dispensar."
+  },
+  "errorBoundary": {
+    "eyebrow": "Algo quebrou",
+    "title": "O dbt-quest encontrou um erro inesperado",
+    "body": "Tente recarregar a página. Se o problema continuar, você pode resetar o progresso salvo — isso vai limpar as lições concluídas e os painéis liberados, mas deve recuperar o app.",
+    "reload": "Recarregar página",
+    "reset": "Resetar progresso e recarregar"
+  }
+}

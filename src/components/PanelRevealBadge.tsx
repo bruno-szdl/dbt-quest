@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import type { PanelKey } from '../engine/types'
 
@@ -10,6 +11,7 @@ const AUTO_DISMISS_MS = 6000
  * click or after AUTO_DISMISS_MS. Renders nothing once dismissed.
  */
 export default function PanelRevealBadge({ panel }: { panel: PanelKey }) {
+  const { t } = useTranslation()
   const isNew = useGameStore((s) => s.newlyRevealedPanels.has(panel))
   const dismiss = useGameStore((s) => s.dismissPanelReveal)
 
@@ -32,7 +34,7 @@ export default function PanelRevealBadge({ panel }: { panel: PanelKey }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); dismiss(panel) }
       }}
-      aria-label={`New panel: ${panel}. Click to dismiss.`}
+      aria-label={t('panel.newPanelAria', { panel })}
       className="badge-pulse-finite"
       style={{
         marginLeft: '6px',
@@ -48,7 +50,7 @@ export default function PanelRevealBadge({ panel }: { panel: PanelKey }) {
         cursor: 'pointer',
       }}
     >
-      Unlocked
+      {t('panel.unlocked')}
     </span>
   )
 }

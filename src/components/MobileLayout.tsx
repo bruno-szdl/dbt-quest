@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getLessonById } from '../lessons'
 import { ALL_PANELS } from '../engine/types'
@@ -12,15 +13,14 @@ import DagPanel from './DagPanel'
 
 type MobileTab = 'lesson' | 'files' | 'editor' | 'console' | 'lineage'
 
-const ALL_TABS: { id: MobileTab; label: string }[] = [
-  { id: 'lesson', label: 'Lesson' },
-  { id: 'files', label: 'Files' },
-  { id: 'editor', label: 'Editor' },
-  { id: 'console', label: 'Console' },
-  { id: 'lineage', label: 'Lineage' },
-]
+const TAB_IDS: MobileTab[] = ['lesson', 'files', 'editor', 'console', 'lineage']
 
 export default function MobileLayout() {
+  const { t } = useTranslation()
+  const ALL_TABS: { id: MobileTab; label: string }[] = TAB_IDS.map((id) => ({
+    id,
+    label: t(`mobile.tabs.${id}`),
+  }))
   const [tab, setTab] = useState<MobileTab>('lesson')
   const [consoleSub, setConsoleSub] = useState<'commands' | 'results'>('commands')
   const currentLessonId = useGameStore((s) => s.currentLessonId)
@@ -92,7 +92,7 @@ export default function MobileLayout() {
       <nav
         className="flex shrink-0"
         role="tablist"
-        aria-label="Mobile sections"
+        aria-label={t('mobile.sectionsAria')}
         style={{
           background: 'var(--color-surface)',
           borderTop: '1px solid var(--color-border)',
@@ -138,11 +138,12 @@ function ConsoleSubTabs({
   sub: 'commands' | 'results'
   setSub: (s: 'commands' | 'results') => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex shrink-0" style={{ background: 'var(--color-surface)', borderBottom: '1px solid var(--color-border)' }}>
-        <SubTabBtn label="Commands" active={sub === 'commands'} onClick={() => setSub('commands')} />
-        <SubTabBtn label="Results" active={sub === 'results'} onClick={() => setSub('results')} />
+        <SubTabBtn label={t('workspace.commands')} active={sub === 'commands'} onClick={() => setSub('commands')} />
+        <SubTabBtn label={t('workspace.results')} active={sub === 'results'} onClick={() => setSub('results')} />
       </div>
       <div className="flex-1 overflow-hidden">
         {sub === 'commands' ? <TerminalPanel embedded /> : <ResultsPanel />}

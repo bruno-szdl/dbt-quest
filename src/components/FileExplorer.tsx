@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import PanelRevealBadge from './PanelRevealBadge'
 
@@ -445,6 +446,7 @@ function DirItem({ node, depth, ...rest }: ItemProps & { node: DirNode }) {
 }
 
 function FileItem({ node, depth, ...rest }: ItemProps & { node: FileNode }) {
+  const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const isActive = node.path === rest.activeFile
   const indent = 8 + depth * 14
@@ -526,7 +528,7 @@ function FileItem({ node, depth, ...rest }: ItemProps & { node: FileNode }) {
         >
           <button
             onClick={(e) => { e.stopPropagation(); rest.onStartRename(node.path) }}
-            title="Rename (F2)"
+            title={t('files.rename')}
             style={iconButtonStyle()}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent-orange)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-muted)' }}
@@ -535,7 +537,7 @@ function FileItem({ node, depth, ...rest }: ItemProps & { node: FileNode }) {
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); rest.onDelete(node.path) }}
-            title="Delete file"
+            title={t('files.delete')}
             style={iconButtonStyle()}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-fail)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-muted)' }}
@@ -571,6 +573,7 @@ function TreeItem(props: ItemProps) {
 // ── main component ────────────────────────────────────────────────────────────
 
 export default function FileExplorer() {
+  const { t } = useTranslation()
   const files = useGameStore((s) => s.files)
   const activeFile = useGameStore((s) => s.activeFile)
   const openFile = useGameStore((s) => s.openFile)
@@ -703,12 +706,12 @@ export default function FileExplorer() {
             letterSpacing: '0.1em',
           }}
         >
-          Files
+          {t('files.header')}
           <PanelRevealBadge panel="files" />
         </span>
         <button
           onClick={startCreateAtRoot}
-          title="New file (type the full path)"
+          title={t('files.newFile')}
           style={{
             background: 'transparent',
             border: 'none',
@@ -784,7 +787,7 @@ export default function FileExplorer() {
               marginTop: '3px',
             }}
           >
-            ↵ create · esc cancel
+            {t('files.createHint')}
           </div>
         </div>
       )}
@@ -802,9 +805,9 @@ export default function FileExplorer() {
               lineHeight: '1.6',
             }}
           >
-            No files yet.
+            {t('files.emptyLine1')}
             <br />
-            Click + to create one.
+            {t('files.emptyLine2')}
           </div>
         ) : (
           tree.map((node) => (

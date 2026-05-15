@@ -1,21 +1,16 @@
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getLastLessonId } from '../lessons'
+import { renderInline } from './Markdownish'
 
 /**
  * Lesson 0: full-width article. A small hero (wordmark + tagline + top CTA)
  * sells the product immediately; the original SQLBolt-style explainer below
- * gives context for learners who want it before clicking through.
+ * gives context for learners who want it before clicking through. All copy
+ * flows through i18n; inline `code` / **bold** is rendered via Markdownish.
  */
-const codeStyle = {
-  fontFamily: 'JetBrains Mono, monospace',
-  fontSize: '0.85em',
-  background: 'var(--color-base)',
-  padding: '1px 4px',
-  borderRadius: '3px',
-  border: '1px solid var(--color-border-subtle)',
-}
-
 export default function IntroPage() {
+  const { t } = useTranslation()
   const loadLesson = useGameStore((s) => s.loadLesson)
   const completedTasks = useGameStore((s) => s.completedTasks)
   const last = getLastLessonId()
@@ -69,7 +64,7 @@ export default function IntroPage() {
             lineHeight: 1.45,
           }}
         >
-          Learn dbt in your browser.
+          {t('intro.tagline')}
         </p>
         <p
           style={{
@@ -81,8 +76,7 @@ export default function IntroPage() {
             lineHeight: 1.55,
           }}
         >
-          {last} short interactive lessons. Real SQL, a real warehouse, a real DAG.
-          All running in this page. No install, no signup.
+          {t('intro.subTagline', { count: last })}
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -91,12 +85,12 @@ export default function IntroPage() {
             className="btn-primary"
             style={{ fontSize: '0.9375rem', padding: '12px 22px' }}
           >
-            {hasProgress ? 'Continue learning ›' : 'Begin Lesson 1 ›'}
+            {hasProgress ? t('intro.ctaContinue') : t('intro.ctaBegin')}
           </button>
           {hasProgress && (
             <button
               onClick={() => {
-                if (window.confirm('Start the course over from Lesson 1? Your task progress will be cleared.')) {
+                if (window.confirm(t('intro.restartConfirm'))) {
                   try {
                     localStorage.removeItem('dbt-quest-progress')
                   } catch { /* ignore */ }
@@ -115,7 +109,7 @@ export default function IntroPage() {
                 cursor: 'pointer',
               }}
             >
-              Restart course
+              {t('intro.restart')}
             </button>
           )}
         </div>
@@ -134,9 +128,11 @@ export default function IntroPage() {
         }}
       >
         <p style={{ margin: '0 0 16px' }}>
-          Welcome to <strong style={{ color: 'var(--color-text)' }}>dbt-quest</strong>, a series of
-          short, interactive lessons designed to help you learn{' '}
-          <strong style={{ color: 'var(--color-text)' }}>dbt</strong> right in your browser, inspired by{' '}
+          {t('intro.welcomeLead')}
+          <strong style={{ color: 'var(--color-text)' }}>{t('intro.welcomeProduct')}</strong>
+          {t('intro.welcomeMid')}
+          <strong style={{ color: 'var(--color-text)' }}>{t('intro.welcomeDbt')}</strong>
+          {t('intro.welcomeTail')}
           <a
             href="https://sqlbolt.com/"
             target="_blank"
@@ -144,76 +140,37 @@ export default function IntroPage() {
             style={{ color: 'var(--color-accent-orange)', textDecoration: 'underline' }}
           >
             SQLBolt
-          </a>.
+          </a>
+          {t('intro.welcomeSqlBoltAfter')}
         </p>
 
-        <SectionHeader>What is dbt?</SectionHeader>
-        <p style={{ margin: '0 0 16px' }}>
-          dbt is the open-source tool data teams use to turn raw warehouse tables into trustworthy,
-          documented, tested models. It sits on top of any SQL warehouse (Snowflake, Databricks, BigQuery,
-          Postgres, DuckDB, …) and gives you a way to manage your transformation SQL <em>as code</em>:
-          version-controlled, modular, and testable.
-        </p>
+        <SectionHeader>{t('intro.whatIsDbt.heading')}</SectionHeader>
+        <p style={{ margin: '0 0 16px' }}>{renderInline(t('intro.whatIsDbt.body'))}</p>
 
-        <Aside title="Did you know?">
-          dbt projects are just folders of <code style={codeStyle}>.sql</code> and <code style={codeStyle}>.yml</code> files. No proprietary syntax. If you can write SQL, you can write dbt. But dbt turns those files into something bigger: a managed, tested, documented, version-controlled transformation framework with full lineage.
+        <Aside title={t('intro.didYouKnow.title')}>
+          {renderInline(t('intro.didYouKnow.body'))}
         </Aside>
 
-        <p style={{ margin: '0 0 12px' }}>
-          A dbt project is a folder full of <code style={codeStyle}>.sql</code> files. Each file is a{' '}
-          <code style={codeStyle}>SELECT</code> statement (what dbt calls a <strong style={{ color: 'var(--color-text)' }}>model</strong>).
-          When you run <code style={codeStyle}>dbt run</code>, dbt:
-        </p>
+        <p style={{ margin: '0 0 12px' }}>{renderInline(t('intro.dbtRun.intro'))}</p>
         <ol style={{ margin: '0 0 16px', paddingLeft: '0', listStyle: 'none' }}>
-          <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
-            <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
-            <span>Reads all your SQL models</span>
-          </li>
-          <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
-            <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
-            <span>Figures out which models depend on others (the <strong style={{ color: 'var(--color-text)' }}>DAG</strong>)</span>
-          </li>
-          <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
-            <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
-            <span>Runs them in the right order and builds the results in your database</span>
-          </li>
+          <DbtRunStep>{renderInline(t('intro.dbtRun.step1'))}</DbtRunStep>
+          <DbtRunStep>{renderInline(t('intro.dbtRun.step2'))}</DbtRunStep>
+          <DbtRunStep>{renderInline(t('intro.dbtRun.step3'))}</DbtRunStep>
         </ol>
-        <p style={{ margin: '0 0 16px' }}>
-          That's the core idea. Everything else (tests, docs, sources, materializations, snapshots)
-          is built on top of those primitives.
-        </p>
+        <p style={{ margin: '0 0 16px' }}>{renderInline(t('intro.dbtRun.outro'))}</p>
 
-        <SectionHeader>An example DAG</SectionHeader>
-        <p style={{ margin: '0 0 16px' }}>
-          Real pipelines have several layers. A common pattern looks like this:
-        </p>
+        <SectionHeader>{t('intro.exampleDag.heading')}</SectionHeader>
+        <p style={{ margin: '0 0 16px' }}>{t('intro.exampleDag.intro')}</p>
         <DagDiagram />
-        <p style={{ margin: '16px 0' }}>
-          The arrows are <code style={codeStyle}>ref()</code> calls in SQL. dbt reads them, builds the graph above,
-          and runs the models left-to-right.
-        </p>
+        <p style={{ margin: '16px 0' }}>{renderInline(t('intro.exampleDag.caption'))}</p>
 
-        <SectionHeader>About the lessons</SectionHeader>
-        <p style={{ margin: '0 0 16px' }}>
-          There are {last} short lessons. Each one introduces a single concept, then gives you 3–5
-          small tasks to apply it. Your progress saves automatically — close the tab and come back later.
-        </p>
-        <p style={{ margin: '0 0 16px' }}>
-          Go at your pace, edit the SQL freely, and don't worry about breaking things. Every
-          lesson has a "Reset lesson" button in the top bar. If you get stuck, every task has a
-          "Show hint" button.
-        </p>
-        <p style={{ margin: '0 0 16px' }}>
-          By the end you'll be ready to open any real dbt project and contribute on day one.
-        </p>
+        <SectionHeader>{t('intro.aboutLessons.heading')}</SectionHeader>
+        <p style={{ margin: '0 0 16px' }}>{t('intro.aboutLessons.p1', { count: last })}</p>
+        <p style={{ margin: '0 0 16px' }}>{t('intro.aboutLessons.p2')}</p>
+        <p style={{ margin: '0 0 16px' }}>{t('intro.aboutLessons.p3')}</p>
 
-        <SectionHeader>Before you start</SectionHeader>
-        <p style={{ margin: '0 0 16px' }}>
-          You only need to know basic SQL —{' '}
-          <code style={codeStyle}>SELECT</code>, <code style={codeStyle}>WHERE</code>, <code style={codeStyle}>GROUP BY</code>. That's it.
-          You don't need a database, a dbt installation, or command-line experience.
-          Everything runs in your browser.
-        </p>
+        <SectionHeader>{t('intro.beforeYouStart.heading')}</SectionHeader>
+        <p style={{ margin: '0 0 16px' }}>{renderInline(t('intro.beforeYouStart.body'))}</p>
 
         <div style={{ marginTop: '40px' }}>
           <button
@@ -221,7 +178,7 @@ export default function IntroPage() {
             className="btn-primary"
             style={{ fontSize: '0.9375rem', padding: '12px 22px' }}
           >
-            {hasProgress ? 'Continue learning ›' : 'Begin Lesson 1: Your first dbt model ›'}
+            {hasProgress ? t('intro.ctaContinue') : t('intro.ctaBeginFull')}
           </button>
         </div>
 
@@ -231,7 +188,17 @@ export default function IntroPage() {
   )
 }
 
+function DbtRunStep({ children }: { children: React.ReactNode }) {
+  return (
+    <li style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
+      <span style={{ color: 'var(--color-accent-orange)', flexShrink: 0 }}>→</span>
+      <span>{children}</span>
+    </li>
+  )
+}
+
 function Footer() {
+  const { t } = useTranslation()
   return (
     <footer
       style={{
@@ -245,14 +212,14 @@ function Footer() {
       }}
     >
       <div>
-        Built by Bruno Lima
+        {t('intro.footer.builtBy')}
         {' · '}
         <FooterLink href="https://github.com/bruno-szdl/dbt-quest">GitHub</FooterLink>
         {' · '}
         <FooterLink href="https://www.linkedin.com/in/brunoszdl">LinkedIn</FooterLink>
       </div>
       <div style={{ marginTop: '6px', fontSize: '0.75rem' }}>
-        Open-source · Issues and PRs welcome
+        {t('intro.footer.tag')}
       </div>
     </footer>
   )
@@ -313,6 +280,7 @@ function Aside({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function DagDiagram() {
+  const { t } = useTranslation()
   const nodes: { id: string; label: string; layer: string; x: number; y: number }[] = [
     { id: 'raw_customers', label: 'raw.customers', layer: 'source', x: 0, y: 0 },
     { id: 'raw_orders', label: 'raw.orders', layer: 'source', x: 0, y: 1 },
@@ -367,9 +335,9 @@ function DagDiagram() {
         </defs>
         {edges.map(([from, to]) => {
           const f = nodes.find((n) => n.id === from)!
-          const t = nodes.find((n) => n.id === to)!
+          const tn = nodes.find((n) => n.id === to)!
           const a = pos(f)
-          const b = pos(t)
+          const b = pos(tn)
           const x1 = a.cx + nodeW / 2
           const x2 = b.cx - nodeW / 2 - 4
           return (
@@ -414,10 +382,10 @@ function DagDiagram() {
         })}
       </svg>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', marginTop: '10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
-        <LegendDot color={layerColor.source} label="source" />
-        <LegendDot color={layerColor.staging} label="staging" />
-        <LegendDot color={layerColor.intermediate} label="intermediate" />
-        <LegendDot color={layerColor.mart} label="mart" />
+        <LegendDot color={layerColor.source} label={t('intro.exampleDag.legend.source')} />
+        <LegendDot color={layerColor.staging} label={t('intro.exampleDag.legend.staging')} />
+        <LegendDot color={layerColor.intermediate} label={t('intro.exampleDag.legend.intermediate')} />
+        <LegendDot color={layerColor.mart} label={t('intro.exampleDag.legend.mart')} />
       </div>
     </div>
   )
@@ -431,3 +399,4 @@ function LegendDot({ color, label }: { color: string; label: string }) {
     </span>
   )
 }
+

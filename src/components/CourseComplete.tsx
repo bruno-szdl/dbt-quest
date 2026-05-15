@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
+import { renderInline } from './Markdownish'
 
 /**
  * Celebration block shown in LessonPanel after the final lesson's tasks all
@@ -8,9 +10,7 @@ import { useGameStore } from '../store/gameStore'
  * "you've finished" success box.
  */
 export default function CourseComplete() {
-  // Stable confetti so re-renders during the celebration don't reshuffle
-  // dots. `useState`'s lazy initializer is the React-sanctioned way to do
-  // impure work once; `useMemo` would trip react-hooks/purity.
+  const { t } = useTranslation()
   const [confetti] = useState(() => {
     const palette = ['var(--color-accent-orange)', 'var(--color-success)', 'var(--color-warning)', 'var(--color-text)']
     return Array.from({ length: 22 }, (_, i) => ({
@@ -35,7 +35,6 @@ export default function CourseComplete() {
         padding: '20px 18px 18px',
       }}
     >
-      {/* confetti — purely decorative, hidden from assistive tech */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         {confetti.map((c, i) => (
           <span
@@ -64,7 +63,7 @@ export default function CourseComplete() {
           marginBottom: '8px',
         }}
       >
-        Course complete
+        {t('courseComplete.eyebrow')}
       </div>
       <h3
         style={{
@@ -76,7 +75,7 @@ export default function CourseComplete() {
           lineHeight: 1.3,
         }}
       >
-        You finished dbt-quest 🎉
+        {t('courseComplete.title')}
       </h3>
       <p
         style={{
@@ -86,21 +85,31 @@ export default function CourseComplete() {
           lineHeight: 1.6,
         }}
       >
-        You can read any real dbt project now: sources, models, refs, materializations,
-        seeds, tests, docs, selectors, <code style={inlineCode}>dbt build</code>. That's the toolkit.
+        {renderInline(t('courseComplete.body'))}
       </p>
 
       <div style={{ marginBottom: '12px' }}>
-        <SubLabel>What to do next</SubLabel>
+        <SubLabel>{t('courseComplete.whatNext')}</SubLabel>
         <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <NextStep>
-            Install dbt locally: <ExtLink href="https://docs.getdbt.com/docs/core/installation-overview">dbt Core install guide</ExtLink>
+            {t('courseComplete.step1Lead')}
+            <ExtLink href="https://docs.getdbt.com/docs/core/installation-overview">{t('courseComplete.step1Link')}</ExtLink>
           </NextStep>
           <NextStep>
-            Open an existing project on GitHub (try <ExtLink href="https://github.com/dbt-labs/jaffle-shop">jaffle-shop</ExtLink>) and read the DAG end-to-end.
+            {t('courseComplete.step2Lead')}
+            <ExtLink href="https://github.com/dbt-labs/jaffle-shop">{t('courseComplete.step2Link')}</ExtLink>
+            {t('courseComplete.step2Tail')}
           </NextStep>
           <NextStep>
-            Skim the official docs you didn't see here: <ExtLink href="https://docs.getdbt.com/docs/build/jinja-macros">macros</ExtLink>, <ExtLink href="https://docs.getdbt.com/docs/build/incremental-models">incremental models</ExtLink>, <ExtLink href="https://docs.getdbt.com/docs/build/snapshots">snapshots</ExtLink>, <ExtLink href="https://docs.getdbt.com/docs/build/packages">packages</ExtLink>.
+            {t('courseComplete.step3Lead')}
+            <ExtLink href="https://docs.getdbt.com/docs/build/jinja-macros">{t('courseComplete.step3Macros')}</ExtLink>
+            {t('courseComplete.step3Sep')}
+            <ExtLink href="https://docs.getdbt.com/docs/build/incremental-models">{t('courseComplete.step3Incremental')}</ExtLink>
+            {t('courseComplete.step3Sep')}
+            <ExtLink href="https://docs.getdbt.com/docs/build/snapshots">{t('courseComplete.step3Snapshots')}</ExtLink>
+            {t('courseComplete.step3Sep')}
+            <ExtLink href="https://docs.getdbt.com/docs/build/packages">{t('courseComplete.step3Packages')}</ExtLink>
+            {t('courseComplete.step3End')}
           </NextStep>
         </ul>
       </div>
@@ -120,7 +129,7 @@ export default function CourseComplete() {
             textDecoration: 'none',
           }}
         >
-          Share on LinkedIn →
+          {t('courseComplete.shareLinkedIn')}
         </a>
         <button
           onClick={() => void loadLesson(0)}
@@ -136,20 +145,11 @@ export default function CourseComplete() {
             fontWeight: 500,
           }}
         >
-          Back to intro
+          {t('courseComplete.backToIntro')}
         </button>
       </div>
     </div>
   )
-}
-
-const inlineCode = {
-  fontFamily: 'JetBrains Mono, monospace',
-  fontSize: '0.85em',
-  background: 'var(--color-base)',
-  padding: '1px 4px',
-  borderRadius: '3px',
-  border: '1px solid var(--color-border-subtle)',
 }
 
 function SubLabel({ children }: { children: React.ReactNode }) {

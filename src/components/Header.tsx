@@ -175,7 +175,7 @@ function LessonSelector({ compact = false }: { compact?: boolean }) {
       {open && (
         <div
           role="listbox"
-          aria-label="Lessons"
+          aria-label={t('header.lessonsAria')}
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -267,7 +267,7 @@ function DbtLogo() {
 }
 
 function LangToggleButton() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const current = i18n.language === 'pt' ? 'pt' : 'en'
 
   const toggle = () => {
@@ -279,7 +279,7 @@ function LangToggleButton() {
   return (
     <button
       onClick={toggle}
-      title="Change language"
+      title={t('header.changeLanguage')}
       className="icon-btn flex items-center justify-center"
       style={{
         height: '28px',

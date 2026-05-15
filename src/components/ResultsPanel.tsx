@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 
 export default function ResultsPanel() {
+  const { t } = useTranslation()
   const lastPreview = useGameStore((s) => s.lastPreview)
 
   if (!lastPreview) {
@@ -24,7 +26,7 @@ export default function ResultsPanel() {
             letterSpacing: '0.1em',
           }}
         >
-          preview
+          {t('results.header')}
         </span>
         <span style={{ color: 'var(--color-muted)' }}>·</span>
         <span
@@ -44,7 +46,7 @@ export default function ResultsPanel() {
             fontSize: '0.625rem',
           }}
         >
-          {rows.length} of {rowCount} row{rowCount !== 1 ? 's' : ''}
+          {t(rowCount === 1 ? 'results.rowsOne' : 'results.rowsMany', { shown: rows.length, total: rowCount })}
         </span>
       </div>
 
@@ -54,7 +56,7 @@ export default function ResultsPanel() {
             className="flex items-center justify-center h-full"
             style={{ color: 'var(--color-muted)', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.6875rem' }}
           >
-            (no rows)
+            {t('results.noRows')}
           </div>
         ) : (
           <table
@@ -121,6 +123,7 @@ export default function ResultsPanel() {
 }
 
 function EmptyState() {
+  const { t } = useTranslation()
   return (
     <div
       className="flex flex-col items-center justify-center h-full gap-3"
@@ -136,7 +139,7 @@ function EmptyState() {
           textTransform: 'uppercase',
         }}
       >
-        No results yet
+        {t('results.empty')}
       </span>
       <span
         style={{
@@ -148,9 +151,9 @@ function EmptyState() {
           maxWidth: '280px',
         }}
       >
-        Run a model, then click <span style={{ color: 'var(--color-text-muted)' }}>Show Results</span>
+        {t('results.emptyHintLead')}<span style={{ color: 'var(--color-text-muted)' }}>{t('results.emptyHintShow')}</span>
         <br />
-        (or run <span style={{ color: 'var(--color-text-muted)' }}>dbt show --select &lt;model&gt;</span>)
+        {t('results.emptyHintOr')}<span style={{ color: 'var(--color-text-muted)' }}>{t('results.emptyHintCmd')}</span>{t('results.emptyHintEnd')}
       </span>
     </div>
   )

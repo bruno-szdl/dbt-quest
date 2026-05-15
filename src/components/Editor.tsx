@@ -1,6 +1,7 @@
 import MonacoEditor from '@monaco-editor/react'
 import type { Monaco } from '@monaco-editor/react'
 import type { editor as MonacoEditorNS, languages, IDisposable } from 'monaco-editor'
+import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 
 function detectLanguage(path: string): string {
@@ -65,6 +66,7 @@ function registerSqlCompletions(monaco: Monaco): void {
 }
 
 export default function Editor() {
+  const { t } = useTranslation()
   const files = useGameStore((s) => s.files)
   const activeFile = useGameStore((s) => s.activeFile)
   const openFile = useGameStore((s) => s.openFile)
@@ -130,7 +132,7 @@ export default function Editor() {
                   <span>{basename(path)}</span>
                 </button>
                 <button
-                  title="Close tab"
+                  title={t('files.closeTab')}
                   onClick={(e) => { e.stopPropagation(); closeTab(path) }}
                   className="flex items-center justify-center cursor-pointer"
                   style={{
@@ -179,7 +181,7 @@ export default function Editor() {
                 textTransform: 'uppercase',
               }}
             >
-              No file open
+              {t('files.noFileOpen')}
             </span>
           </div>
         ) : (

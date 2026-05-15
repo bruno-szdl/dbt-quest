@@ -1,1 +1,510 @@
-{}
+{
+  "0": {
+    "title": "Introdução"
+  },
+  "1": {
+    "title": "Seu primeiro model dbt",
+    "concept": "Ao longo do curso você vai trabalhar em um único projeto dbt fictício, de uma pequena empresa de e-commerce. Cada lição adiciona um novo conceito sobre o que veio antes.\n\nUm **model** no dbt é apenas um `SELECT` salvo como arquivo `.sql` dentro da pasta `models/`. Quando você roda o dbt, ele transforma essa query em uma **view** no seu banco (uma query salva, que o banco conhece pelo nome).\n\nO projeto já tem um model: `stg_customers.sql`. Ele lê de uma tabela bruta chamada `raw.customers`.\n\nDois comandos que você vai usar o tempo todo:\n\n- `dbt run`: materializa todos os models. Quando termina, `stg_customers` aparece no painel **Database** como uma view.\n\n- `dbt show --select <model>`: faz um preview das linhas de um model.\n\nExperimente abaixo.",
+    "tasks": [
+      {
+        "prompt": "Rode `dbt run` no terminal para construir o model stg_customers no seu Database.",
+        "hint": "Digite `dbt run` no prompt e aperte Enter."
+      },
+      {
+        "prompt": "Faça preview das linhas rodando `dbt show --select stg_customers`.",
+        "hint": "`dbt show` lê o resultado materializado de volta do warehouse."
+      }
+    ],
+    "quiz": {
+      "question": "Você quer materializar seus models no warehouse — mas ainda não quer rodar nenhum teste. Qual comando faz exatamente isso?",
+      "options": [
+        "`dbt compile` — só converte Jinja em SQL",
+        "`dbt run` — materializa os models, sem testes",
+        "`dbt build` — materializa os models *e* roda os testes",
+        "`dbt test` — roda testes em models já construídos"
+      ],
+      "explanation": "`dbt run` é o caminho \"construir sem testar\". `dbt build` faz os dois de uma vez (você vai ver mais à frente); `dbt compile` só renderiza o Jinja e para; `dbt test` roda os testes sobre o que já está no warehouse."
+    },
+    "furtherReading": [
+      { "label": "Referência do comando dbt run" },
+      { "label": "Sobre models no dbt" }
+    ]
+  },
+  "2": {
+    "title": "ref() e o DAG",
+    "concept": "Models quase nunca vivem sozinhos. Eles leem de outros models. Em vez de fixar o nome da tabela no código, você usa `{{ ref('model_name') }}`. O dbt analisa cada chamada de `ref()` para descobrir qual model depende de qual, e isso vira o **DAG** (o grafo de lineage à direita).\n\nAs `{{ ... }}` são **Jinja**, uma linguagem de templates. Um arquivo de model dbt é SQL com pedaços de Jinja misturados. Antes de rodar qualquer coisa, o dbt **compila** o Jinja: `{{ ref('stg_customers') }}` vira o nome real da tabela no seu warehouse. Você pode ver o SQL compilado a qualquer momento com `dbt compile`.\n\nNo nosso projeto, `stg_customers` já está pronto da lição anterior. Agora você vai construir alguns models em cima dele usando `ref()`.",
+    "tasks": [
+      {
+        "prompt": "Em `models/dim_customers.sql`, escreva um SELECT que leia todas as colunas de `stg_customers` usando `ref()`.",
+        "hint": "Tente: `select * from {{ ref('stg_customers') }}`"
+      },
+      {
+        "prompt": "Agora faça o mesmo em `models/customer_emails.sql`: selecione apenas `id` e `email` de `stg_customers`, de novo usando `ref()`.",
+        "hint": "Mesmo padrão, menos colunas: `select id, email from {{ ref('stg_customers') }}`"
+      },
+      {
+        "prompt": "Olhe o grafo de lineage — `stg_customers` agora deve se ramificar para os dois models que você acabou de escrever.",
+        "hint": "O DAG se atualiza assim que o ref() entra no seu arquivo. Veja na aba de lineage."
+      },
+      {
+        "prompt": "Rode `dbt compile` e leia a saída — veja como `{{ ref('stg_customers') }}` é substituído pelo nome real da tabela.",
+        "hint": "`dbt compile` transforma o Jinja em SQL puro sem materializar nada. Digite `dbt compile` no prompt."
+      },
+      {
+        "prompt": "Rode `dbt run` e confira que os dois models novos materializam direitinho.",
+        "hint": ""
+      }
+    ],
+    "quiz": {
+      "question": "Por que usar `{{ ref(...) }}` em vez de fixar o nome da tabela no SQL?",
+      "options": [
+        "Roda mais rápido",
+        "Permite que o dbt entenda as dependências entre models e execute na ordem certa",
+        "É obrigatório no SQL",
+        "É só mais curto de digitar"
+      ],
+      "explanation": "`ref()` é o que dá ao dbt o grafo de dependências. Sem ele, o dbt não tem ideia de que seu model depende de outro model."
+    },
+    "furtherReading": [
+      { "label": "Função ref()" },
+      { "label": "Sobre Jinja" }
+    ]
+  },
+  "3": {
+    "title": "Pipelines de múltiplas etapas",
+    "concept": "Pipelines reais têm passos intermediários. Um padrão comum é:\n\n`staging → intermediate → mart`\n\n**Staging** limpa o input bruto. **Intermediate** faz joins, filtros ou agregações. **Marts** são as saídas polidas que o negócio consome. Cada etapa é um model próprio, conectado por `ref()`.\n\nAté agora nosso projeto lida com customers. Vamos adicionar orders. `stg_orders` já está pronto. Sua missão é construir as duas etapas que o transformam em um mart de receita:\n\n1. `int_paid_orders`: mantém só as linhas com `status = 'paid'`.\n2. `fct_revenue_by_customer`: soma o `amount` pago por customer.",
+    "tasks": [
+      {
+        "prompt": "Em `models/int_paid_orders.sql`, escreva um `select` que leia de `{{ ref('stg_orders') }}`.",
+        "hint": "Comece com: `select * from {{ ref('stg_orders') }}`. O WHERE você adiciona em seguida."
+      },
+      {
+        "prompt": "Adicione um `where` que mantenha apenas `status = 'paid'`.",
+        "hint": "Acrescente `where status = 'paid'` (aspas simples em volta de `paid`)."
+      },
+      {
+        "prompt": "Em `models/fct_revenue_by_customer.sql`, escreva um SELECT que some `amount` de `int_paid_orders` agrupado por `customer_id`.",
+        "hint": "Tente:\n```\nselect\n  customer_id,\n  sum(amount) as revenue\nfrom {{ ref('int_paid_orders') }}\ngroup by customer_id\n```"
+      },
+      {
+        "prompt": "Confira que o DAG mostra a cadeia inteira: `stg_orders → int_paid_orders → fct_revenue_by_customer`.",
+        "hint": ""
+      },
+      {
+        "prompt": "Rode `dbt run` e confirme que todos os models novos materializam.",
+        "hint": ""
+      },
+      {
+        "prompt": "Faça preview do mart com `dbt show --select fct_revenue_by_customer` para ver a receita por customer.",
+        "hint": "Você deve ver uma linha por `customer_id` com um total de `revenue`. Pedidos `refunded` e `pending` não devem ser contados."
+      }
+    ],
+    "quiz": {
+      "question": "O que acontece se você mudar `stg_orders` e rodar `dbt run`?",
+      "options": [
+        "Apenas `stg_orders` é reconstruído",
+        "Todos os models do projeto são reconstruídos, na ordem de dependência",
+        "Você precisa reconstruir os models downstream manualmente",
+        "Nada. O dbt só reconstrói quando arquivos são renomeados"
+      ],
+      "explanation": "`dbt run` reconstrói todos os models em ordem topológica, então os models downstream sempre veem a saída mais recente dos upstream."
+    },
+    "furtherReading": [
+      { "label": "Como estruturamos projetos dbt" }
+    ]
+  },
+  "4": {
+    "title": "Materializations: view vs table",
+    "concept": "Por padrão, todo model dbt vira uma **view** (uma query salva, que é executada de novo a cada consulta). Views são baratas de construir mas lentas de consultar. (Você pode mudar o padrão do projeto inteiro no `dbt_project.yml`, mas o override por model é o que você vai ver com mais frequência.)\n\nQuando um model é consultado com frequência ou é caro de computar, você vai querer uma **table** (o resultado fica fisicamente armazenado). Você muda a **materialization** com um bloco de config no topo do model:\n\n```sql\n{{ config(materialized='table') }}\n\nselect ...\n```\n\nOs marts do nosso projeto são lidos com frequência por consumidores downstream. Converta `dim_customers` e `fct_revenue_by_customer` para tables para que as leituras sejam rápidas.",
+    "tasks": [
+      {
+        "prompt": "Mude `dim_customers` para ser materializado como table (adicione o bloco de config no topo).",
+        "hint": "`{{ config(materialized='table') }}` na primeira linha do arquivo."
+      },
+      {
+        "prompt": "Faça o mesmo para `fct_revenue_by_customer` — é um mart, então também deve ser table.",
+        "hint": "Mesmo bloco de config no topo de `models/fct_revenue_by_customer.sql`: `{{ config(materialized='table') }}`."
+      },
+      {
+        "prompt": "Garanta que `stg_customers` continue como view (o padrão; não precisa de config).",
+        "hint": "Views são o padrão. Enquanto você não adicionar um bloco de config em stg_customers, ele já é view."
+      },
+      {
+        "prompt": "Rode `dbt run` e observe cada model materializar com a estratégia escolhida.",
+        "hint": ""
+      }
+    ],
+    "quiz": {
+      "question": "Um mart é reconstruído uma vez por noite e consultado centenas de vezes durante o dia por um dashboard de BI. View ou table?",
+      "options": [
+        "View — a query é simples, então rodar de novo a cada leitura é barato",
+        "Table — pague o custo de computação uma vez no build e cada leitura do dashboard fica rápida",
+        "View — tables não podem ser consultadas por ferramentas de BI",
+        "Tanto faz — o dbt escolhe a materialization ótima automaticamente"
+      ],
+      "explanation": "Tables trocam custo de build por custo de leitura. Quando um model é lido muito mais vezes do que é reconstruído — exatamente o padrão de dashboard — materializar como table se paga muitas vezes."
+    },
+    "furtherReading": [
+      { "label": "Materializations" }
+    ]
+  },
+  "5": {
+    "title": "Selecionando models",
+    "concept": "Até agora, todo comando que você rodou tocou o **projeto inteiro**. `dbt run` reconstrói todos os models, toda vez. Em um projeto real, com centenas de models, isso é lento — e normalmente desnecessário. Enquanto você está iterando em um único model, você só quer reconstruir *aquele* model.\n\nÉ para isso que serve a flag `--select`:\n\n```bash\ndbt run --select stg_customers\n```\n\nIsso materializa apenas `stg_customers` e mais nada. Existe um atalho — `-s` significa exatamente a mesma coisa:\n\n```bash\ndbt run -s stg_customers\n```\n\nObserve o grafo de lineage enquanto você digita um seletor: os models que *não* foram selecionados vão sumindo, então você vê de relance o que o comando vai tocar antes mesmo de rodar.\n\nNesta lição, o projeto já está construído. Você vai fazer uma pequena mudança em um model, reconstruir só esse model, e depois rodar um `dbt run` completo para deixar tudo em sincronia de novo.",
+    "tasks": [
+      {
+        "prompt": "Em `models/stg_customers.sql`, remova a coluna `country` da lista do SELECT — nada downstream usa ela.",
+        "hint": "Apague a linha `country,` (e a vírgula final da linha acima, se necessário) para que o model selecione apenas `id`, `name` e `email`."
+      },
+      {
+        "prompt": "Você acabou de editar `stg_customers`. Materialize de novo só esse model para que a mudança chegue ao warehouse — sem rodar o resto do projeto. Repare como o grafo apaga o restante enquanto você digita.",
+        "hint": "`dbt run --select stg_customers` restringe a execução a um único model."
+      },
+      {
+        "prompt": "Use o atalho do `--select` para materializar de novo apenas `dim_customers`.",
+        "hint": "`-s` é um alias para `--select`. Então: `dbt run -s dim_customers`."
+      },
+      {
+        "prompt": "Agora coloque o projeto inteiro de volta em sincronia.",
+        "hint": "Remova o seletor: `dbt run`."
+      }
+    ],
+    "quiz": {
+      "question": "O que `dbt run --select stg_customers` faz?",
+      "options": [
+        "Roda todos os models exceto stg_customers",
+        "Constrói apenas o model stg_customers",
+        "Roda stg_customers e todos os seus models downstream",
+        "Faz preview das linhas de stg_customers"
+      ],
+      "explanation": "`--select stg_customers` restringe a execução exatamente a esse model. `-s` é o atalho para a mesma flag."
+    },
+    "furtherReading": [
+      { "label": "Sintaxe de seleção de nós" }
+    ]
+  },
+  "6": {
+    "title": "Sources",
+    "concept": "Até agora, nossos models de staging leem direto de tabelas como `raw.customers` e `raw.orders`, com nomes qualificados pelo schema escritos no código. Funciona, mas tem problemas: nada conta ao dbt de onde essas tabelas vêm, o DAG não mostra o sistema upstream real e não há onde anexar tests ou checagens de freshness do lado bruto.\n\nA solução: declarar **sources** em um arquivo `.yml` e lê-los com `{{ source('schema', 'table') }}` nos seus models.\n\nO formato YAML é assim:\n\n```yaml\nversion: 2\n\nsources:\n  - name: raw    # o schema\n    tables:\n      - name: customers\n      - name: orders\n```\n\nNesta lição você vai declarar as duas tabelas brutas como sources e depois refatorar `stg_customers` e `stg_orders` para usar `source()` em vez dos nomes fixos no código.",
+    "tasks": [
+      {
+        "prompt": "Em `models/sources.yml`, adicione uma entrada `- name: customers` na lista de `tables:` do source `raw`.",
+        "hint": "Em uma nova linha abaixo de `tables:`, escreva `      - name: customers` (seis espaços iniciais, igual ao exemplo na lição)."
+      },
+      {
+        "prompt": "Adicione uma segunda entrada, `- name: orders`, logo abaixo de `customers`.",
+        "hint": "Mesma indentação, uma linha abaixo."
+      },
+      {
+        "prompt": "Refatore `stg_customers.sql` para que o FROM use `{{ source('raw', 'customers') }}` em vez do `raw.customers` fixo no código.",
+        "hint": "Troque `from raw.customers` por `from {{ source('raw', 'customers') }}`."
+      },
+      {
+        "prompt": "Refatore `stg_orders.sql` da mesma forma, usando `{{ source('raw', 'orders') }}`.",
+        "hint": "Troque `from raw.orders` por `from {{ source('raw', 'orders') }}`."
+      },
+      {
+        "prompt": "Rode `dbt run` e confirme que o projeto inteiro continua materializando em cima dos novos sources.",
+        "hint": ""
+      }
+    ],
+    "quiz": {
+      "question": "Quando usar `source()` vs `ref()`?",
+      "options": [
+        "São intercambiáveis",
+        "`source()` para tabelas brutas do warehouse que você não construiu; `ref()` para models dbt",
+        "`source()` só em produção",
+        "`ref()` só para materializations em table"
+      ],
+      "explanation": "`source()` aponta para inputs que você não controla (raw landings, sistemas externos). `ref()` aponta para outros models dbt."
+    },
+    "furtherReading": [
+      { "label": "Sources" }
+    ]
+  },
+  "7": {
+    "title": "Seeds",
+    "concept": "**Seeds** são arquivos CSV pequenos, versionados no repositório (em `seeds/`), que o dbt carrega no warehouse como tabelas. São perfeitos para dados de lookup: códigos de país, cotações de moeda, mapeamentos de status. Qualquer coisa pequena, que muda devagar, e que se encaixa melhor no controle de versão do que num banco.\n\nDuas coisas diferenciam seeds de models comuns:\n\n1. São carregados com `dbt seed`, **não** com `dbt run`. Os dados vivem num CSV, não num SELECT.\n2. Do ponto de vista do ref(), um seed *é* um model: você referencia com `{{ ref('seed_name') }}` igual a qualquer outro.\n\nNesta lição, o time colocou um lookup `seeds/countries.csv` no projeto. A tabela `countries` ainda não está no warehouse; só o CSV está no disco. Você vai dar seed nela e depois construir um pequeno model `dim_countries` em cima.",
+    "tasks": [
+      {
+        "prompt": "Dê uma olhada em `seeds/countries.csv` — ele vive em `seeds/`, não em `models/`. Repare na linha de header e nas cinco linhas de dados.",
+        "hint": "Clique no arquivo na árvore à esquerda. CSVs renderizam como texto puro — você deve ver uma linha de header e cinco linhas de dados."
+      },
+      {
+        "prompt": "O CSV está no disco, mas o warehouse ainda não tem nenhuma tabela `countries`. Carregue ela.",
+        "hint": "`dbt seed` é o comando que transforma CSVs em `seeds/` em tabelas do warehouse. `dbt run` não faz isso."
+      },
+      {
+        "prompt": "Em `models/dim_countries.sql`, escreva um SELECT que leia todas as colunas do seed `countries` usando `{{ ref('countries') }}`.",
+        "hint": "Tente: `select * from {{ ref('countries') }}`"
+      },
+      {
+        "prompt": "Agora rode `dbt run` para construir `dim_countries` em cima do seed.",
+        "hint": ""
+      },
+      {
+        "prompt": "Faça preview do resultado com `dbt show --select dim_countries`.",
+        "hint": "Você deve ver cinco linhas — uma por país do CSV."
+      }
+    ],
+    "quiz": {
+      "question": "Seu time tem uma tabela de eventos com 50M de linhas, atualizada de hora em hora a partir do Kafka. Um colega sugere carregá-la via `dbt seed` para versionar no repo. O que está errado?",
+      "options": [
+        "Nada — é exatamente para isso que seeds servem",
+        "Seeds não podem ser referenciados com `ref()`",
+        "Seeds são para CSVs pequenos e que mudam devagar — uma stream de 50M de linhas/hora pertence a um source, não ao controle de versão",
+        "`dbt seed` funcionaria, mas só no target de dev, não em prod"
+      ],
+      "explanation": "Seeds são CSVs versionados, revisados em PRs — perfeitos para códigos de país, mapeamentos de status, cotações. Colocar uma stream de 50M de linhas no git incharia o repo e perderia as atualizações horárias no instante em que o arquivo fosse commitado. Esse dado pertence ao warehouse, acessado via `source`."
+    },
+    "furtherReading": [
+      { "label": "Seeds" }
+    ]
+  },
+  "8": {
+    "title": "Data tests: not_null & unique",
+    "concept": "O dbt tem dois **data tests** embutidos para quase toda coluna que você vai escrever: **not_null** e **unique**. Você declara em um arquivo YAML ao lado do seu model e roda com `dbt test`.\n\nPegar um nulo ou uma duplicata cedo (antes de quebrar um join downstream ou duplicar uma métrica) é o ganho de qualidade de dados mais barato que existe.\n\nData tests vivem num arquivo `schema.yml` ao lado dos seus models. A estrutura é assim:\n\n```yaml\nversion: 2\n\nmodels:\n  - name: stg_customers\n    columns:\n      - name: id\n        data_tests:\n          - not_null\n          - unique\n      - name: email\n        data_tests:\n          - not_null\n```\n\nAlgumas coisas para reparar:\n\n- Cada nome de test fica numa linha, com prefixo `- ` (traço + espaço).\n- Indentação importa em YAML: `data_tests:` precisa estar alinhado abaixo da sua coluna, e as entradas de test indentam mais um nível.\n- Você pode colocar quantos data tests quiser numa coluna, e quantas colunas quiser num model.\n\nAdicionamos um `schema.yml` ao projeto, com `stg_customers.id` configurado mas com a lista `data_tests:` vazia. Sua missão: adicionar `not_null` e `unique` em `id` e rodar `dbt test`; depois adicionar um teste `not_null` em `email`. Desta vez os dados brutos não estão limpos. Você vai ver o teste pegar um problema real e depois consertar.",
+    "tasks": [
+      {
+        "prompt": "Em `schema.yml`, adicione um teste `not_null` sob a coluna `id` de `stg_customers`.",
+        "hint": "Em uma nova linha abaixo de `data_tests:`, escreva `          - not_null` (10 espaços iniciais, traço, espaço e depois `not_null`)."
+      },
+      {
+        "prompt": "Agora adicione um teste `unique` na mesma coluna `id`.",
+        "hint": "Outra linha logo abaixo do `not_null` que você acabou de adicionar: `          - unique`."
+      },
+      {
+        "prompt": "Rode `dbt test` e confirme que os dois testes passam em `stg_customers`.",
+        "hint": "Digite `dbt test` no prompt. Você deve ver duas linhas PASS."
+      },
+      {
+        "prompt": "Adicione um novo bloco de coluna para `email` sob o model `stg_customers` com um teste `not_null` e rode `dbt test` de novo. Desta vez ele FALHA — isso é esperado. Os dados brutos têm um customer sem email.",
+        "hint": "Adicione isto sob o bloco `id` existente (mesma indentação que `- name: id`):\n```\n      - name: email\n        data_tests:\n          - not_null\n```\nDepois rode `dbt test`. Você deve ver uma linha vermelha `FAIL` — leia ela."
+      },
+      {
+        "prompt": "Rode `dbt show --select stg_customers` para inspecionar os dados. Encontre a linha que está causando a falha.",
+        "hint": "Procure uma linha onde a coluna `email` é NULL — é esse o registro falhando no teste `not_null`."
+      },
+      {
+        "prompt": "Conserte do jeito que você faria num projeto real: você não pode editar dados brutos, então filtre a linha ofensora no model de staging. Depois materialize de novo só esse model para aplicar a correção.",
+        "hint": "Em `models/stg_customers.sql`, adicione `where email is not null` como última linha. Depois `dbt run --select stg_customers` materializa só esse model com o filtro aplicado."
+      },
+      {
+        "prompt": "Rode `dbt test` de novo. O `not_null` em `email` deve passar agora.",
+        "hint": "O filtro removeu a linha sem email, então não sobrou nulo nenhum. `dbt test` deve ficar verde."
+      }
+    ],
+    "quiz": {
+      "question": "Quando o `dbt test` roda seus testes?",
+      "options": [
+        "O tempo todo, em background",
+        "Só quando você chama `dbt test` (ou `dbt build`)",
+        "Automaticamente depois de todo `dbt run`",
+        "Só em produção"
+      ],
+      "explanation": "Testes rodam só quando você os invoca. `dbt build` é um atalho que roda os models e os testes deles juntos."
+    },
+    "furtherReading": [
+      { "label": "Data tests" }
+    ]
+  },
+  "9": {
+    "title": "Relationships & accepted_values",
+    "concept": "Além de `not_null`/`unique`, outros dois data tests aparecem o tempo todo:\n\n- **accepted_values**: a coluna deve ser uma de uma lista fixa. Ótimo para campos de status, onde um typo ou valor novo poderia quebrar dashboards silenciosamente.\n- **relationships**: todo valor desta coluna precisa existir em uma coluna de outro model. É uma checagem de chave estrangeira, sem você precisar escrever uma.\n\nOs dois são declarados em YAML, sob `data_tests:`, junto dos data tests mais simples. A sintaxe é um pouco mais elaborada porque eles recebem parâmetros:\n\n```yaml\n- name: status\n  data_tests:\n    - accepted_values:\n        arguments:\n          values: ['paid', 'refunded', 'pending']\n- name: customer_id\n  data_tests:\n    - relationships:\n        arguments:\n          to: ref('stg_customers')\n          field: id\n```\n\nRepare na indentação: o nome do test (`accepted_values` / `relationships`) é seguido de dois-pontos, e o bloco de parâmetros vai indentado embaixo.\n\nNosso `stg_customers` já tem `not_null` + `unique` da lição anterior. Agora você vai adicionar os dois novos data tests em `stg_orders`.",
+    "tasks": [
+      {
+        "prompt": "Adicione um teste `accepted_values` em `stg_orders.status` permitindo `['paid', 'refunded', 'pending']`.",
+        "hint": "Abaixo do `data_tests:` da coluna, adicione:\n```\n          - accepted_values:\n              arguments:\n                values: ['paid', 'refunded', 'pending']\n```"
+      },
+      {
+        "prompt": "Adicione um teste `relationships` em `stg_orders.customer_id` apontando para `stg_customers.id`.",
+        "hint": "Adicione:\n```\n          - relationships:\n              arguments:\n                to: ref('stg_customers')\n                field: id\n```"
+      },
+      {
+        "prompt": "Rode `dbt test`. As duas novas checagens devem passar.",
+        "hint": ""
+      }
+    ],
+    "quiz": {
+      "question": "Um teste `relationships` na coluna A apontando para o model X, coluna B, falha quando…",
+      "options": [
+        "A coluna A contém um NULL",
+        "A coluna A contém um valor que não existe em X.B",
+        "A coluna B contém uma duplicata",
+        "O model X ainda não foi construído"
+      ],
+      "explanation": "Um teste relationships falha em linhas órfãs (valores na coluna A que não têm linha correspondente no model referenciado)."
+    },
+    "furtherReading": [
+      { "label": "Referência de data tests genéricos" }
+    ]
+  },
+  "10": {
+    "title": "Documentação",
+    "concept": "Todo model e toda coluna do seu YAML pode carregar uma `description`. Essas descrições são **metadados portáveis**: uma vez que você escreve no dbt, elas viajam:\n\n- podem aparecer na UI da sua plataforma de dados / warehouse, do lado da coluna\n- `dbt docs generate` transforma elas num site estático de documentação\n- elas alimentam o catálogo na dbt platform\n- ferramentas customizadas e catálogos de dados de terceiros podem ler direto dos metadados do dbt\n\n(Este curso não roda `dbt docs generate`, mas as descrições que você escreve abaixo são exatamente o que alimenta tudo isso.)\n\nBoa documentação não é sobre ser completo. É sobre o que *não é óbvio*. Compare:\n\n- ❌ `customer_id`: *\"O id do customer\"* (o nome já diz isso)\n- ✅ `customer_id`: *\"FK para stg_customers.id; null em checkouts de visitante\"* (semântica + nulabilidade)\n\nSe um nome se explica sozinho, você não precisa descrever. Use suas palavras no que o nome *não* consegue contar: o que um valor de status significa, por que uma coluna é nullable, qual time é dono do model.\n\nO projeto já tem data tests em `stg_customers` e `stg_orders`. Agora vamos adicionar descrições onde elas valem o esforço.",
+    "tasks": [
+      {
+        "prompt": "Escreva uma descrição não-vazia no model `stg_customers` dentro de `schema.yml`.",
+        "hint": "Substitua o `\"\"` vazio depois de `description:` no model por uma frase curta, ex.: `\"Uma linha por customer, limpa de raw.customers.\"`"
+      },
+      {
+        "prompt": "Escreva uma descrição na coluna `status` explicando o que os valores aceitos significam.",
+        "hint": "Algo como: `\"Ciclo de vida do pedido: paid, refunded ou pending.\"`"
+      },
+      {
+        "prompt": "Adicione uma nova entrada sob `models:` para `fct_revenue_by_customer` com uma descrição (não precisa de bloco de colunas).",
+        "hint": "No fim do `schema.yml`, adicione:\n```\n  - name: fct_revenue_by_customer\n    description: \"Receita paga total por customer.\"\n```"
+      }
+    ],
+    "quiz": {
+      "question": "Qual é a melhor descrição de coluna?",
+      "options": [
+        "\"O id do customer\"",
+        "\"customer_id\"",
+        "\"FK para stg_customers.id; nullable em checkouts de visitante\"",
+        "Deixar em branco"
+      ],
+      "explanation": "Descrições valem o esforço quando capturam o que o nome sozinho não diz: semântica, nulabilidade, dono."
+    },
+    "furtherReading": [
+      { "label": "Documentação" }
+    ]
+  },
+  "11": {
+    "title": "Estrutura de projeto: staging, intermediate, marts",
+    "concept": "A comunidade dbt tem uma convenção forte para organizar models em três camadas:\n\n- **staging/**: um model por tabela de source, limpeza leve (renomes, casts). Prefixo `stg_`.\n- **intermediate/**: joins e blocos reutilizáveis. Prefixo `int_`.\n- **marts/**: tabelas voltadas ao negócio (muitas vezes dimensionais). Prefixo `dim_` ou `fct_`.\n\nO dbt não obriga essa estrutura de pastas, mas seguir a convenção deixa qualquer projeto dbt instantaneamente legível. Até agora nosso projeto manteve tudo plano em `models/`. Nesta lição você vai refatorar para o layout canônico em três camadas.\n\nClique com o botão direito num arquivo (ou passe o mouse e clique no ícone de renomear) para movê-lo. O dbt identifica models pelo nome do arquivo, não pelo caminho da pasta, então isso é puramente organizacional.",
+    "tasks": [
+      {
+        "prompt": "Mova `stg_customers.sql` e `stg_orders.sql` para a pasta `models/staging/`. (Renomeie cada arquivo para `models/staging/<nome>.sql`.)",
+        "hint": "Clique com botão direito num arquivo (ou hover para o ícone de renomear) e mude o caminho para `models/staging/stg_customers.sql`."
+      },
+      {
+        "prompt": "Mova `int_paid_orders.sql` para `models/intermediate/`.",
+        "hint": ""
+      },
+      {
+        "prompt": "Mova `dim_customers.sql`, `dim_countries.sql` e `fct_revenue_by_customer.sql` para `models/marts/`.",
+        "hint": "Três renomes. O dbt resolve models pelo nome, não pelo caminho — refs e testes seguem funcionando sem mudança."
+      },
+      {
+        "prompt": "Rode `dbt run` e confirme que todo model ainda materializa depois da reorganização.",
+        "hint": "Nada no SQL precisa mudar — só os caminhos dos arquivos se moveram."
+      }
+    ],
+    "quiz": {
+      "question": "Uma pessoa nova no time vê um model chamado `int_active_users`. O que ela deve esperar?",
+      "options": [
+        "Uma tabela de source bruta",
+        "Um model de staging com renomes leves",
+        "Um model reutilizável de join/agregação, ainda não voltado ao negócio",
+        "Um dashboard"
+      ],
+      "explanation": "O prefixo `int_` sinaliza lógica intermediária: joins, agregações, blocos consumidos por marts."
+    },
+    "furtherReading": [
+      { "label": "Como estruturamos projetos dbt" }
+    ]
+  },
+  "12": {
+    "title": "Selecionando subconjuntos: unions & operadores de grafo",
+    "concept": "Na lição 5 você selecionou um único model. Agora que o projeto está organizado em staging, intermediate e marts, você vai querer selecionar *subconjuntos* — e a sintaxe de seletores do dbt deixa isso preciso.\n\n**Unions.** Liste vários models, separados por espaço, para rodar todos:\n\n```bash\ndbt run --select stg_customers stg_orders\n```\n\n**Operadores de grafo.** Um `+` traz tudo conectado pelo DAG:\n\n- `+model` — o model **e tudo upstream** (ancestrais)\n- `model+` — o model **e tudo downstream** (descendentes)\n\nEntão `+fct_revenue_by_customer` reconstrói esse mart *e* todos os models de que ele depende, em ordem de dependência.\n\n**Por que `model+` importa.** Suponha que você corrigiu um bug em `stg_customers`. Reconstruir *só* `stg_customers` não basta — os marts em cima dele ainda têm os dados antigos, errados. O movimento certo é:\n\n```bash\ndbt build --select stg_customers+\n```\n\n`dbt build` roda **e testa** cada model. Combinado com `stg_customers+`, ele reconstrói o model corrigido e tudo downstream *e* roda os testes deles — então dados ruins não passam silenciosamente para um dashboard.\n\nObserve o grafo de lineage enquanto você digita cada seletor abaixo: ele acende exatamente os models que o comando vai tocar.",
+    "tasks": [
+      {
+        "prompt": "Materialize de novo os dois models de staging em um único comando, usando um seletor de união.",
+        "hint": "`dbt run --select stg_customers stg_orders` — separar nomes de models com espaço seleciona a união dos dois."
+      },
+      {
+        "prompt": "Imagine que você encontrou um problema de dados. Adicione `where email is not null` em `models/staging/stg_customers.sql` e depois rode `dbt build --select stg_customers+` para reconstruir e re-testar esse model mais tudo downstream.",
+        "hint": "Adicione `where email is not null` como última linha de `stg_customers.sql`. Depois rode `dbt build --select stg_customers+` — o `+` no final puxa todo model downstream."
+      },
+      {
+        "prompt": "Agora materialize de novo `fct_revenue_by_customer` junto com todo model do qual ele depende, em ordem de dependência.",
+        "hint": "Um `+` no começo seleciona o model e todos os ancestrais: `dbt run --select +fct_revenue_by_customer`."
+      },
+      {
+        "prompt": "Por fim, rode um `dbt build` simples para construir e testar o projeto inteiro de uma vez.",
+        "hint": "Sem seletor desta vez — `dbt build` percorre o DAG inteiro."
+      }
+    ],
+    "quiz": {
+      "question": "Você acabou de corrigir um bug em `stg_customers`. Qual comando reconstrói esse model *e* re-testa tudo que depende dele?",
+      "options": [
+        "dbt run --select stg_customers",
+        "dbt build --select +stg_customers",
+        "dbt build --select stg_customers+",
+        "dbt test --select stg_customers"
+      ],
+      "explanation": "`stg_customers+` seleciona o model e tudo downstream; `dbt build` roda e testa cada um — então a correção se propaga e dados ruins são pegos."
+    },
+    "furtherReading": [
+      { "label": "Operadores de grafo" }
+    ]
+  },
+  "13": {
+    "title": "Testes customizados (singular tests)",
+    "concept": "Quando os testes embutidos não dão conta, você pode escrever os seus. Um **singular test** é apenas uma query SQL salva em `tests/`. Se ela retornar qualquer linha, o teste falha.\n\nO padrão é \"me mostre as linhas ruins\":\n\n```sql\n-- tests/no_pre_launch_signups.sql\nselect *\nfrom {{ ref('stg_users') }}\nwhere signup_at < '2024-01-01'  -- nossa empresa nem existia ainda\n```\n\nO projeto agora tem `tests/` ao lado das pastas staging/intermediate/marts. Adicionamos um singular test, `no_future_signups.sql`, que sinaliza pedidos com data no futuro. Leia, depois rode `dbt build` para ver o singular test executar junto com os genéricos.",
+    "tasks": [
+      {
+        "prompt": "Abra `tests/no_future_signups.sql` e leia. O teste passa quando essa query retorna zero linhas.",
+        "hint": "Clique no arquivo na árvore. O padrão: escreva um SELECT que retorne linhas ofensoras; resultado vazio = pass."
+      },
+      {
+        "prompt": "Adicione um segundo singular test em `tests/no_negative_revenue.sql` que encontre linhas em `fct_revenue_by_customer` onde revenue é negativo (não deveria haver, mas vamos verificar).",
+        "hint": "Crie o arquivo com:\n```\nselect *\nfrom {{ ref('fct_revenue_by_customer') }}\nwhere revenue < 0\n```"
+      },
+      {
+        "prompt": "Rode `dbt build`. Ele roda os models e depois todos os testes (genéricos + singulares) em ordem de dependência.",
+        "hint": "`dbt build` = `dbt run` + `dbt test`, na ordem do DAG."
+      }
+    ],
+    "quiz": {
+      "question": "Um singular test em `tests/foo.sql` passa quando…",
+      "options": [
+        "A query retorna pelo menos uma linha",
+        "A query retorna zero linhas",
+        "A query não tem erros de sintaxe",
+        "O arquivo existe"
+      ],
+      "explanation": "Singular tests são queries \"me mostre as linhas ruins\". Zero linhas ruins = pass."
+    },
+    "furtherReading": [
+      { "label": "Singular data tests" }
+    ]
+  },
+  "14": {
+    "title": "Juntando tudo: dbt build",
+    "concept": "Olhe ao redor. Este é o projeto que você foi construindo lição por lição:\n\n- Um source `raw` canônico declarado em YAML\n- Dois models de staging (`stg_customers`, `stg_orders`) lendo dele\n- Um filtro intermediário (`int_paid_orders`) e três marts (`dim_customers`, `dim_countries`, `fct_revenue_by_customer`)\n- Um seed `countries` alimentando `dim_countries`\n- Testes genéricos (`not_null`, `unique`, `relationships`, `accepted_values`), descrições e um singular test\n- Tudo organizado na estrutura canônica `staging/intermediate/marts`\n\n`dbt build` é o comando que você vai rodar mais em projetos reais. Um único comando faz tudo de uma passada:\n\n1. **Seeds** — carrega os CSVs de `seeds/` no warehouse\n2. **Models** — materializa cada model em ordem de dependência\n3. **Tests** — roda os testes logo depois de cada model e pula os models downstream se um falhar\n4. **Snapshots** — captura o histórico de slowly-changing-dimensions (não coberto neste curso; veja o link da doc do dbt abaixo)\n\nEsse último ponto é a rede de segurança: nenhum dado upstream quebrado contamina silenciosamente um dashboard.\n\nRode `dbt build` e veja o projeto inteiro rodar.",
+    "tasks": [
+      {
+        "prompt": "Rode `dbt build`. Ele carrega os seeds, materializa todo model e roda todo teste — tudo em um único comando.",
+        "hint": "Um único comando faz tudo: `dbt build`."
+      },
+      {
+        "prompt": "Confirme que `fct_revenue_by_customer` foi construído e passou.",
+        "hint": ""
+      },
+      {
+        "prompt": "Confirme que todo model tem testes passando.",
+        "hint": ""
+      },
+      {
+        "prompt": "Veja a rede de segurança em ação. Edite `models/staging/_schema.yml` para que o teste `accepted_values` em `stg_orders.status` não permita mais o valor presente no pedido 106. Depois rode `dbt build` de novo e observe o que acontece com os models downstream de `stg_orders`.",
+        "hint": "O pedido 106 tem status `pending`. Remova `'pending'` da lista `accepted_values` para que a lista vire `values: ['paid', 'refunded']`, salve e rode `dbt build`. `int_paid_orders` e `fct_revenue_by_customer` devem ser **pulados** em vez de construídos sobre dados ruins."
+      }
+    ],
+    "quiz": {
+      "question": "Por que preferir `dbt build` em vez de `dbt run` + `dbt test` separados?",
+      "options": [
+        "É mais curto de digitar",
+        "Roda os testes na ordem do DAG e pula models downstream quando um teste upstream falha",
+        "É a única forma de usar sources",
+        "Gera documentação"
+      ],
+      "explanation": "`dbt build` intercala testes com builds, então dados ruins são pegos no instante em que aparecem, antes que models downstream os consumam."
+    },
+    "furtherReading": [
+      { "label": "Comando dbt build" },
+      { "label": "Snapshots (não cobertos aqui)" }
+    ]
+  }
+}

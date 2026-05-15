@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { runQuery } from '../engine/duckdb'
 import { useGameStore } from '../store/gameStore'
 import PanelRevealBadge from './PanelRevealBadge'
@@ -133,6 +134,7 @@ function CatalogRow({ entry }: { entry: CatalogEntry }) {
 }
 
 export default function DatabaseExplorer() {
+  const { t } = useTranslation()
   const running = useGameStore((s) => s.running)
   const currentLevelId = useGameStore((s) => s.currentLessonId)
   const [groups, setGroups] = useState<SchemaGroup[]>([])
@@ -205,7 +207,7 @@ export default function DatabaseExplorer() {
             textTransform: 'uppercase',
           }}
         >
-          Database
+          {t('database.header')}
           <PanelRevealBadge panel="warehouse" />
         </span>
         {totalEntries > 0 && (
@@ -235,7 +237,7 @@ export default function DatabaseExplorer() {
                 fontStyle: 'italic',
               }}
             >
-              No tables yet
+              {t('database.empty')}
             </div>
           ) : (
             groups.map((g) => <SchemaSection key={g.schema} group={g} />)
