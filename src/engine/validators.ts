@@ -113,6 +113,26 @@ export function lineageHasSourceEdge(
   return false
 }
 
+/** True if an accepted_values test on `model.column` declares exactly the given values (order-insensitive). */
+export function acceptedValuesTestIncludes(
+  state: GameState,
+  model: string,
+  column: string,
+  values: string[],
+): boolean {
+  const defs = parseTests(state.files, new Set([model]))
+  const expected = new Set(values)
+  return defs.some(
+    (d) =>
+      d.model === model &&
+      d.column === column &&
+      d.kind === 'accepted_values' &&
+      d.values !== undefined &&
+      d.values.length === expected.size &&
+      d.values.every((v) => expected.has(v)),
+  )
+}
+
 /** True if a relationships test on `model.column` points at `toModel.field`. */
 export function relationshipTestPoints(
   state: GameState,

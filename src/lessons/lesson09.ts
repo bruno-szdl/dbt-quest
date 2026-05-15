@@ -1,6 +1,6 @@
 import type { Lesson } from '../engine/types'
 import {
-  testDefinitionsInclude,
+  acceptedValuesTestIncludes,
   relationshipTestPoints,
   allTestsPass,
 } from '../engine/validators'
@@ -83,7 +83,7 @@ Our \`stg_customers\` already has \`not_null\` + \`unique\` from the previous le
       id: 'accepted',
       prompt: "Add an `accepted_values` test to `stg_orders.status` allowing `['paid', 'refunded', 'pending']`.",
       hint: "Under the column's `data_tests:` line, add:\n```\n          - accepted_values:\n              arguments:\n                values: ['paid', 'refunded', 'pending']\n```",
-      validate: (s) => testDefinitionsInclude(s, 'stg_orders', ['accepted_values']),
+      validate: (s) => acceptedValuesTestIncludes(s, 'stg_orders', 'status', ['paid', 'refunded', 'pending']),
     },
     {
       id: 'rel',
