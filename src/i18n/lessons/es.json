@@ -3,8 +3,8 @@
     "title": "Introducción"
   },
   "1": {
-    "title": "Tu primer model dbt",
-    "concept": "A lo largo del curso vas a trabajar en un único proyecto dbt ficticio, de una pequeña empresa de e-commerce. Cada lección agrega un concepto nuevo sobre lo anterior.\n\nUn **model** en dbt es solo un `SELECT` guardado como archivo `.sql` dentro de la carpeta `models/`. Cuando corres dbt, este transforma esa query en una **view** en tu base (una query guardada, que la base conoce por su nombre).\n\nEl proyecto ya tiene un model: `stg_customers.sql`. Lee de una tabla cruda llamada `raw.customers`.\n\nDos comandos que vas a usar todo el tiempo:\n\n- `dbt run`: materializa todos los models. Cuando termina, `stg_customers` aparece en el panel **Database** como una view.\n\n- `dbt show --select <model>`: hace un preview de las filas de un model.\n\nPruébalo abajo.",
+    "title": "Tu primer dbt model",
+    "concept": "A lo largo del curso vas a trabajar en un único proyecto dbt ficticio, de una pequeña empresa de e-commerce. Cada lección agrega un concepto nuevo sobre lo anterior.\n\nUn **model** en dbt es solo un `SELECT` guardado como archivo `.sql` dentro de la carpeta `models/`. Cuando corres dbt, este transforma esa query en una **view** en tu base de datos (una query guardada, que la base de datos conoce por su nombre).\n\nEl proyecto ya tiene un model: `stg_customers.sql`. Lee de una tabla cruda llamada `raw.customers`.\n\nDos comandos que vas a usar todo el tiempo:\n\n- `dbt run`: materializa todos los models. Cuando termina, `stg_customers` aparece en el panel **Database** como una view.\n\n- `dbt show --select <model>`: hace un preview de las filas de un model.\n\nPruébalo abajo.",
     "tasks": [
       {
         "prompt": "Corre `dbt run` en la terminal para construir el model stg_customers en tu Database.",
@@ -32,7 +32,7 @@
   },
   "2": {
     "title": "ref() y el DAG",
-    "concept": "Los models casi nunca viven solos. Leen de otros models. En vez de fijar el nombre de la tabla en el código, usas `{{ ref('model_name') }}`. dbt analiza cada llamada a `ref()` para descubrir qué model depende de cuál, y eso se convierte en el **DAG** (el grafo de lineage a la derecha).\n\nLos `{{ ... }}` son **Jinja**, un lenguaje de templates. Un archivo de model dbt es SQL con fragmentos de Jinja mezclados. Antes de correr cualquier cosa, dbt **compila** el Jinja: `{{ ref('stg_customers') }}` se convierte en el nombre real de la tabla en tu warehouse. Puedes ver el SQL compilado en cualquier momento con `dbt compile`.\n\nEn nuestro proyecto, `stg_customers` ya está listo desde la lección anterior. Ahora vas a construir algunos models encima de él usando `ref()`.",
+    "concept": "Los models casi nunca viven solos. Leen de otros models. En vez de fijar el nombre de la tabla en el código, usas `{{ ref('model_name') }}`. dbt analiza cada llamada a `ref()` para descubrir qué model depende de cuál, y eso se convierte en el **DAG** (el grafo de lineage a la derecha).\n\nLos `{{ ... }}` son **Jinja**, un lenguaje de templates. Un archivo de dbt model es SQL con fragmentos de Jinja mezclados. Antes de correr cualquier cosa, dbt **compila** el Jinja: `{{ ref('stg_customers') }}` se convierte en el nombre real de la tabla en tu warehouse. Puedes ver el SQL compilado en cualquier momento con `dbt compile`.\n\nEn nuestro proyecto, `stg_customers` ya está listo desde la lección anterior. Ahora vas a construir algunos models encima de él usando `ref()`.",
     "tasks": [
       {
         "prompt": "En `models/dim_customers.sql`, escribe un SELECT que lea todas las columnas de `stg_customers` usando `ref()`.",
@@ -115,7 +115,7 @@
   },
   "4": {
     "title": "Materializations: view vs table",
-    "concept": "Por defecto, cada model dbt se convierte en una **view** (una query guardada, que se ejecuta de nuevo en cada consulta). Las views son baratas de construir pero lentas de consultar. (Puedes cambiar el default de todo el proyecto en `dbt_project.yml`, pero el override por model es lo que vas a ver con más frecuencia.)\n\nCuando un model se consulta seguido o es caro de computar, vas a querer una **table** (el resultado queda almacenado físicamente). Cambias la **materialization** con un bloque de config arriba del model:\n\n```sql\n{{ config(materialized='table') }}\n\nselect ...\n```\n\nLos marts de nuestro proyecto se leen seguido por consumidores downstream. Convierte `dim_customers` y `fct_revenue_by_customer` en tables para que las lecturas sean rápidas.",
+    "concept": "Por defecto, cada dbt model se convierte en una **view** (una query guardada, que se ejecuta de nuevo en cada consulta). Las views son baratas de construir pero lentas de consultar. (Puedes cambiar el default de todo el proyecto en `dbt_project.yml`, pero el override por model es lo que vas a ver con más frecuencia.)\n\nCuando un model se consulta seguido o es caro de computar, vas a querer una **table** (el resultado queda almacenado físicamente). Cambias la **materialization** con un bloque de config arriba del model:\n\n```sql\n{{ config(materialized='table') }}\n\nselect ...\n```\n\nLos marts de nuestro proyecto se leen seguido por consumidores downstream. Convierte `dim_customers` y `fct_revenue_by_customer` en tables para que las lecturas sean rápidas.",
     "tasks": [
       {
         "prompt": "Cambia `dim_customers` para que se materialice como table (agrega el bloque de config arriba).",
@@ -224,7 +224,7 @@
   },
   "7": {
     "title": "Seeds",
-    "concept": "Los **seeds** son archivos CSV pequeños, versionados en el repositorio (en `seeds/`), que dbt carga en el warehouse como tablas. Son perfectos para datos de lookup: códigos de país, tipos de cambio, mapeos de status. Cualquier cosa pequeña, que cambia lento, y que encaja mejor en el control de versiones que en una base.\n\nDos cosas diferencian a los seeds de los models comunes:\n\n1. Se cargan con `dbt seed`, **no** con `dbt run`. Los datos viven en un CSV, no en un SELECT.\n2. Desde el punto de vista de ref(), un seed *es* un model: lo referencias con `{{ ref('seed_name') }}` igual que cualquier otro.\n\nEn esta lección, el equipo agregó un lookup `seeds/countries.csv` al proyecto. La tabla `countries` todavía no está en el warehouse; solo el CSV está en disco. Vas a hacer el seed y luego construir un pequeño model `dim_countries` encima.",
+    "concept": "Los **seeds** son archivos CSV pequeños, versionados en el repositorio (en `seeds/`), que dbt carga en el warehouse como tablas. Son perfectos para datos de lookup: códigos de país, tipos de cambio, mapeos de status. Cualquier cosa pequeña, que cambia lento, y que encaja mejor en el control de versiones que en una base de datos.\n\nDos cosas diferencian a los seeds de los models comunes:\n\n1. Se cargan con `dbt seed`, **no** con `dbt run`. Los datos viven en un CSV, no en un SELECT.\n2. Desde el punto de vista de ref(), un seed *es* un model: lo referencias con `{{ ref('seed_name') }}` igual que cualquier otro.\n\nEn esta lección, el equipo agregó un lookup `seeds/countries.csv` al proyecto. La tabla `countries` todavía no está en el warehouse; solo el CSV está en disco. Vas a hacer el seed y luego construir un pequeño model `dim_countries` encima.",
     "tasks": [
       {
         "prompt": "Échale un vistazo a `seeds/countries.csv` — vive en `seeds/`, no en `models/`. Fíjate en la línea de header y en las cinco filas de datos.",

@@ -38,7 +38,7 @@
     "subTagline": "{{count}} lições interativas e curtas. SQL de verdade, um warehouse de verdade, um DAG de verdade. Tudo rodando nesta página. Sem instalação, sem cadastro.",
     "ctaBegin": "Começar pela Lição 1 ›",
     "ctaContinue": "Continuar de onde parei ›",
-    "ctaBeginFull": "Começar pela Lição 1: seu primeiro model dbt ›",
+    "ctaBeginFull": "Começar pela Lição 1: seu primeiro dbt model›",
     "restart": "Recomeçar o curso",
     "restartConfirm": "Recomeçar o curso do zero, a partir da Lição 1? Seu progresso será apagado.",
     "welcomeLead": "Bem-vindo ao ",
@@ -58,8 +58,8 @@
     "dbtRun": {
       "intro": "Um projeto dbt é uma pasta cheia de arquivos `.sql`. Cada arquivo é um `SELECT` (o que o dbt chama de **model**). Quando você roda `dbt run`, o dbt:",
       "step1": "Lê todos os seus models SQL",
-      "step2": "Descobre quais models dependem de quais (o **DAG**)",
-      "step3": "Roda eles na ordem certa e materializa os resultados no seu banco",
+      "step2": "Descobre quais models dependem de quais (a **DAG**)",
+      "step3": "Roda eles na ordem certa e materializa os resultados no seu banco de dados",
       "outro": "É essa a ideia central. Todo o resto (tests, docs, sources, materializations, snapshots) é construído em cima dessas primitivas."
     },
     "exampleDag": {
@@ -81,7 +81,7 @@
     },
     "beforeYouStart": {
       "heading": "Antes de começar",
-      "body": "Você só precisa saber SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Só isso. Você não precisa de banco de dados, instalação do dbt nem experiência com linha de comando. Tudo roda no navegador."
+      "body": "Você só precisa saber SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Só isso. Você não precisa de Database, instalação do dbt nem experiência com linha de comando. Tudo roda no navegador."
     },
     "footer": {
       "builtBy": "Feito por Bruno Lima",
@@ -99,7 +99,7 @@
     },
     "terminal": {
       "title": "Terminal / Resultados / Lineage",
-      "body": "Rode comandos dbt (dbt run, dbt test, dbt build), inspecione resultados de queries e veja o DAG se atualizar conforme você adiciona ref() entre os models."
+      "body": "Rode comandos dbt (dbt run, dbt test, dbt build), inspecione resultados de queries e veja a DAG se atualizar conforme você adiciona ref() entre os models."
     },
     "lesson": {
       "title": "Painel da lição",
@@ -115,7 +115,7 @@
     "step1Link": "guia de instalação do dbt Core",
     "step2Lead": "Abra um projeto real no GitHub (experimente o ",
     "step2Link": "jaffle-shop",
-    "step2Tail": ") e percorra o DAG de ponta a ponta.",
+    "step2Tail": ") e percorra a DAG de ponta a ponta.",
     "step3Lead": "Leia rapidamente a documentação oficial que você ainda não viu aqui: ",
     "step3Macros": "macros",
     "step3Incremental": "incremental models",
@@ -146,7 +146,7 @@
   },
   "dag": {
     "header": "dag",
-    "empty": "Visualização do DAG",
+    "empty": "Visualização da DAG",
     "emptyHint": "adicione um model para ver o grafo",
     "status": {
       "passed": "Passou",
@@ -166,7 +166,7 @@
     "noFileOpen": "Nenhum arquivo aberto"
   },
   "database": {
-    "header": "Banco de dados",
+    "header": "Database",
     "empty": "Nenhuma tabela ainda"
   },
   "panel": {

@@ -38,7 +38,7 @@
     "subTagline": "{{count}} lecciones cortas e interactivas. SQL de verdad, un warehouse de verdad, un DAG de verdad. Todo corriendo en esta página. Sin instalación, sin registro.",
     "ctaBegin": "Empezar por la Lección 1 ›",
     "ctaContinue": "Seguir donde lo dejé ›",
-    "ctaBeginFull": "Empezar por la Lección 1: tu primer model dbt ›",
+    "ctaBeginFull": "Empezar por la Lección 1: tu primer dbt model ›",
     "restart": "Reiniciar el curso",
     "restartConfirm": "¿Volver a empezar el curso desde la Lección 1? Se borrará tu progreso.",
     "welcomeLead": "Bienvenido a ",
@@ -59,7 +59,7 @@
       "intro": "Un proyecto dbt es una carpeta llena de archivos `.sql`. Cada archivo es un `SELECT` (lo que dbt llama un **model**). Cuando corres `dbt run`, dbt:",
       "step1": "Lee todos tus models SQL",
       "step2": "Detecta qué models dependen de cuáles (el **DAG**)",
-      "step3": "Los corre en el orden correcto y materializa los resultados en tu base",
+      "step3": "Los corre en el orden correcto y materializa los resultados en tu base de datos",
       "outro": "Esa es la idea central. Todo lo demás (tests, docs, sources, materializations, snapshots) se construye sobre esas primitivas."
     },
     "exampleDag": {
@@ -81,7 +81,7 @@
     },
     "beforeYouStart": {
       "heading": "Antes de empezar",
-      "body": "Solo necesitas SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Nada más. No necesitas una base de datos, una instalación de dbt, ni experiencia con la línea de comandos. Todo corre en tu navegador."
+      "body": "Solo necesitas SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Nada más. No necesitas una base de datos de datos, una instalación de dbt, ni experiencia con la línea de comandos. Todo corre en tu navegador."
     },
     "footer": {
       "builtBy": "Hecho por Bruno Lima",
@@ -166,7 +166,7 @@
     "noFileOpen": "Ningún archivo abierto"
   },
   "database": {
-    "header": "Base de datos",
+    "header": "Database",
     "empty": "Aún no hay tablas"
   },
   "panel": {
