@@ -20,7 +20,7 @@ const lesson07: Lesson = {
 Two things make seeds different from regular models:
 
 1. They're loaded with \`dbt seed\`, **not** \`dbt run\`. The data lives in a CSV, not a SELECT.
-2. From a model's point of view, a seed *is* a model: you reference it with \`{{ ref('seed_name') }}\` just like any other.
+2. From a ref()'s point of view, a seed *is* a model: you reference it with \`{{ ref('seed_name') }}\` just like any other.
 
 In this lesson the team has dropped a \`seeds/countries.csv\` lookup into the project. The \`countries\` table isn't in the warehouse yet; only the CSV is on disk. You'll seed it, then build a small \`dim_countries\` model on top.`,
   initialFiles: {
