@@ -94,8 +94,7 @@ Ensures proper headers and caching:
 RFC 9116 security contact information for vulnerability disclosure:
 
 ```
-Contact: security@dbtquest.io
-Contact: bruno.szdl@gmail.com
+Contact: info@datagym.io
 Expires: 2027-05-15
 ```
 
