@@ -23,7 +23,7 @@ const lesson11: Lesson = {
 - **intermediate/**: joins and reusable building blocks. Prefixed \`int_\`.
 - **marts/**: business-facing tables (often dimensional). Prefixed \`dim_\` or \`fct_\`.
 
-Folders aren't enforced by dbt, but following the convention makes any dbt project instantly readable. Until now our project has kept everything flat in \`models/\`. In this lesson you'll refactor it into the canonical three-layer layout.
+Folders aren't enforced by dbt, but following the convention makes any dbt project instantly readable. Until now our project has kept everything flat in \`models/\`. In this lesson you'll refactor it into the standard three-layer layout.
 
 Right-click a file (or hover and click the rename icon) to move it. dbt identifies models by filename, not by folder path, so this is purely organizational.`,
   initialFiles: {

@@ -1,5 +1,5 @@
 /**
- * Canonical project snapshot.
+ * Reference project snapshot.
  *
  * Every lesson is a slice of the same fictional dbt project. The constants
  * below are the "ideal" file contents at each milestone — what the learner's

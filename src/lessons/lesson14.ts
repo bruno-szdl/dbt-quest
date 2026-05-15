@@ -20,12 +20,12 @@ const lesson14: Lesson = {
   title: 'Putting it all together: dbt build',
   concept: `Take a look around. This is the project you've been building lesson by lesson:
 
-- A canonical \`raw\` source declared in YAML
+- A well-defined \`raw\` source declared in YAML
 - Two staging models (\`stg_customers\`, \`stg_orders\`) reading from it
 - An intermediate filter (\`int_paid_orders\`) and three marts (\`dim_customers\`, \`dim_countries\`, \`fct_revenue_by_customer\`)
 - A \`countries\` seed feeding \`dim_countries\`
 - Generic tests (\`not_null\`, \`unique\`, \`relationships\`, \`accepted_values\`), descriptions, and one singular test
-- All laid out in the canonical \`staging/intermediate/marts\` structure
+- All organized in the standard \`staging/intermediate/marts\` structure
 
 \`dbt build\` is the one command you'll run most in real projects. A single command handles everything in one pass:
 
