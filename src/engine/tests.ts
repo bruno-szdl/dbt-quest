@@ -252,3 +252,39 @@ export async function runTests(tests: TestDef[]): Promise<TestOutcome[]> {
   }
   return out
 }
+
+const REF_RE = /\{\{\s*ref\s*\(\s*['"]([^'"]+)['"]\s*\)\s*\}\}/g
+
+export interface SingularTest {
+  name: string
+  sql: string
+}
+
+export interface SingularTestOutcome extends SingularTest {
+  passed: boolean
+  failingRows: number
+  error?: string
+}
+
+export function parseSingularTests(files: Record<string, string>): SingularTest[] {
+  return Object.entries(files)
+    .filter(([path]) => path.startsWith('tests/') && path.endsWith('.sql'))
+    .map(([path, raw]) => ({
+      name: path.slice('tests/'.length, -'.sql'.length),
+      sql: raw.replace(REF_RE, (_m, model: string) => `"${model}"`),
+    }))
+}
+
+export async function runSingularTests(tests: SingularTest[]): Promise<SingularTestOutcome[]> {
+  const out: SingularTestOutcome[] = []
+  for (const t of tests) {
+    try {
+      const res = await runQuery(t.sql)
+      const failing = res.rows.length
+      out.push({ ...t, passed: failing === 0, failingRows: failing })
+    } catch (e) {
+      out.push({ ...t, passed: false, failingRows: 0, error: errorMessage(e) })
+    }
+  }
+  return out
+}

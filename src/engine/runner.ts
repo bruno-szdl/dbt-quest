@@ -1,7 +1,7 @@
 import type { ParsedCommand, SelectorGroup, SelectorTerm } from './commandParser'
 import { parseCommand } from './commandParser'
 import { materializeModels, plan, previewModel, type ModelOutcome } from './executor'
-import { parseTests, runTests, type TestDef, type TestOutcome } from './tests'
+import { parseTests, runTests, parseSingularTests, runSingularTests, type TestDef, type TestOutcome, type SingularTestOutcome } from './tests'
 import { type CompiledModel, collectModels, getFileStem } from './compiler'
 import { buildDag } from './dagBuilder'
 import { registerCsv } from './duckdb'
@@ -233,6 +233,12 @@ function formatSkipLine(i: number, total: number, name: string): TerminalLine {
 function formatTestLine(i: number, total: number, t: TestOutcome): TerminalLine {
   const label = `${t.kind}_${t.model}_${t.column}`
   const prefix = `${i + 1} of ${total} ${t.passed ? 'PASS' : 'FAIL'} ${label} `
+  const suffix = t.passed ? '[PASS]' : `[FAIL — ${t.failingRows} row${t.failingRows !== 1 ? 's' : ''}]`
+  return { text: `${prefix}${dots(prefix, suffix)} ${suffix}`, color: t.passed ? 'green' : 'red' }
+}
+
+function formatSingularTestLine(i: number, total: number, t: SingularTestOutcome): TerminalLine {
+  const prefix = `${i + 1} of ${total} ${t.passed ? 'PASS' : 'FAIL'} ${t.name} `
   const suffix = t.passed ? '[PASS]' : `[FAIL — ${t.failingRows} row${t.failingRows !== 1 ? 's' : ''}]`
   return { text: `${prefix}${dots(prefix, suffix)} ${suffix}`, color: t.passed ? 'green' : 'red' }
 }
@@ -550,6 +556,22 @@ export async function execute(
         }
       }
 
+      // Run singular tests after all models are built
+      if (!runFailed) {
+        const singularTests = parseSingularTests(state.files)
+        if (singularTests.length > 0) {
+          const singularOutcomes = await runSingularTests(singularTests)
+          singularOutcomes.forEach((t, i) => {
+            lines.push(formatSingularTestLine(i, singularOutcomes.length, t))
+            if (t.error) lines.push({ text: `  Error: ${t.error}`, color: 'red' })
+          })
+          for (const t of singularOutcomes) {
+            totalTests++
+            if (t.passed) passedTests++
+          }
+        }
+      }
+
       lines.push({ text: '' })
       if (runFailed) {
         lines.push({
@@ -647,19 +669,26 @@ export async function execute(
     // Separate path for dbt test (without models)
     const modelNames = new Set(selected.map((m) => m.name))
     const tests = parseTests(state.files, modelNames)
+    const singularTests = parseSingularTests(state.files)
+    const totalTestCount = tests.length + singularTests.length
     lines.push({
-      text: `Found ${tests.length} test${tests.length !== 1 ? 's' : ''}`,
+      text: `Found ${totalTestCount} test${totalTestCount !== 1 ? 's' : ''}`,
       color: 'gray',
     })
     lines.push({ text: '' })
 
-    if (tests.length === 0) {
+    if (totalTestCount === 0) {
       lines.push({ text: 'Nothing to test.', color: 'yellow' })
       lines.push({ text: '' })
     } else {
       const outcomes = await runTests(tests)
+      const singularOutcomes = await runSingularTests(singularTests)
       outcomes.forEach((t, i) => {
         lines.push(formatTestLine(i, outcomes.length, t))
+        if (t.error) lines.push({ text: `  Error: ${t.error}`, color: 'red' })
+      })
+      singularOutcomes.forEach((t, i) => {
+        lines.push(formatSingularTestLine(i, singularOutcomes.length, t))
         if (t.error) lines.push({ text: `  Error: ${t.error}`, color: 'red' })
       })
       // Clear stale results for models in this run so a passing re-run
@@ -671,12 +700,12 @@ export async function execute(
         if (prev === 'fail') continue
         newTestResults[t.model] = t.passed ? 'pass' : 'fail'
       }
-      const passed = outcomes.filter((t) => t.passed).length
-      const failed = outcomes.length - passed
+      const passed = outcomes.filter((t) => t.passed).length + singularOutcomes.filter((t) => t.passed).length
+      const failed = totalTestCount - passed
 
       lines.push({ text: '' })
       lines.push({
-        text: `Finished running ${outcomes.length} test${outcomes.length !== 1 ? 's' : ''}.`,
+        text: `Finished running ${totalTestCount} test${totalTestCount !== 1 ? 's' : ''}.`,
         color: 'gray',
       })
       lines.push({

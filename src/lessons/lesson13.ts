@@ -56,11 +56,11 @@ The project now has tests/ alongside the staging/intermediate/marts folders. We'
     },
     {
       id: 'add-test',
-      prompt: "Add a second singular test at `tests/no_refunded_in_revenue.sql` that finds rows in `fct_revenue_by_customer` where revenue would be negative (defensive -there shouldn't be any).",
+      prompt: "Add a second singular test at `tests/no_negative_revenue.sql` that finds rows in `fct_revenue_by_customer` where revenue is negative (there shouldn't be any, but let's verify).",
       hint: "Create the file with:\n```\nselect *\nfrom {{ ref('fct_revenue_by_customer') }}\nwhere revenue < 0\n```",
       validate: (s) =>
-        fileMatches(s, 'tests/no_refunded_in_revenue.sql', /from\s+\{\{\s*ref\(\s*['"]fct_revenue_by_customer['"]/i) &&
-        fileMatches(s, 'tests/no_refunded_in_revenue.sql', /where\s+revenue\s*<\s*0/i),
+        fileMatches(s, 'tests/no_negative_revenue.sql', /from\s+\{\{\s*ref\(\s*['"]fct_revenue_by_customer['"]/i) &&
+        fileMatches(s, 'tests/no_negative_revenue.sql', /where\s+revenue\s*<\s*0/i),
     },
     {
       id: 'build',
