@@ -389,7 +389,7 @@ function QuizBlock({
   return (
     <div>
       <div style={{ color: 'var(--color-text)', fontSize: '0.8125rem', fontFamily: 'IBM Plex Sans, sans-serif', lineHeight: 1.5, marginBottom: '10px' }}>
-        {question}
+        {renderInline(question)}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {options.map((opt, i) => {
@@ -425,7 +425,7 @@ function QuizBlock({
                 cursor: 'pointer',
               }}
             >
-              {opt}
+              {renderInline(opt)}
             </button>
           )
         })}
@@ -444,7 +444,7 @@ function QuizBlock({
             lineHeight: 1.5,
           }}
         >
-          {isCorrect ? '✓ ' : ''}{explanation}
+          {isCorrect ? '✓ ' : ''}{renderInline(explanation)}
         </div>
       )}
     </div>
