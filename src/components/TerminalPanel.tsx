@@ -17,9 +17,11 @@ function lineColor(line: TerminalLine): string {
 
 interface TerminalPanelProps {
   embedded?: boolean
+  mobileMode?: boolean
+  autoFocusInput?: boolean
 }
 
-export default function TerminalPanel({ embedded = false }: TerminalPanelProps) {
+export default function TerminalPanel({ embedded = false, mobileMode = false, autoFocusInput = true }: TerminalPanelProps) {
   const { t } = useTranslation()
   const terminalHistory = useGameStore((s) => s.terminalHistory)
   const runCommand = useGameStore((s) => s.runCommand)
@@ -178,13 +180,17 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
           looked like a stray white bar in light mode). */}
       <div
         className="flex items-center gap-0 px-4 shrink-0"
-        style={{ height: '36px', background: 'var(--color-terminal-bg)', borderTop: '1px solid var(--color-border-subtle)' }}
+        style={{
+          height: mobileMode ? '44px' : '36px',
+          background: 'var(--color-terminal-bg)',
+          borderTop: '1px solid var(--color-border-subtle)',
+        }}
       >
         <span
           aria-hidden="true"
           style={{
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.75rem',
+            fontSize: mobileMode ? '0.875rem' : '0.75rem',
             color: 'var(--color-accent-orange)',
             userSelect: 'none',
             flexShrink: 0,
@@ -198,7 +204,7 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
           value={input}
           onChange={(e) => updateInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          autoFocus
+          autoFocus={autoFocusInput}
           spellCheck={false}
           autoComplete="off"
           autoCapitalize="off"
@@ -206,12 +212,13 @@ export default function TerminalPanel({ embedded = false }: TerminalPanelProps) 
           aria-label={t('terminal.inputAria')}
           style={{
             flex: 1,
+            minWidth: 0,
             background: 'transparent',
             border: 'none',
             outline: 'none',
             color: 'var(--color-text)',
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.75rem',
+            fontSize: mobileMode ? '1rem' : '0.75rem',
             caretColor: 'var(--color-accent-orange)',
           }}
         />

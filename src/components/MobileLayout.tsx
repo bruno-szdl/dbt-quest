@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGameStore } from '../store/gameStore'
 import { getLessonById } from '../lessons'
@@ -11,9 +11,17 @@ import TerminalPanel from './TerminalPanel'
 import ResultsPanel from './ResultsPanel'
 import DagPanel from './DagPanel'
 
-type MobileTab = 'lesson' | 'files' | 'editor' | 'console' | 'lineage'
+type MobileTab = 'lesson' | 'editor' | 'terminal' | 'files' | 'database' | 'lineage'
 
-const TAB_IDS: MobileTab[] = ['lesson', 'files', 'editor', 'console', 'lineage']
+const TAB_IDS: MobileTab[] = ['lesson', 'editor', 'terminal', 'files', 'database', 'lineage']
+const SWIPE_MIN_DISTANCE = 56
+const SWIPE_DIRECTION_RATIO = 1.2
+
+interface SwipeState {
+  startX: number
+  startY: number
+  swiping: boolean
+}
 
 export default function MobileLayout() {
   const { t } = useTranslation()
@@ -23,19 +31,20 @@ export default function MobileLayout() {
   }))
   const [tab, setTab] = useState<MobileTab>('lesson')
   const [consoleSub, setConsoleSub] = useState<'commands' | 'results'>('commands')
+  const swipeRef = useRef<SwipeState | null>(null)
   const currentLessonId = useGameStore((s) => s.currentLessonId)
   const lessonPanels = getLessonById(currentLessonId)?.panels ?? ALL_PANELS
   const seenFiles = lessonPanels.includes('files')
   const seenWarehouse = lessonPanels.includes('warehouse')
   const seenLineage = lessonPanels.includes('lineage')
 
-  // The mobile "Files" tab also contains the Database explorer, so we keep it
-  // visible whenever either panel is unlocked for this lesson.
-  const showFilesTab = seenFiles || seenWarehouse
+  const showFilesTab = seenFiles
+  const showDatabaseTab = seenWarehouse
   const showLineageTab = seenLineage
 
   const tabs = ALL_TABS.filter((t) => {
     if (t.id === 'files') return showFilesTab
+    if (t.id === 'database') return showDatabaseTab
     if (t.id === 'lineage') return showLineageTab
     return true
   })
@@ -44,6 +53,48 @@ export default function MobileLayout() {
   // on Lineage and switched back to lesson 1), fall back to Lesson during
   // render rather than via an effect.
   const activeTab: MobileTab = tabs.some((t) => t.id === tab) ? tab : 'lesson'
+  const goToAdjacentTab = (offset: -1 | 1) => {
+    const currentIndex = tabs.findIndex((t) => t.id === activeTab)
+    if (currentIndex === -1) return
+    const nextIndex = Math.max(0, Math.min(tabs.length - 1, currentIndex + offset))
+    if (nextIndex !== currentIndex) setTab(tabs[nextIndex].id)
+  }
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) {
+      swipeRef.current = null
+      return
+    }
+    const touch = event.touches[0]
+    swipeRef.current = { startX: touch.clientX, startY: touch.clientY, swiping: false }
+  }
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const swipe = swipeRef.current
+    if (!swipe || event.touches.length !== 1) return
+    const touch = event.touches[0]
+    const dx = touch.clientX - swipe.startX
+    const dy = touch.clientY - swipe.startY
+
+    if (!swipe.swiping && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * SWIPE_DIRECTION_RATIO) {
+      swipe.swiping = true
+    }
+    if (swipe.swiping) event.preventDefault()
+  }
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const swipe = swipeRef.current
+    swipeRef.current = null
+    if (!swipe || !swipe.swiping) return
+
+    const touch = event.changedTouches[0]
+    if (!touch) return
+    const dx = touch.clientX - swipe.startX
+    const dy = touch.clientY - swipe.startY
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) <= Math.abs(dy) * SWIPE_DIRECTION_RATIO) return
+
+    goToAdjacentTab(dx < 0 ? 1 : -1)
+  }
 
   return (
     <div
@@ -54,7 +105,14 @@ export default function MobileLayout() {
         paddingRight: 'env(safe-area-inset-right)',
       }}
     >
-      <div className="flex-1 overflow-hidden">
+      <div
+        className="flex-1 overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => { swipeRef.current = null }}
+        style={{ touchAction: 'pan-y' }}
+      >
         {activeTab === 'lesson' && (
           <div className="h-full overflow-hidden">
             <LessonPanel />
@@ -63,12 +121,7 @@ export default function MobileLayout() {
         {activeTab === 'files' && (
           <div className="h-full flex flex-col overflow-hidden" style={{ background: 'var(--color-base)' }}>
             <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
-              {seenFiles && (
-                <div className="flex-1 overflow-hidden min-h-0">
-                  <FileExplorer />
-                </div>
-              )}
-              {seenWarehouse && <DatabaseExplorer />}
+              <FileExplorer />
             </div>
           </div>
         )}
@@ -77,9 +130,14 @@ export default function MobileLayout() {
             <Editor />
           </div>
         )}
-        {activeTab === 'console' && (
+        {activeTab === 'terminal' && (
           <div className="h-full flex flex-col overflow-hidden">
             <ConsoleSubTabs sub={consoleSub} setSub={setConsoleSub} />
+          </div>
+        )}
+        {activeTab === 'database' && (
+          <div className="h-full flex flex-col overflow-hidden" style={{ background: 'var(--color-base)' }}>
+            <DatabaseExplorer />
           </div>
         )}
         {activeTab === 'lineage' && (
@@ -146,7 +204,7 @@ function ConsoleSubTabs({
         <SubTabBtn label={t('workspace.results')} active={sub === 'results'} onClick={() => setSub('results')} />
       </div>
       <div className="flex-1 overflow-hidden">
-        {sub === 'commands' ? <TerminalPanel embedded /> : <ResultsPanel />}
+        {sub === 'commands' ? <TerminalPanel embedded mobileMode autoFocusInput={false} /> : <ResultsPanel />}
       </div>
     </div>
   )
