@@ -31,7 +31,8 @@
       "lesson": "Lección",
       "files": "Archivos",
       "editor": "Editor",
-      "console": "Consola",
+      "terminal": "Terminal",
+      "database": "Database",
       "lineage": "Lineage"
     }
   },
