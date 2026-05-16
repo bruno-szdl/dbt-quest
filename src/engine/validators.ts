@@ -51,15 +51,28 @@ export function testPassed(
   return state.testResults[modelName] === 'pass'
 }
 
+function stripYamlComments(content: string): string {
+  return content
+    .split('\n')
+    .map((line) => line.replace(/(^|\s)#.*$/, '$1'))
+    .join('\n')
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 export function sourceDefined(
   state: GameState,
   sourceName: string,
   tableName: string,
 ): boolean {
+  const sourceRe = new RegExp(`(^|\\n)\\s*-\\s*name:\\s*${escapeRegex(sourceName)}\\s*(\\n|$)`)
+  const tableRe = new RegExp(`(^|\\n)\\s*-\\s*name:\\s*${escapeRegex(tableName)}\\s*(\\n|$)`)
   for (const [path, content] of Object.entries(state.files)) {
     if (!path.endsWith('.yml') && !path.endsWith('.yaml')) continue
-    if (content.includes(`name: ${sourceName}`) && content.includes(`name: ${tableName}`))
-      return true
+    const stripped = stripYamlComments(content)
+    if (sourceRe.test(stripped) && tableRe.test(stripped)) return true
   }
   return false
 }
