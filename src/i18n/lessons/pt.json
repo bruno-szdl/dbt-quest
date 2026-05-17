@@ -4,7 +4,7 @@
   },
   "1": {
     "title": "Seu primeiro dbt model",
-    "concept": "Ao longo do curso você vai trabalhar em um único projeto dbt fictício, de uma pequena empresa de e-commerce. Cada lição adiciona um novo conceito sobre o que veio antes.\n\nUm **model** no dbt é apenas um `SELECT` salvo como arquivo `.sql` dentro da pasta `models/`. Quando você roda o dbt, ele transforma essa query em uma **view** no seu banco de dados (uma query salva, que o banco de dados conhece pelo nome).\n\nO projeto já tem um model: `stg_customers.sql`. Ele lê de uma tabela bruta chamada `raw.customers`.\n\nDois comandos que você vai usar o tempo todo:\n\n- `dbt run`: materializa todos os models. Quando termina, `stg_customers` aparece no painel **Database** como uma view.\n\n- `dbt show --select <model>`: faz um preview das linhas de um model.\n\nExperimente abaixo.",
+    "concept": "Ao longo do curso você vai trabalhar em um único projeto dbt fictício, de uma pequena empresa de e-commerce. Cada lição adiciona um novo conceito sobre o que veio antes.\n\nUm **model** no dbt é apenas um `SELECT` salvo como arquivo `.sql` dentro da pasta `models/`. Quando você roda o dbt, ele transforma essa query em uma **view** no seu Database (uma query salva, que o Database conhece pelo nome).\n\nO projeto já tem um model: `stg_customers.sql`. Ele lê de uma tabela bruta chamada `raw.customers`.\n\nDois comandos que você vai usar o tempo todo:\n\n- `dbt run`: materializa todos os models. Quando termina, `stg_customers` aparece no painel **Database** como uma view.\n\n- `dbt show --select <model>`: faz um preview das linhas de um model.\n\nExperimente abaixo.",
     "tasks": [
       {
         "prompt": "Rode `dbt run` no terminal para construir o model stg_customers no seu Database.",
@@ -44,7 +44,7 @@
       },
       {
         "prompt": "Olhe o grafo de lineage — `stg_customers` agora deve se ramificar para os dois models que você acabou de escrever.",
-        "hint": "A DAG se atualiza assim que o ref() entra no seu arquivo. Veja na aba de lineage."
+        "hint": "A DAG se atualiza assim que o ref() entra no seu arquivo. Veja na aba Lineage."
       },
       {
         "prompt": "Rode `dbt compile` e leia a saída — veja como `{{ ref('stg_customers') }}` é substituído pelo nome real da tabela.",
@@ -235,7 +235,7 @@
   },
   "7": {
     "title": "Seeds",
-    "concept": "**Seeds** são arquivos CSV pequenos, versionados no repositório (em `seeds/`), que o dbt carrega no warehouse como tabelas. São perfeitos para dados de lookup: códigos de país, cotações de moeda, mapeamentos de status. Qualquer coisa pequena, que muda devagar, e que se encaixa melhor no controle de versão do que num banco de dados.\n\nDuas coisas diferenciam seeds de models comuns:\n\n1. São carregados com `dbt seed`, **não** com `dbt run`. Os dados vivem num CSV, não num SELECT.\n2. Do ponto de vista do ref(), um seed *é* um model: você referencia com `{{ ref('seed_name') }}` igual a qualquer outro.\n\nNesta lição, o time colocou um lookup `seeds/countries.csv` no projeto. A tabela `countries` ainda não está no warehouse; só o CSV está no disco. Você vai dar seed nela e depois construir um pequeno model `dim_countries` em cima.",
+    "concept": "**Seeds** são arquivos CSV pequenos, versionados no repositório (em `seeds/`), que o dbt carrega no warehouse como tabelas. São perfeitos para dados de lookup: códigos de país, cotações de moeda, mapeamentos de status. Qualquer coisa pequena, que muda devagar, e que se encaixa melhor no controle de versão do que num Database.\n\nDuas coisas diferenciam seeds de models comuns:\n\n1. São carregados com `dbt seed`, **não** com `dbt run`. Os dados vivem num CSV, não num SELECT.\n2. Do ponto de vista do ref(), um seed *é* um model: você referencia com `{{ ref('seed_name') }}` igual a qualquer outro.\n\nNesta lição, o time colocou um lookup `seeds/countries.csv` no projeto. A tabela `countries` ainda não está no warehouse; só o CSV está no disco. Você vai dar seed nela e depois construir um pequeno model `dim_countries` em cima.",
     "tasks": [
       {
         "prompt": "Dê uma olhada em `seeds/countries.csv` — ele vive em `seeds/`, não em `models/`. Repare na linha de header e nas cinco linhas de dados.",
@@ -266,7 +266,7 @@
         "Seeds são para CSVs pequenos e que mudam devagar — uma stream de 50M de linhas/hora pertence a um source, não ao controle de versão",
         "`dbt seed` funcionaria, mas só no target de dev, não em prod"
       ],
-      "explanation": "Seeds são CSVs versionados, revisados em PRs — perfeitos para códigos de país, mapeamentos de status, cotações. Colocar uma stream de 50M de linhas no git incharia o repo e perderia as atualizações horárias no instante em que o arquivo fosse commitado. Esse dado pertence ao warehouse, acessado via `source`."
+      "explanation": "Seeds são CSVs versionados, revisados em PRs — perfeitos para códigos de país, mapeamentos de status, cotações. Colocar uma stream de 50M de linhas no git encheria o repositório e perderia as atualizações horárias no instante em que o arquivo fosse commitado. Esse dado pertence ao warehouse, acessado via `source`."
     },
     "furtherReading": [
       { "label": "Seeds" }
@@ -452,7 +452,7 @@
       },
       {
         "prompt": "Por fim, rode um `dbt build` simples para construir e testar o projeto inteiro de uma vez.",
-        "hint": "Sem seletor desta vez — `dbt build` percorre a DAG inteiro."
+        "hint": "Sem seletor desta vez — `dbt build` percorre a DAG inteira."
       }
     ],
     "quiz": {
@@ -524,7 +524,7 @@
         "hint": "Um único comando faz tudo: `dbt build`."
       },
       {
-        "prompt": "Confirme que `fct_revenue_by_customer` foi construído e passou.",
+        "prompt": "Confirme que `fct_revenue_by_customer` foi construído e passou nos testes.",
         "hint": ""
       },
       {

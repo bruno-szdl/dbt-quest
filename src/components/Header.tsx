@@ -326,6 +326,9 @@ const LANGUAGES: ReadonlyArray<{ code: string; label: string }> = [
   { code: 'en', label: 'English' },
   { code: 'pt', label: 'Português' },
   { code: 'es', label: 'Español' },
+  { code: 'fr', label: 'Français' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'it', label: 'Italiano' },
 ]
 
 function LangToggleButton() {

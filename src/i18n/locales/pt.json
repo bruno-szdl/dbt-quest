@@ -47,8 +47,8 @@
     "tagline": "Aprenda dbt grátis no seu navegador.",
     "subTagline": "{{count}} lições interativas e curtas. SQL de verdade, um warehouse de verdade, uma DAG de verdade. Tudo rodando nesta página. Sem instalação, sem cadastro.",
     "ctaBegin": "Começar pela Lição 1 ›",
-    "ctaContinue": "Continuar de onde parei ›",
-    "ctaBeginFull": "Começar pela Lição 1: seu primeiro dbt model›",
+    "ctaContinue": "Continuar aprendendo ›",
+    "ctaBeginFull": "Começar pela Lição 1: seu primeiro dbt model ›",
     "restart": "Recomeçar o curso",
     "restartConfirm": "Recomeçar o curso do zero, a partir da Lição 1? Seu progresso será apagado.",
     "welcomeLead": "Bem-vindo ao ",
@@ -69,7 +69,7 @@
       "intro": "Um projeto dbt é uma pasta cheia de arquivos `.sql`. Cada arquivo é um `SELECT` (o que o dbt chama de **model**). Quando você roda `dbt run`, o dbt:",
       "step1": "Lê todos os seus models SQL",
       "step2": "Descobre quais models dependem de quais (a **DAG**)",
-      "step3": "Roda eles na ordem certa e materializa os resultados no seu banco de dados",
+      "step3": "Roda eles na ordem certa e materializa os resultados no seu Database",
       "outro": "É essa a ideia central. Todo o resto (tests, docs, sources, materializations, snapshots) é construído em cima dessas primitivas."
     },
     "exampleDag": {
@@ -86,7 +86,7 @@
     "aboutLessons": {
       "heading": "Sobre as lições",
       "p1": "São {{count}} lições curtas. Cada uma introduz um conceito e depois te dá 3 a 5 tarefas para aplicá-lo. Seu progresso é salvo automaticamente — pode fechar a aba e voltar depois.",
-      "p2": "Vá no seu ritmo, edite o SQL à vontade e não se preocupe em quebrar algo. Toda lição tem um botão \"Reset lesson\" no topo, e toda tarefa tem um botão \"Ver dica\" se você travar.",
+      "p2": "Vá no seu ritmo, edite o SQL à vontade e não se preocupe em quebrar algo. Toda lição tem um botão \"Resetar lição\" no topo, e toda tarefa tem um botão \"Ver dica\" se você travar.",
       "p3": "Ao final, você vai conseguir abrir qualquer projeto dbt real e contribuir desde o primeiro dia."
     },
     "beforeYouStart": {

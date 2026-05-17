@@ -15,7 +15,7 @@ import {
 const lesson07: Lesson = {
   id: 7,
   title: 'Seeds',
-  concept: `**Seeds** are small CSV files checked into the repo (under \`seeds/\`) that dbt loads into the warehouse as tables. They're perfect for lookup data: country codes, currency rates, status mappings. Anything small, slow-changing, and more at home in version control than in a database.
+  concept: `**Seeds** are small CSV files checked into the repo (under \`seeds/\`) that dbt loads into the warehouse as tables. They're perfect for lookup data: country codes, currency rates, status mappings. Anything small, slow-changing, and more at home in version control than in a Database.
 
 Two things make seeds different from regular models:
 

@@ -3,8 +3,11 @@ import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
 import pt from './locales/pt.json'
 import es from './locales/es.json'
+import fr from './locales/fr.json'
+import de from './locales/de.json'
+import it from './locales/it.json'
 
-const SUPPORTED = ['en', 'pt', 'es'] as const
+const SUPPORTED = ['en', 'pt', 'es', 'fr', 'de', 'it'] as const
 type Supported = (typeof SUPPORTED)[number]
 
 function detectBrowserLang(): Supported {
@@ -28,6 +31,9 @@ void i18n.use(initReactI18next).init({
     en: { ui: en },
     pt: { ui: pt },
     es: { ui: es },
+    fr: { ui: fr },
+    de: { ui: de },
+    it: { ui: it },
   },
   lng: initial,
   fallbackLng: 'en',

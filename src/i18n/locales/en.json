@@ -16,7 +16,7 @@
     "changeLanguage": "Change language",
     "lessonsAria": "Lessons",
     "resetLesson": "Reset lesson",
-    "resetLessonConfirm": "Sure? Reset"
+    "resetLessonConfirm": "Sure?"
   },
   "lessonPanel": {
     "badge": "Lesson {{current}} / {{total}}",
@@ -69,7 +69,7 @@
       "intro": "A dbt project is a folder full of `.sql` files. Each file is a `SELECT` statement (what dbt calls a **model**). When you run `dbt run`, dbt:",
       "step1": "Reads all your SQL models",
       "step2": "Figures out which models depend on others (the **DAG**)",
-      "step3": "Runs them in the right order and builds the results in your database",
+      "step3": "Runs them in the right order and builds the results in your Database",
       "outro": "That's the core idea. Everything else (tests, docs, sources, materializations, snapshots) is built on top of those primitives."
     },
     "exampleDag": {
@@ -91,7 +91,7 @@
     },
     "beforeYouStart": {
       "heading": "Before you start",
-      "body": "You only need to know basic SQL — `SELECT`, `WHERE`, `GROUP BY`. That's it. No database, no dbt installation, no command-line experience needed. Everything runs in your browser."
+      "body": "You only need to know basic SQL — `SELECT`, `WHERE`, `GROUP BY`. That's it. No Database, no dbt installation, no command-line experience needed. Everything runs in your browser."
     },
     "footer": {
       "builtBy": "Built by Bruno Lima",
@@ -175,7 +175,7 @@
     "closeTab": "Close tab",
     "noFileOpen": "No file open"
   },
-  "database": {
+  "Database": {
     "header": "Database",
     "empty": "No tables yet"
   },
@@ -186,7 +186,7 @@
   "errorBoundary": {
     "eyebrow": "Something broke",
     "title": "dbt-quest hit an unexpected error",
-    "body": "Try reloading the page. If the problem persists, you can reset your saved progress — this will clear completed levels and unlocked badges, but should recover the app.",
+    "body": "Try reloading the page. If the problem persists, you can reset your saved progress — this will clear completed lessons and unlocked panels, but should recover the app.",
     "reload": "Reload page",
     "reset": "Reset progress & reload"
   },

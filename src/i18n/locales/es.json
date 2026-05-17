@@ -33,7 +33,7 @@
     "results": "Resultados"
   },
   "mobile": {
-    "sectionsAria": "Secciones en mobile",
+    "sectionsAria": "Secciones móviles",
     "tabs": {
       "lesson": "Lección",
       "files": "Archivos",
@@ -47,7 +47,7 @@
     "tagline": "Aprende dbt gratis en tu navegador.",
     "subTagline": "{{count}} lecciones cortas e interactivas. SQL de verdad, un warehouse de verdad, un DAG de verdad. Todo corriendo en esta página. Sin instalación, sin registro.",
     "ctaBegin": "Empezar por la Lección 1 ›",
-    "ctaContinue": "Seguir donde lo dejé ›",
+    "ctaContinue": "Seguir aprendiendo ›",
     "ctaBeginFull": "Empezar por la Lección 1: tu primer dbt model ›",
     "restart": "Reiniciar el curso",
     "restartConfirm": "¿Volver a empezar el curso desde la Lección 1? Se borrará tu progreso.",
@@ -69,7 +69,7 @@
       "intro": "Un proyecto dbt es una carpeta llena de archivos `.sql`. Cada archivo es un `SELECT` (lo que dbt llama un **model**). Cuando corres `dbt run`, dbt:",
       "step1": "Lee todos tus models SQL",
       "step2": "Detecta qué models dependen de cuáles (el **DAG**)",
-      "step3": "Los corre en el orden correcto y materializa los resultados en tu base de datos",
+      "step3": "Los corre en el orden correcto y materializa los resultados en tu Database",
       "outro": "Esa es la idea central. Todo lo demás (tests, docs, sources, materializations, snapshots) se construye sobre esas primitivas."
     },
     "exampleDag": {
@@ -86,12 +86,12 @@
     "aboutLessons": {
       "heading": "Sobre las lecciones",
       "p1": "Son {{count}} lecciones cortas. Cada una introduce un solo concepto y luego te da 3 a 5 tareas para aplicarlo. Tu progreso se guarda automáticamente — puedes cerrar la pestaña y volver después.",
-      "p2": "Ve a tu ritmo, edita el SQL libremente y no te preocupes por romper nada. Cada lección tiene un botón \"Reset lesson\" arriba, y cada tarea tiene un botón \"Ver pista\" si te trabas.",
+      "p2": "Ve a tu ritmo, edita el SQL libremente y no te preocupes por romper nada. Cada lección tiene un botón \"Reiniciar lección\" arriba, y cada tarea tiene un botón \"Ver pista\" si te trabas.",
       "p3": "Al final, vas a poder abrir cualquier proyecto dbt real y contribuir desde el primer día."
     },
     "beforeYouStart": {
       "heading": "Antes de empezar",
-      "body": "Solo necesitas SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Nada más. Sin base de datos, sin instalación de dbt, sin experiencia en línea de comandos necesaria. Todo corre en tu navegador."
+      "body": "Solo necesitas SQL básico — `SELECT`, `WHERE`, `GROUP BY`. Nada más. Sin Database, sin instalación de dbt, sin experiencia en línea de comandos necesaria. Todo corre en tu navegador."
     },
     "footer": {
       "builtBy": "Hecho por Bruno Lima",

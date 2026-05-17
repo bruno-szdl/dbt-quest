@@ -8,7 +8,7 @@ const lesson01: Lesson = {
   panels: ['warehouse'],
   concept: `Throughout this course you'll be working on a single fictional dbt project for a small e-commerce company. Each lesson adds one new concept on top of what came before.
 
-A **model** in dbt is just a \`SELECT\` statement saved as a \`.sql\` file inside the \`models/\` folder. When you run dbt, it turns that query into a **view** in your database (a saved query the database knows by name).
+A **model** in dbt is just a \`SELECT\` statement saved as a \`.sql\` file inside the \`models/\` folder. When you run dbt, it turns that query into a **view** in your Database (a saved query the Database knows by name).
 
 The project already has one model: \`stg_customers.sql\`. It reads from a raw table called \`raw.customers\`.
 
