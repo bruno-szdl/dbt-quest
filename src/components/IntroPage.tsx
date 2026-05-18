@@ -64,7 +64,13 @@ export default function IntroPage() {
             lineHeight: 1.45,
           }}
         >
-          {t('intro.tagline')}
+          {t('intro.tagline').split(/(dbt)/).map((part, i) =>
+            part === 'dbt' ? (
+              <strong key={i} style={{ color: 'var(--color-accent-orange)', fontWeight: 700 }}>dbt</strong>
+            ) : (
+              part
+            )
+          )}
         </p>
         <p
           style={{
@@ -132,7 +138,7 @@ export default function IntroPage() {
           {t('intro.welcomeLead')}
           <strong style={{ color: 'var(--color-text)' }}>{t('intro.welcomeProduct')}</strong>
           {t('intro.welcomeMid')}
-          <strong style={{ color: 'var(--color-text)' }}>{t('intro.welcomeDbt')}</strong>
+          <strong style={{ color: 'var(--color-accent-orange)', fontSize: '1.0625rem', fontWeight: 700 }}>{t('intro.welcomeDbt')}</strong>
           {t('intro.welcomeTail')}
           <a
             href="https://sqlbolt.com/"
