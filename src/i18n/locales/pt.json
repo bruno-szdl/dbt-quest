@@ -49,7 +49,7 @@
     "subTagline": "{{count}} lições interativas e curtas. SQL de verdade, um warehouse de verdade, uma DAG de verdade. Tudo rodando nesta página. Sem instalação, sem cadastro.",
     "ctaBegin": "Começar pela Lição 1 ›",
     "ctaContinue": "Continuar aprendendo ›",
-    "ctaBeginFull": "Começar pela Lição 1: seu primeiro dbt model ›",
+    "ctaBeginFull": "Começar pela Lição 1: seu primeiro modelo dbt ›",
     "restart": "Recomeçar o curso",
     "restartConfirm": "Recomeçar o curso do zero, a partir da Lição 1? Seu progresso será apagado.",
     "welcomeLead": "Bem-vindo ao ",
@@ -60,23 +60,23 @@
     "welcomeSqlBoltAfter": ".",
     "whatIsDbt": {
       "heading": "O que é dbt?",
-      "body": "dbt é a ferramenta open-source que times de dados usam para transformar tabelas brutas do warehouse em models confiáveis, documentados e testados. Ele roda sobre qualquer warehouse SQL (Snowflake, Databricks, BigQuery, Postgres, DuckDB, …) e te dá uma forma de gerenciar seu SQL de transformação *como código*: versionado, modular e testável."
+      "body": "dbt é a ferramenta open-source que times de dados usam para transformar tabelas brutas do warehouse em modelos confiáveis, documentados e testados. Ele roda sobre qualquer warehouse SQL (Snowflake, Databricks, BigQuery, Postgres, DuckDB, …) e te dá uma forma de gerenciar seu SQL de transformação *como código*: versionado, modular e testável."
     },
     "didYouKnow": {
       "title": "Você sabia?",
       "body": "Projetos dbt são apenas pastas com arquivos `.sql` e `.yml`. Sem sintaxe proprietária. Se você sabe SQL, você sabe escrever dbt. Mas o dbt transforma esses arquivos em algo maior: um framework de transformação versionado, testado, documentado e com lineage completo."
     },
     "dbtRun": {
-      "intro": "Um projeto dbt é uma pasta cheia de arquivos `.sql`. Cada arquivo é um `SELECT` (o que o dbt chama de **model**). Quando você roda `dbt run`, o dbt:",
-      "step1": "Lê todos os seus models SQL",
-      "step2": "Descobre quais models dependem de quais (a **DAG**)",
+      "intro": "Um projeto dbt é uma pasta cheia de arquivos `.sql`. Cada arquivo é um `SELECT` (o que o dbt chama de **modelo**). Quando você roda `dbt run`, o dbt:",
+      "step1": "Lê todos os seus modelos SQL",
+      "step2": "Descobre quais modelos dependem de quais (a **DAG**)",
       "step3": "Roda eles na ordem certa e materializa os resultados no seu Database",
       "outro": "É essa a ideia central. Todo o resto (tests, docs, sources, materializations, snapshots) é construído em cima dessas primitivas."
     },
     "exampleDag": {
       "heading": "Um exemplo de DAG",
       "intro": "Pipelines reais têm várias camadas. Um padrão comum é assim:",
-      "caption": "As setas são chamadas a `ref()` no SQL. O dbt lê elas, monta o grafo acima e executa os models da esquerda para a direita.",
+      "caption": "As setas são chamadas a `ref()` no SQL. O dbt lê elas, monta o grafo acima e executa os modelos da esquerda para a direita.",
       "legend": {
         "source": "source",
         "staging": "staging",
@@ -102,7 +102,7 @@
   "workspaceTour": {
     "files": {
       "title": "Arquivos",
-      "body": "A pasta do projeto dbt. Models ficam em models/, tests em tests/, e CSVs brutos em seeds/. Clique em um arquivo para abrir no editor."
+      "body": "A pasta do projeto dbt. Modelos ficam em models/, tests em tests/, e CSVs brutos em seeds/. Clique em um arquivo para abrir no editor."
     },
     "editor": {
       "title": "Editor",
@@ -110,7 +110,7 @@
     },
     "terminal": {
       "title": "Terminal / Resultados / Lineage",
-      "body": "Rode comandos dbt (dbt run, dbt test, dbt build), inspecione resultados de queries e veja a DAG se atualizar conforme você adiciona ref() entre os models."
+      "body": "Rode comandos dbt (dbt run, dbt test, dbt build), inspecione resultados de queries e veja a DAG se atualizar conforme você adiciona ref() entre os modelos."
     },
     "lesson": {
       "title": "Painel da lição",
@@ -120,7 +120,7 @@
   "courseComplete": {
     "eyebrow": "Curso concluído",
     "title": "Você terminou o Analytics Engineering Quest 🎉",
-    "body": "Agora você consegue ler qualquer projeto dbt real: sources, models, refs, materializations, seeds, tests, docs, seletores, `dbt build`. Esse é o kit de ferramentas.",
+    "body": "Agora você consegue ler qualquer projeto dbt real: sources, modelos, refs, materializations, seeds, tests, docs, seletores, `dbt build`. Esse é o kit de ferramentas.",
     "whatNext": "O que fazer agora",
     "step1Lead": "Instale o dbt localmente: ",
     "step1Link": "guia de instalação do dbt Core",
@@ -149,7 +149,7 @@
     "rowsMany": "{{shown}} de {{total}} linhas",
     "noRows": "(sem linhas)",
     "empty": "Ainda sem resultados",
-    "emptyHintLead": "Rode um model e clique em ",
+    "emptyHintLead": "Rode um modelo e clique em ",
     "emptyHintShow": "Show Results",
     "emptyHintOr": "(ou rode ",
     "emptyHintCmd": "dbt show --select <model>",
@@ -158,7 +158,7 @@
   "dag": {
     "header": "dag",
     "empty": "Visualização da DAG",
-    "emptyHint": "adicione um model para ver o grafo",
+    "emptyHint": "adicione um modelo para ver o grafo",
     "status": {
       "passed": "Passou",
       "failed": "Falhou",

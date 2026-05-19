@@ -22,7 +22,7 @@ const lesson14: Lesson = {
 
 - A well-defined \`raw\` source declared in YAML
 - Two staging models (\`stg_customers\`, \`stg_orders\`) reading from it
-- An intermediate filter (\`int_paid_orders\`) and three marts (\`dim_customers\`, \`dim_countries\`, \`fct_revenue_by_customer\`)
+- An intermediate model with a filter (\`int_paid_orders\`) and three marts (\`dim_customers\`, \`dim_countries\`, \`fct_revenue_by_customer\`)
 - A \`countries\` seed feeding \`dim_countries\`
 - Generic tests (\`not_null\`, \`unique\`, \`relationships\`, \`accepted_values\`), descriptions, and one singular test
 - All organized in the standard \`staging/intermediate/marts\` structure
