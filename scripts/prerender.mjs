@@ -159,17 +159,42 @@ function headBlock(page) {
     ${schemas.map(jsonLd).join('\n    ')}`
 }
 
+/** Extract Vite-injected asset tags from the template head — the bundled
+ * <script type="module" src="/assets/...">, preload links, and the bundled
+ * CSS <link rel="stylesheet">. These MUST survive head replacement or the
+ * SPA never loads (the prerendered static content gets stuck on screen). */
+function extractAssetTags(headHtml) {
+  const tags = []
+  // Match <script ...src="/assets/..."...></script> (with or without crossorigin/type/etc.)
+  const scriptRe = /<script\b[^>]*\bsrc=["']\/assets\/[^"']+["'][^>]*><\/script>/g
+  // Match <link ...href="/assets/..."...> (stylesheet, modulepreload, prefetch).
+  const linkRe = /<link\b[^>]*\bhref=["']\/assets\/[^"']+["'][^>]*\/?>/g
+  let m
+  while ((m = scriptRe.exec(headHtml)) !== null) tags.push(m[0])
+  while ((m = linkRe.exec(headHtml)) !== null) tags.push(m[0])
+  return tags
+}
+
 /** Render a single page by splicing head + body into the Vite-generated
  * template. The Vite template carries the bundled <script src="/assets/...">
  * tags; we want to keep those intact while replacing the head metadata and
  * #root contents. */
 function renderPage(template, page) {
-  // Strip the existing <head>...</head> contents (keep <head> tag), replace.
+  // 1. Pull Vite's asset tags out of the existing head so we can re-inject them.
+  const headMatch = template.match(/<head>([\s\S]*?)<\/head>/)
+  const assetTags = headMatch ? extractAssetTags(headMatch[1]) : []
+  if (assetTags.length === 0) {
+    throw new Error(
+      'prerender: no /assets/ script or link tags found in template head — refusing to write a broken HTML file',
+    )
+  }
+  // 2. Replace head: SEO metadata first, then Vite asset tags last so the
+  //    bundle still loads.
   let html = template.replace(
     /<head>[\s\S]*?<\/head>/,
-    `<head>\n${headBlock(page)}\n  </head>`,
+    `<head>\n${headBlock(page)}\n\n    ${assetTags.join('\n    ')}\n  </head>`,
   )
-  // Inject static content into <div id="root"></div>.
+  // 3. Inject static content into <div id="root"></div>.
   html = html.replace(
     /<div id="root">\s*<\/div>/,
     `<div id="root">${bodyHtml(page)}\n    </div>`,
